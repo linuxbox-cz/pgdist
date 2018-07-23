@@ -1,7 +1,11 @@
 import os
 import sys
 import logging
-import configparser
+
+try:
+	import configparser
+except ImportError:
+	import ConfigParser as configparser
 
 import address
 

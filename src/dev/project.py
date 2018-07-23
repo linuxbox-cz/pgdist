@@ -152,6 +152,11 @@ class Update:
 		else:
 			self.directory = find_directory()
 		self.parts = []
+		pattern = "%s--%s--%s.sql" % (to_fname(project_name), to_fname(old_version), to_fname(new_version))
+		fname = os.path.join(self.directory, "sql_dist", pattern)
+		if os.path.isfile(fname):
+			logging.debug("Update find part: %s" % (fname,))
+			self.parts.insert(1, UpdatePart(fname))
 		pattern = "%s--%s--%s--p*.sql" % (to_fname(project_name), to_fname(old_version), to_fname(new_version))
 		for fname in glob.glob(os.path.join(self.directory, "sql_dist", pattern)):
 			x = re.match(r".*--p(?P<part>\d+)\.sql", fname)
@@ -311,8 +316,13 @@ def create_version(version, git_tag, force):
 		project = ProjectGit(git_tag)
 	else:
 		project = ProjectFs()
+	if not os.path.isdir(os.path.join(project.directory, "sql_dist")):
+		os.mkdir(os.path.join(project.directory, "sql_dist"))
 	for i, part in enumerate(project.parts):
-		fname = "%s--%s--p%02d.sql" % (to_fname(project.name), to_fname(version), i+1)
+		if len(project.parts) == 1:
+			fname = "%s--%s.sql" % (to_fname(project.name), to_fname(version))
+		else:
+			fname = "%s--%s--p%02d.sql" % (to_fname(project.name), to_fname(version), i+1)
 		build_fname = os.path.join(project.directory, "sql_dist", fname)
 		if os.path.isfile(build_fname) and not force:
 			logging.error("Error file exists: %s" % (build_fname,))
@@ -380,7 +390,11 @@ def create_update(git_tag, new_version, force, gitversion=None):
 	dump_old = pgsql.load_and_dump(project_old)
 	dump_new = pgsql.load_and_dump(project_new)
 
-	fname = "%s--%s--%s--p%02d.sql" % (to_fname(project_old.name), to_fname(old_version), to_fname(new_version), 1)
+	if not os.path.isdir(os.path.join(project.project_old, "sql_dist")):
+		os.mkdir(os.path.join(project.project_old, "sql_dist"))
+
+	# first part can be without --p%02d (--p01)
+	fname = "%s--%s--%s.sql" % (to_fname(project_old.name), to_fname(old_version), to_fname(new_version))
 	build_fname = os.path.join(project_old.directory, "sql_dist", fname)
 	if os.path.isfile(build_fname) and not force:
 		logging.error("Error file exists: %s" % (build_fname,))

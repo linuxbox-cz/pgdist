@@ -192,24 +192,43 @@ class Project:
 def get_projects(project_name, dbname, conninfo, directory):
 	projects = {}
 	for fname in os.listdir(directory):
-		# version
-		x = re.match(r"(?P<project_name>.+)--(?P<version>.+)--p(?P<part>\d+)\.sql$", fname)
-		if x and '--' not in x.group("project_name"):
-			pr_name = x.group("project_name")
-			if not project_name or project_name == pr_name:
-				pr_name = x.group("project_name")
-				if pr_name not in projects:
-					projects[pr_name] = Project(pr_name)
-				projects[pr_name].add_version(directory, fname, x.group("version"), int(x.group("part")))
+		version = None
+		version_old = None
+		version_new = None
+		(root, ext) = os.path.splitext(fname)
+		if ext != ".sql":
+			continue
+		p = root.split("--")
+		# like: project--v1.sql
+		if len(p) == 2:
+			(pr_name, version) = p
+			part = 1
+		# like: project--v1--p1.sql
+		elif len(p) == 3 and re.match(r"p\d+$", p[2]):
+			(pr_name, version) = p[0:2]
+			part = int(p[2][1:])
+		# like: project--v1--v2.sql
+		elif len(p) == 3:
+			(pr_name, version_old, version_new) = p
+			part = 1
+		# like: project--v1--v2--p1.sql
+		elif len(p) == 4 and re.match(r"p\d+$", p[3]):
+			(pr_name, version_old, version_new) = p[0:3]
+			part = int(p[3][1:])
+		else:
+			continue
 
-		# update
-		x = re.match(r"(?P<project_name>.+)--(?P<version_old>.+)--(?P<version_new>.+)--p(?P<part>\d+)\.sql$", fname)
-		if x:
-			pr_name = x.group("project_name")
-			if not project_name or project_name == pr_name:
-				if pr_name not in projects:
-					projects[pr_name] = Project(pr_name)
-				projects[pr_name].add_update(directory, fname, x.group("version_old"), x.group("version_new"), int(x.group("part")))
+		if project_name and project_name != pr_name:
+			continue
+
+		if pr_name not in projects:
+			projects[pr_name] = Project(pr_name)
+
+		if version:
+			projects[pr_name].add_version(directory, fname, version, part)
+
+		if version_old and version_new:
+			projects[pr_name].add_update(directory, fname, version_old, version_new, part)
 
 	if dbname:
 		dbs = [dbname]
