@@ -164,6 +164,7 @@ def remove_default(args):
 				if args[i] == "'":
 					i += 1
 					break
+				i += 1
 			continue
 		if args[i] == ",":
 			parsed.append(args[s:i].split(' DEFAULT')[0])
