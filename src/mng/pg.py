@@ -223,11 +223,11 @@ def set_version(project_name, dbname, version, conninfo):
 	conn = connect(conninfo, dbname)
 	cursor = conn.cursor()
 	pgdist_install(conn)
-	logging.info("set version %s in %s to %s" % (project.name, dbname, version))
+	logging.info("set version %s in %s to %s" % (project_name, dbname, version))
 	cursor.execute("INSERT INTO pgdist.history (project, version, part, comment) VALUES (%s, %s, %s, %s);",
 		(project_name, version, 1, "set version %s" % (version,)))
 	cursor.execute("UPDATE pgdist.installed SET version=%s, from_version=NULL, part=1, parts=1 WHERE project=%s RETURNING *;",
-		(version, project.name))
+		(version, project_name))
 	if not cursor.fetchone():
 		cursor.execute("INSERT INTO pgdist.installed (project, version, part, parts) VALUES (%s, %s, 1, 1);",
-			(project.name, str(update.version)))
+			(project_name, version))
