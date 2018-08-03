@@ -90,7 +90,20 @@ class PG:
 			logging.error("Error: clean only test database")
 			sys.exit(1)
 
+	def create_roles(self, project):
+		if project.roles:
+			creates = []
+			for role in project.roles:
+				creates.append("""
+					IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = '%s') THEN
+						CREATE ROLE %s NOLOGIN;
+					END IF;""" % (role.name, role.name))
+
+			cmd = """DO $do$ BEGIN %s END $do$;""" % ("\n".join(creates),)
+			self.psql(cmd=cmd)
+
 	def load_project(self, project):
+		self.create_roles(project)
 		if project.git:
 			return self.load_project_git(project)
 		else:
