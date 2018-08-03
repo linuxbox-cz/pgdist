@@ -285,7 +285,7 @@ def rm(files, all):
 	new_conf = io.StringIO()
 	if all:
 		loaded_files = load_files(directory)
-		files = [f for f in project.get_files() if f in loaded_files]
+		files = [f for f in project.get_files() if f not in loaded_files]
 	else:
 		files_ok = []
 		for file in files:
@@ -298,6 +298,7 @@ def rm(files, all):
 		files = files_ok
 	with open(os.path.join(directory, "sql", "pg_project.sql")) as f:
 		for line in f:
+			line = unicode(line, "UTF8")
 			x = re.match(r"\\ir\s+(?P<file>.*\S)", line)
 			if x and x.group("file") in files:
 				file = x.group("file")
@@ -506,6 +507,7 @@ def role_add(name, arg1, arg2):
 
 	with open(os.path.join(directory, "sql", "pg_project.sql")) as f:
 		for line in f:
+			line = unicode(line, "UTF8")
 			x = re.match(r"--\s+end\s+header", line)
 			if x:
 				p = [name]
@@ -517,7 +519,7 @@ def role_add(name, arg1, arg2):
 					p.append(arg1)
 				if arg2 and arg2 in ("password"):
 					p.append(arg2)
-				new_conf.write("-- role: %s\n" % (" ".join(p),))
+				new_conf.write("-- role: %s\n" % (u" ".join(p),))
 			new_conf.write(line)
 	new_conf.seek(0)
 	with open(os.path.join(directory, "sql", "pg_project.sql"), "w") as f:
@@ -535,6 +537,7 @@ def role_change(name, arg1, arg2):
 
 	with open(os.path.join(directory, "sql", "pg_project.sql")) as f:
 		for line in f:
+			line = unicode(line, "UTF8")
 			x = re.match(r"--\s+role\s+%s(\s|$)" % (name,), line)
 			if x:
 				p = [name]
@@ -565,6 +568,7 @@ def role_rm(name):
 
 	with open(os.path.join(directory, "sql", "pg_project.sql")) as f:
 		for line in f:
+			line = unicode(line, "UTF8")
 			x = re.match(r"--\s+role\s+%s(\s|$)" % (name,), line)
 			if not x:
 				new_conf.write(line)
