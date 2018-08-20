@@ -1,6 +1,7 @@
 
 import sys
 import logging
+import re
 import io
 import subprocess
 
@@ -17,7 +18,7 @@ class PgError(Exception):
 class PG:
 	def __init__(self, addr, dbname=None):
 		self.address = addr
-		self.dbname = dbname
+		self.dbname = re.sub(r"\W", "", dbname)
 
 	def psql(self, cmd=None, single_transaction=True, change_db=False, file=None, cwd=None):
 		return self.run(c='psql', cmd=cmd, single_transaction=single_transaction, change_db=change_db, file=file, cwd=cwd)
