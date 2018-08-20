@@ -33,6 +33,9 @@ PGdist - distribute PotgreSQL functions, tables, etc...
     role-change name [nologin|login] [password] - change param on role
     role-rm name - remove role from project, not remove from databases
 
+    require-add project git git_tree_ish - add require to another project
+    require-rm project - remove require to another project
+
 PGdist Server - manage projects in PostgreSQL database
 
     list [project [dbname]] - show list of installed projects in database
@@ -106,7 +109,8 @@ def main():
 		logging.getLogger().addHandler(handler)
 
 	if args.cmd in ("init", "create-schema", "status", "test-load", "create-version", "add", "rm",
-		"create-update", "test-update", "diff-db", "role-list", "role-add", "role-change", "role-rm"):
+		"create-update", "test-update", "diff-db", "role-list", "role-add", "role-change", "role-rm",
+		"require-add", "require-rm"):
 
 		sys.path.insert(1, os.path.join(sys.path[0], "dev"))
 		import color
@@ -177,6 +181,14 @@ def main():
 	elif args.cmd == "role-rm" and len(args.args) in (1,):
 		(name,) = args_parse(args.args, 1)
 		project.role_rm(name)
+
+	elif args.cmd == "require-add" and len(args.args) in (3,):
+		(project_name, git, git_tree_ish) = args_parse(args.args, 3)
+		project.require_add(project_name, git, git_tree_ish)
+
+	elif args.cmd == "require-rm" and len(args.args) in (1,):
+		(project_name, ) = args_parse(args.args, 1)
+		project.require_rm(project_name)
 
 	# install projects
 	elif args.cmd == "list" and len(args.args) in (0, 1, 2,):

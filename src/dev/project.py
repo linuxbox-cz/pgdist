@@ -9,6 +9,7 @@ import difflib
 import tarfile
 import logging
 import io
+import cStringIO
 import subprocess
 
 import color
@@ -38,6 +39,12 @@ class Role:
 			p.append("login")
 		return " ".join(p)
 
+class Require:
+	def __init__(self, project_name, git, tree_ish):
+		self.project_name = project_name
+		self.git = git
+		self.tree_ish = tree_ish
+
 class ProjectBase:
 	def load_conf(self, file):
 		for line in file:
@@ -66,6 +73,10 @@ class ProjectBase:
 			x = re.match(r"--\s*role:\s+(?P<role>\S+)(\s+(?P<param>.*))?", line)
 			if x:
 				self.roles.append(Role(x.group("role"), x.group("param").split("--")[0].split(" ")))
+			# requires
+			x = re.match(r"--\s*require:\s+(?P<project_name>\S+)\s+(?P<git>\S+)\s+(?P<git_tree_ish>\S+)", line)
+			if x:
+				self.requires.append(Require(x.group("project_name"), x.group("git"), x.group("git_tree_ish")))
 		file.close()
 
 	def is_file(self, file):
@@ -98,6 +109,7 @@ class ProjectFs(ProjectBase):
 		self.name = None
 		self.parts = []
 		self.roles = []
+		self.requires = []
 		self.git = False
 		self.load_conf(open(os.path.join(self.directory, "sql", "pg_project.sql")))
 
@@ -105,7 +117,7 @@ class ProjectFs(ProjectBase):
 		return open(os.path.join(self.directory, "sql", fname))
 
 class ProjectGit(ProjectBase):
-	def __init__(self, git_tag=None, directory=None):
+	def __init__(self, git_tag=None, git_remote=None, git_tree_ish=None, directory=None):
 		if directory:
 			self.directory = directory
 		else:
@@ -113,16 +125,23 @@ class ProjectGit(ProjectBase):
 		self.name = None
 		self.parts = []
 		self.roles = []
+		self.requires = []
 		self.git = True
 		# TODO, archive only sql directory
-		args = ["/usr/bin/git", "archive", "--format=tar", git_tag]
+		if git_tag:
+			args = ["/usr/bin/git", "archive", "--format=tar", git_tag]
+		elif git_remote:
+			args = ["/usr/bin/git", "archive", "--format=tar", "--remote", git_remote, git_tree_ish]
+		else:
+			# TODO err msg
+			sys.exit(1)
 		process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE, cwd=self.directory)
 		output, err = process.communicate()
 		retcode = process.poll()
 		if retcode != 0:
 			logging.error("Fail get git version: %s" % (err))
 			sys.exit(1)
-		self.tar = tarfile.open(fileobj=io.StringIO(output), bufsize=10240)
+		self.tar = tarfile.open(fileobj=cStringIO.StringIO(output), bufsize=10240)
 		self.load_conf(self.tar.extractfile("sql/pg_project.sql"))
 
 	def get_file(self, fname):
@@ -368,12 +387,23 @@ def create_version(version, git_tag, force):
 			build_file.write("\n")
 		print("Created file: %s" % (fname))
 
+def load_requires(project, pg, loop_detect=[]):
+	loop2 = loop_detect + [project.name]
+	for require in project.requires:
+		if require.project_name in loop2:
+			logging.error("Error: requires loop: %s" % (" > ".join(loop2)))
+		if require.project_name not in pg.loaded_projects_name:
+			p = ProjectGit(git_remote=require.git, git_tree_ish=require.tree_ish)
+			load_requires(p, pg, loop_detect)
+			pg.load_project(p)
+
 def test_load(clean=True):
 	project = ProjectFs()
 	test_db = "pgdist_test_%s" % (project.name,)
 	try:
 		pg = pgsql.PG(config.test_db, dbname=test_db)
 		pg.init()
+		load_requires(project, pg)
 		pg.load_project(project)
 	except pgsql.PgError as e:
 		logging.error("Load project fail:")
@@ -584,6 +614,41 @@ def role_rm(name):
 		for line in f:
 			line = unicode(line, "UTF8")
 			x = re.match(r"--\s+role\s+%s(\s|$)" % (name,), line)
+			if not x:
+				new_conf.write(line)
+	new_conf.seek(0)
+	with open(os.path.join(directory, "sql", "pg_project.sql"), "w") as f:
+		for l in new_conf:
+			f.write(l)
+	new_conf.close()
+
+def require_add(project_name, git, git_tree_ish):
+	new_conf = io.StringIO()
+	directory = find_directory()
+	project = ProjectFs()
+
+	with open(os.path.join(directory, "sql", "pg_project.sql")) as f:
+		for line in f:
+			line = unicode(line, "UTF8")
+			x = re.match(r"--\s+end\s+header", line)
+			if x:
+				new_conf.write("-- require: %s %s %s\n" % (project_name, git, git_tree_ish))
+			new_conf.write(line)
+	new_conf.seek(0)
+	with open(os.path.join(directory, "sql", "pg_project.sql"), "w") as f:
+		for l in new_conf:
+			f.write(l)
+	new_conf.close()
+
+def require_rm(project_name):
+	new_conf = io.StringIO()
+	directory = find_directory()
+	project = ProjectFs()
+
+	with open(os.path.join(directory, "sql", "pg_project.sql")) as f:
+		for line in f:
+			line = unicode(line, "UTF8")
+			x = re.match(r"--\s+require\s*:\s*%s\s" % (project_name,), line)
 			if not x:
 				new_conf.write(line)
 	new_conf.seek(0)

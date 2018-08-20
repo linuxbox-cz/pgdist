@@ -21,6 +21,7 @@ class PG:
 	def __init__(self, addr, dbname=None):
 		self.address = addr
 		self.dbname = re.sub(r"\W", "", dbname)
+		self.loaded_projects_name = []
 
 	def psql(self, cmd=None, single_transaction=True, change_db=False, file=None, cwd=None):
 		return self.run(c='psql', cmd=cmd, single_transaction=single_transaction, change_db=change_db, file=file, cwd=cwd)
@@ -111,13 +112,14 @@ class PG:
 			return self.load_project_git(project)
 		else:
 			return self.load_project_fs(project)
+		self.loaded_projects_name.append(project.name)
 
 	def load_project_git(self, project):
 		for part in project.parts:
 			cmd = io.StringIO()
 			for file in part.files:
 				for l in project.get_file(file):
-					cmd.write(l)
+					cmd.write(unicode(l, "UTF8"))
 			self.psql(cmd=cmd.getvalue(), single_transaction=part.single_transaction, change_db=True)
 			cmd.close()
 
