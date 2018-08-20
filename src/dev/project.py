@@ -366,7 +366,7 @@ def create_version(version, git_tag, force):
 			build_file.write("\n")
 		print("Created file: %s" % (fname))
 
-def test_load():
+def test_load(clean=True):
 	project = ProjectFs()
 	test_db = "pgdist_test_%s" % (project.name,)
 	try:
@@ -376,9 +376,15 @@ def test_load():
 	except pgsql.PgError as e:
 		logging.error("Load project fail:")
 		print(e.output)
-		pg.clean()
+		if clean:
+			pg.clean()
+		else:
+			print("Check database: %s" % pg.dbname)
 		sys.exit(1)
-	pg.clean()
+	if clean:
+		pg.clean()
+	else:
+		print("Check database: %s" % pg.dbname)
 
 def create_update(git_tag, new_version, force, gitversion=None):
 	project_old = ProjectGit(git_tag)
@@ -421,7 +427,7 @@ def create_update(git_tag, new_version, force, gitversion=None):
 		pr_new = pg_parser.parse(io.StringIO(dump_new))
 		pr_old.gen_update(build_file, pr_new)
 
-def test_update(git_tag, new_version, updates, gitversion=None):
+def test_update(git_tag, new_version, updates, gitversion=None, clean=True):
 	if gitversion:
 		old_version = gitversion
 	else:
@@ -445,9 +451,15 @@ def test_update(git_tag, new_version, updates, gitversion=None):
 	except pgsql.PgError as e:
 		logging.error("Load project fail:")
 		print(e.output)
-		pg_test.clean()
+		if clean:
+			pg_test.clean()
+		else:
+			print("Check database: %s" % pg_test.dbname)
 		sys.exit(1)
-	pg_test.clean()
+	if clean:
+		pg_test.clean()
+	else:
+		print("Check database: %s" % pg_test.dbname)
 	
 	dump_cur = pgsql.load_and_dump(project_new)
 

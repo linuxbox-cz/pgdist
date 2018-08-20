@@ -74,6 +74,7 @@ def main():
 	parser.add_argument("--no-owner", dest="no_owner", help="do not dump and compare ownership of objects", action="store_true")
 	parser.add_argument("--no-acl", dest="no_acl", help="do not dump and compare access privileges (grant/revoke commands)", action="store_true")
 	parser.add_argument("--diff-raw", dest="diff_raw", help="compare raw SQL dumps", action="store_true")
+	parser.add_argument("--no-clean", dest="no_clean", help="no clean test database after load/update test", action="store_true", default=False)
 
 	# install projects
 	parser.add_argument("--showall", help="show all versions", action="store_true")
@@ -142,7 +143,7 @@ def main():
 		project.rm(args.args, args.all)
 
 	elif args.cmd == "test-load" and len(args.args) in (0,):
-		project.test_load()
+		project.test_load(not args.no_clean)
 
 	elif args.cmd == "create-version" and len(args.args) in (1, 2,):
 		(version, git_tag) = args_parse(args.args, 2)
@@ -154,7 +155,7 @@ def main():
 
 	elif args.cmd == "test-update" and len(args.args) in (2,):
 		(git_tag, new_version) = args_parse(args.args, 1)
-		project.test_update(git_tag, new_version, args.gitversion)
+		project.test_update(git_tag, new_version, args.gitversion, not args.no_clean)
 
 	elif args.cmd == "diff-db" and len(args.args) in (1,):
 		(pgconn,) = args_parse(args.args, 1)
