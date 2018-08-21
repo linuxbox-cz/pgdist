@@ -144,32 +144,6 @@ class PG:
 		(retcode, output) = self.pg_dump(change_db=True, no_owner=no_owner, no_acl=no_acl)
 		return unicode(output, "UTF8")
 
-def load_and_dump(project, no_owner=False, no_acl=False):
-	test_db = "pgdist_test_%s" % (project.name,)
-	try:
-		pg_test = PG(config.test_db, dbname=test_db)
-		pg_test.init()
-		pg_test.load_project(project)
-		dump = pg_test.dump(no_owner, no_acl)
-	except PgError as e:
-		logging.error("Load project fail:")
-		print(e.output)
-		pg_test.clean()
-		sys.exit(1)
-	pg_test.clean()
-	return dump
-
-def load_dump_and_dump(dump_remote, project_name="undef", no_owner=False, no_acl=False):
-	test_db = "pgdist_test_%s" % (project_name,)
-	try:
-		pg_test = PG(config.test_db, dbname=test_db)
-		pg_test.init()
-		pg_test.load_dump(dump_remote)
-		dump = pg_test.dump(no_owner, no_acl)
-	except PgError as e:
-		logging.error("Load dump fail:")
-		print(e.output)
-		pg_test.clean()
-		sys.exit(1)
-	pg_test.clean()
-	return dump
+	def load_file(self, filename):
+		if filename:
+			self.psql(single_transaction=True, file=filename, change_db=True)

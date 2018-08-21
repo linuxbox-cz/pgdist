@@ -397,14 +397,19 @@ def load_requires(project, pg, loop_detect=[]):
 			load_requires(p, pg, loop_detect)
 			pg.load_project(p)
 
-def test_load(clean=True):
-	project = ProjectFs()
+def load_and_dump(project, clean=True, no_owner=False, no_acl=False, pre_load=None, post_load=None, updates=None):
 	test_db = "pgdist_test_%s" % (project.name,)
 	try:
 		pg = pgsql.PG(config.test_db, dbname=test_db)
 		pg.init()
+		pg.load_file(pre_load)
 		load_requires(project, pg)
 		pg.load_project(project)
+		if updates:
+			for update in updates:
+				pg_test.load_update(update)
+		pg.load_file(post_load)
+		dump = pg.dump(no_owner, no_acl)
 	except pgsql.PgError as e:
 		logging.error("Load project fail:")
 		print(e.output)
@@ -417,8 +422,30 @@ def test_load(clean=True):
 		pg.clean()
 	else:
 		print("Check database: %s" % pg.dbname)
+	return dump
 
-def create_update(git_tag, new_version, force, gitversion=None):
+def load_dump_and_dump(dump_remote, project_name="undef", no_owner=False, no_acl=False, pre_load=None, post_load=None):
+	test_db = "pgdist_test_%s" % (project_name,)
+	try:
+		pg = pgsql.PG(config.test_db, dbname=test_db)
+		pg.init()
+		pg.load_file(pre_load)
+		pg.load_dump(dump_remote)
+		pg.load_file(post_load)
+		dump = pg.dump(no_owner, no_acl)
+	except pgsql.PgError as e:
+		logging.error("Load dump fail:")
+		print(e.output)
+		pg.clean()
+		sys.exit(1)
+	pg.clean()
+	return dump
+
+def test_load(clean=True, pre_load=None, post_load=None):
+	project = ProjectFs()
+	load_and_dump(project, clean=clean, pre_load=pre_load, post_load=post_load)
+
+def create_update(git_tag, new_version, force, gitversion=None, pre_load=None, post_load=None):
 	project_old = ProjectGit(git_tag)
 	project_new = ProjectFs()
 	if gitversion:
@@ -426,8 +453,8 @@ def create_update(git_tag, new_version, force, gitversion=None):
 	else:
 		old_version = re.sub(r"^[^\d]*", "", git_tag)
 
-	dump_old = pgsql.load_and_dump(project_old)
-	dump_new = pgsql.load_and_dump(project_new)
+	dump_old = load_and_dump(project_old, pre_load=pre_load, post_load=post_load)
+	dump_new = load_and_dump(project_new, pre_load=pre_load, post_load=post_load)
 
 	if not os.path.isdir(os.path.join(project.project_old, "sql_dist")):
 		os.mkdir(os.path.join(project.project_old, "sql_dist"))
@@ -459,7 +486,7 @@ def create_update(git_tag, new_version, force, gitversion=None):
 		pr_new = pg_parser.parse(io.StringIO(dump_new))
 		pr_old.gen_update(build_file, pr_new)
 
-def test_update(git_tag, new_version, updates, gitversion=None, clean=True):
+def test_update(git_tag, new_version, updates, gitversion=None, clean=True, pre_load=None, post_load=None):
 	if gitversion:
 		old_version = gitversion
 	else:
@@ -471,39 +498,18 @@ def test_update(git_tag, new_version, updates, gitversion=None, clean=True):
 	if not updates:
 		upds.append(Update(project_old.name, old_version, new_version))
 
-
-	test_db = "pgdist_test_%s" % (project_old.name,)
-	try:
-		pg_test = pgsql.PG(config.test_db, dbname=test_db)
-		pg_test.init()
-		pg_test.load_project(project_old)
-		for update in upds:
-			pg_test.load_update(update)
-		dump_updated = pg_test.dump()
-	except pgsql.PgError as e:
-		logging.error("Load project fail:")
-		print(e.output)
-		if clean:
-			pg_test.clean()
-		else:
-			print("Check database: %s" % pg_test.dbname)
-		sys.exit(1)
-	if clean:
-		pg_test.clean()
-	else:
-		print("Check database: %s" % pg_test.dbname)
-	
-	dump_cur = pgsql.load_and_dump(project_new)
+	dump_updated = load_and_dump(project, pre_load=pre_load, post_load=post_load, updates=upds)
+	dump_cur = load_and_dump(project_new, pre_load=pre_load, post_load=post_load)
 
 	pr_cur = pg_parser.parse(io.StringIO(dump_cur))
 	pr_updated = pg_parser.parse(io.StringIO(dump_updated))
 	pr_updated.diff(pr_cur)
 
-def diff_pg(addr, diff_raw, no_owner, no_acl):
+def diff_pg(addr, diff_raw, no_owner, no_acl, pre_load=None, post_load=None, pre_remoted_load=None, post_remoted_load=None):
 	config.check_set_test_db()
 	project = ProjectFs()
 
-	dump_cur = pgsql.load_and_dump(project, no_owner, no_acl)
+	dump_cur = load_and_dump(project, no_owner, no_acl, pre_load=pre_load, post_load=post_load)
 
 	try:
 		pg_remote = pgsql.PG(addr)
@@ -513,7 +519,7 @@ def diff_pg(addr, diff_raw, no_owner, no_acl):
 		print(e.output)
 		sys.exit(1)
 
-	dump_remote = pgsql.load_dump_and_dump(dump_remote, project.name, no_owner, no_acl)
+	dump_remote = load_dump_and_dump(dump_remote, project.name, no_owner, no_acl, pre_load=pre_remoted_load, post_load=post_remoted_load)
 
 	if diff_raw:
 		diff_c = difflib.unified_diff(dump_remote.splitlines(1), dump_cur.splitlines(1), fromfile=addr.addr, tofile="project")

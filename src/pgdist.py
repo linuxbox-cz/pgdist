@@ -80,6 +80,10 @@ def main():
 	parser.add_argument("--no-acl", dest="no_acl", help="do not dump and compare access privileges (grant/revoke commands)", action="store_true")
 	parser.add_argument("--diff-raw", dest="diff_raw", help="compare raw SQL dumps", action="store_true")
 	parser.add_argument("--no-clean", dest="no_clean", help="no clean test database after load/update test", action="store_true", default=False)
+	parser.add_argument("--pre-load", dest="pre_load", help="SQL file to load before load project")
+	parser.add_argument("--post-load", dest="post_load", help="SQL file to load after load project")
+	parser.add_argument("--pre-remoted-load", dest="pre_remoted_load", help="SQL file to load before load remote dump, command: diff-db")
+	parser.add_argument("--post-remoted-load", dest="post_remoted_load", help="SQL file to load after project, command: diff-db, path unversion install")
 
 	# install projects
 	parser.add_argument("--showall", help="show all versions", action="store_true")
@@ -149,23 +153,24 @@ def main():
 		project.rm(args.args, args.all)
 
 	elif args.cmd == "test-load" and len(args.args) in (0,):
-		project.test_load(not args.no_clean)
+		project.test_load(not args.no_clean, args.pre_load, args.post_load)
 
 	elif args.cmd == "create-version" and len(args.args) in (1, 2,):
 		(version, git_tag) = args_parse(args.args, 2)
-		project.create_version(version, git_tag, args.force)
+		project.create_version(version, git_tag, args.force, pre_load=args.pre_load, post_load=args.post_load)
 
 	elif args.cmd == "create-update" and len(args.args) in (2,):
 		(git_tag, new_version) = args_parse(args.args, 2)
-		project.create_update(git_tag, new_version, args.force, args.gitversion)
+		project.create_update(git_tag, new_version, args.force, args.gitversion, pre_load=args.pre_load, post_load=args.post_load)
 
 	elif args.cmd == "test-update" and len(args.args) in (2,):
 		(git_tag, new_version) = args_parse(args.args, 1)
-		project.test_update(git_tag, new_version, args.gitversion, not args.no_clean)
+		project.test_update(git_tag, new_version, args.gitversion, not args.no_clean, pre_load=args.pre_load, post_load=args.post_load)
 
 	elif args.cmd == "diff-db" and len(args.args) in (1,):
 		(pgconn,) = args_parse(args.args, 1)
-		project.diff_pg(address.Address(pgconn), args.diff_raw, args.no_owner, args.no_acl)
+		project.diff_pg(address.Address(pgconn), args.diff_raw, args.no_owner, args.no_acl,
+			pre_load=args.pre_load, post_load=args.post_load, pre_remoted_load=args.pre_remoted_load, post_remoted_load=args.post_remoted_load)
 
 	elif args.cmd == "role-list" and len(args.args) in (0,):
 		project.role_list()
