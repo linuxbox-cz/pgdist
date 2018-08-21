@@ -20,7 +20,10 @@ class PgError(Exception):
 class PG:
 	def __init__(self, addr, dbname=None):
 		self.address = addr
-		self.dbname = re.sub(r"\W", "", dbname)
+		if dbname:
+			self.dbname = re.sub(r"\W", "", dbname)
+		else:
+			self.dbname = None
 		self.loaded_projects_name = []
 
 	def psql(self, cmd=None, single_transaction=True, change_db=False, file=None, cwd=None):
