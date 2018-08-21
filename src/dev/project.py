@@ -21,13 +21,25 @@ class Part:
 	def __init__(self):
 		self.files = []
 		self.single_transaction = True
+		self.data = ""
+
+	def add_data(self, data):
+		self.data += data
+
+	def add_file(self, fname):
+		self.data += "\\ir %s\n" % (fname,)
+		self.files.append(fname)
+
+	def rm_file(self, fname):
+		self.files.remove(fname)
+		self.data = "\n".join(filter(lambda x: not re.match(r"\\ir\s+%s($|\s)" % (fname,), x), self.data.splitlines()))
 
 class Role:
-	def __init__(self, name, param):
+	def __init__(self, name, param=None):
 		self.name = name
-		self.password = "password" in param
-		self.nologin = "nologin" in param
-		self.login = "login" in param
+		self.password = param and "password" in param
+		self.nologin = param and "nologin" in param
+		self.login = param and "login" in param
 
 	def __str__(self):
 		p = [self.name]
@@ -45,39 +57,90 @@ class Require:
 		self.git = git
 		self.tree_ish = tree_ish
 
+	def __str__(self):
+		return "%s %s %s" % (self.project_name, self.git, self.tree_ish)
+
 class ProjectBase:
+	def init(self, directory=None):
+		if directory:
+			self.directory = directory
+		else:
+			self.directory = find_directory()
+		self.name = None
+		self.parts = []
+		self.roles = []
+		self.requires = []
+
 	def load_conf(self, file):
+		part = None
 		for line in file:
 			# project name
 			x = re.match(r"-- name:\s*(?P<name>.*\S)", line)
 			if x:
 				self.name = x.group("name")
+				continue
 			# part of project
 			x = re.match(r"-- part", line)
 			if x:
 				part = Part()
 				self.parts.append(part)
+				continue
 			# single_transaction
 			x = re.match(r"--\s*single_transaction", line)
 			if x:
 				part.single_transaction = True
+				continue
 			# not single_transaction
 			x = re.match(r"--\s*not\s*single_transaction", line)
 			if x:
 				part.single_transaction = False
-			# import file
-			x = re.match(r"\\ir\s+(?P<file>.*\S)", line)
-			if x:
-				part.files.append(x.group("file"))
+				continue
 			# role
 			x = re.match(r"--\s*role:\s+(?P<role>\S+)(\s+(?P<param>.*))?", line)
 			if x:
 				self.roles.append(Role(x.group("role"), x.group("param").split("--")[0].split(" ")))
+				continue
 			# requires
 			x = re.match(r"--\s*require:\s+(?P<project_name>\S+)\s+(?P<git>\S+)\s+(?P<git_tree_ish>\S+)", line)
 			if x:
 				self.requires.append(Require(x.group("project_name"), x.group("git"), x.group("git_tree_ish")))
+				continue
+			# part data
+			# import file
+			if part:
+				part.add_data(line)
+				x = re.match(r"\\ir\s+(?P<file>.*\S)", line)
+				if x:
+					part.files.append(x.group("file"))
 		file.close()
+
+	def save_conf(self):
+		new_conf = io.StringIO()
+		new_conf.write("-- pgdist project\n")
+		new_conf.write("-- name: %s\n" % (self.name, ))
+		new_conf.write("\n")
+		if self.roles:
+			for role in self.roles:
+				new_conf.write("-- role: %s\n" % (role,))
+			new_conf.write("\n")
+		if self.requires:
+			for require in self.requires:
+				new_conf.write("-- require: %s\n" % (require,))
+			new_conf.write("\n")
+		new_conf.write("-- end header\n")
+		for part in self.parts:
+			new_conf.write("\n")
+			new_conf.write("-- part\n")
+			if part.single_transaction:
+				new_conf.write("-- single_transaction\n")
+			else:
+				new_conf.write("-- not single_transaction\n")
+			new_conf.write(part.data)
+		new_conf.seek(0)
+		with open(os.path.join(self.directory, "sql", "pg_project.sql"), "w") as f:
+			for l in new_conf:
+				f.write(l)
+		new_conf.close()
 
 	def is_file(self, file):
 		for part in self.parts:
@@ -100,32 +163,44 @@ class ProjectBase:
 				return role
 		return None
 
+	def get_require(self, project_name):
+		for require in self.requires:
+			if require.project_name == project_name:
+				return require
+		return None
+
+class ProjectNew(ProjectBase):
+	def __init__(self, name, directory=None):
+		self.init(directory)
+		self.git = False
+		self.name = name
+		self.data = "\n"
+		self.parts.append(Part())
+
 class ProjectFs(ProjectBase):
 	def __init__(self, directory=None):
-		if directory:
-			self.directory = directory
-		else:
-			self.directory = find_directory()
-		self.name = None
-		self.parts = []
-		self.roles = []
-		self.requires = []
+		self.init(directory)
 		self.git = False
 		self.load_conf(open(os.path.join(self.directory, "sql", "pg_project.sql")))
 
 	def get_file(self, fname):
 		return open(os.path.join(self.directory, "sql", fname))
 
+	def add_file(self, fname):
+		if not self.parts:
+			logging.error("Error: no part")
+			sys.exit(1)
+		self.parts[-1].add_file(fname)
+
+	def rm_file(self, fname):
+		for part in self.parts:
+			if fname in part.files:
+				part.rm_file(fname)
+				return
+
 class ProjectGit(ProjectBase):
 	def __init__(self, git_tag=None, git_remote=None, git_tree_ish=None, directory=None):
-		if directory:
-			self.directory = directory
-		else:
-			self.directory = find_directory()
-		self.name = None
-		self.parts = []
-		self.roles = []
-		self.requires = []
+		self.init(directory)
 		self.git = True
 		# TODO, archive only sql directory
 		if git_tag:
@@ -232,14 +307,10 @@ def project_init(name, directory):
 		os.makedirs(os.path.join(directory, "sql"))
 	if not os.path.isdir(os.path.join(directory, "sql_dist")):
 		os.makedirs(os.path.join(directory, "sql_dist"))
-	with open(os.path.join(directory, "sql", "pg_project.sql"),"a+") as f:
-		f.write("-- pgdist project\n")
-		f.write("-- name: %s\n" % (name, ))
-		f.write("-- end header\n")
-		f.write("\n")
-		f.write("-- part\n")
-		f.write("-- single_transaction\n")
-		f.write("\n")
+
+	project = ProjectNew(name, directory)
+	project.save_conf()
+
 	print("PGdist project inited in %s" % (directory,))
 
 def create_schema(schema_name):
@@ -295,10 +366,12 @@ def add(files, all):
 			logging.error("File %s not found." % (file,))
 			sys.exit(1)
 		files = files_ok
-	with open(os.path.join(directory, "sql", "pg_project.sql"),"a+") as f:
-		for file in files:
-			print("adding to project: %s" % (file,))
-			f.write("\\ir %s\n" % (file,))
+	for file in files:
+		print("adding to project: %s" % (file,))
+		project.add_file(file)
+	if files:
+		print("If you need, change order of files in project file sql/pg_project.sql")
+	project.save_conf()
 
 def rm(files, all):
 	directory = find_directory()
@@ -317,21 +390,10 @@ def rm(files, all):
 				continue
 			files_ok.append(file)
 		files = files_ok
-	with open(os.path.join(directory, "sql", "pg_project.sql")) as f:
-		for line in f:
-			line = unicode(line, "UTF8")
-			x = re.match(r"\\ir\s+(?P<file>.*\S)", line)
-			if x and x.group("file") in files:
-				file = x.group("file")
-				print("removing from project: %s" % (file,))
-			else:
-				new_conf.write(line)
-	new_conf.seek(0)
-	with open(os.path.join(directory, "sql", "pg_project.sql"), "w") as f:
-		for l in new_conf:
-			f.write(l)
-	new_conf.close()
-
+	for file in files:
+		print("removing from project: %s" % (file,))
+		project.rm_file(file)
+	project.save_conf()
 
 def create_version(version, git_tag, force):
 	if git_tag:
@@ -538,14 +600,7 @@ def diff_pg(addr, diff_raw, no_owner, no_acl, pre_load=None, post_load=None, pre
 def role_list():
 	project = ProjectFs()
 	for role in project.roles:
-		p = [role.name]
-		if role.login:
-			p.append("login")
-		if role.nologin:
-			p.append("nologin")
-		if role.password:
-			p.append("password")
-		print(" ".join(p))
+		print(role)
 
 def role_add(name, arg1, arg2):
 	new_conf = io.StringIO()
@@ -554,111 +609,48 @@ def role_add(name, arg1, arg2):
 	if project.get_role(name):
 		logging.error("Error: user %s exists" % (name,))
 		sys.exit(1)
-
-	with open(os.path.join(directory, "sql", "pg_project.sql")) as f:
-		for line in f:
-			line = unicode(line, "UTF8")
-			x = re.match(r"--\s+end\s+header", line)
-			if x:
-				p = [name]
-				if arg1 and arg1 in ("login", "nologin"):
-					p.append(arg1)
-				if arg2 and arg2 in ("login", "nologin"):
-					p.append(arg2)
-				if arg1 and arg1 in ("password"):
-					p.append(arg1)
-				if arg2 and arg2 in ("password"):
-					p.append(arg2)
-				new_conf.write("-- role: %s\n" % (u" ".join(p),))
-			new_conf.write(line)
-	new_conf.seek(0)
-	with open(os.path.join(directory, "sql", "pg_project.sql"), "w") as f:
-		for l in new_conf:
-			f.write(l)
-	new_conf.close()
+	role = Role(name)
+	role.password = "password" in (arg1, arg2)
+	role.login = "login" in (arg1, arg2)
+	role.nologin = "nologin" in (arg1, arg2)
+	project.roles.append(role)
+	project.save_conf()
 
 def role_change(name, arg1, arg2):
 	new_conf = io.StringIO()
 	directory = find_directory()
 	project = ProjectFs()
-	if not project.get_role(name):
+	role = project.get_role(name)
+	if not role:
 		logging.error("Error: user %s not exists" % (name,))
 		sys.exit(1)
-
-	with open(os.path.join(directory, "sql", "pg_project.sql")) as f:
-		for line in f:
-			line = unicode(line, "UTF8")
-			x = re.match(r"--\s+role\s+%s(\s|$)" % (name,), line)
-			if x:
-				p = [name]
-				if arg1 and arg1 in ("login", "nologin"):
-					p.append(arg1)
-				if arg2 and arg2 in ("login", "nologin"):
-					p.append(arg2)
-				if arg1 and arg1 in ("password"):
-					p.append(arg1)
-				if arg2 and arg2 in ("password"):
-					p.append(arg2)
-				new_conf.write("-- role: %s\n" % (p,))
-			else:
-				new_conf.write(line)
-	new_conf.seek(0)
-	with open(os.path.join(directory, "sql", "pg_project.sql"), "w") as f:
-		for l in new_conf:
-			f.write(l)
-	new_conf.close()
+	role.password = "password" in (arg1, arg2)
+	role.login = "login" in (arg1, arg2)
+	role.nologin = "nologin" in (arg1, arg2)
+	project.save_conf()
 
 def role_rm(name):
-	new_conf = io.StringIO()
-	directory = find_directory()
 	project = ProjectFs()
-	if project.get_role(name):
-		logging.error("Error: user %s exists" % (name,))
+	role = project.get_role(name)
+	if not role:
+		logging.error("Error: role %s not exists" % (name,))
 		sys.exit(1)
-
-	with open(os.path.join(directory, "sql", "pg_project.sql")) as f:
-		for line in f:
-			line = unicode(line, "UTF8")
-			x = re.match(r"--\s+role\s+%s(\s|$)" % (name,), line)
-			if not x:
-				new_conf.write(line)
-	new_conf.seek(0)
-	with open(os.path.join(directory, "sql", "pg_project.sql"), "w") as f:
-		for l in new_conf:
-			f.write(l)
-	new_conf.close()
+	project.roles.remove(role)
+	project.save_conf()
 
 def require_add(project_name, git, git_tree_ish):
-	new_conf = io.StringIO()
-	directory = find_directory()
 	project = ProjectFs()
-
-	with open(os.path.join(directory, "sql", "pg_project.sql")) as f:
-		for line in f:
-			line = unicode(line, "UTF8")
-			x = re.match(r"--\s+end\s+header", line)
-			if x:
-				new_conf.write("-- require: %s %s %s\n" % (project_name, git, git_tree_ish))
-			new_conf.write(line)
-	new_conf.seek(0)
-	with open(os.path.join(directory, "sql", "pg_project.sql"), "w") as f:
-		for l in new_conf:
-			f.write(l)
-	new_conf.close()
+	if project.get_require(project_name):
+		logging.error("Error: require %s exists" % (project_name,))
+		sys.exit(1)
+	project.requires.append(Require(project_name, git, git_tree_ish))
+	project.save_conf()
 
 def require_rm(project_name):
-	new_conf = io.StringIO()
-	directory = find_directory()
 	project = ProjectFs()
-
-	with open(os.path.join(directory, "sql", "pg_project.sql")) as f:
-		for line in f:
-			line = unicode(line, "UTF8")
-			x = re.match(r"--\s+require\s*:\s*%s\s" % (project_name,), line)
-			if not x:
-				new_conf.write(line)
-	new_conf.seek(0)
-	with open(os.path.join(directory, "sql", "pg_project.sql"), "w") as f:
-		for l in new_conf:
-			f.write(l)
-	new_conf.close()
+	require = project.get_require(project_name)
+	if not require:
+		logging.error("Error: require %s not exists" % (project_name,))
+		sys.exit(1)
+	project.requires.remove(require)
+	project.save_conf()
