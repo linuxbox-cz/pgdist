@@ -8,6 +8,9 @@ import argparse
 import logging
 import logging.handlers
 
+reload(sys)
+sys.setdefaultencoding('utf-8')
+
 description = """
 PGdist - distribute PotgreSQL functions, tables, etc...
 

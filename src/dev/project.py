@@ -600,9 +600,9 @@ def read_file(fname):
 		data.write(unicode(f.read(), "UTF8"))
 	return data.getvalue()
 
-def print_diff(dump1, dump2, diff_raw, no_owner, no_acl):
+def print_diff(dump1, dump2, diff_raw, no_owner, no_acl, fromfile, tofile):
 	if diff_raw:
-		diff_c = difflib.unified_diff(dump1.splitlines(1), dump2.splitlines(1), fromfile=addr.addr, tofile="project")
+		diff_c = difflib.unified_diff(dump1.splitlines(1), dump2.splitlines(1), fromfile=fromfile, tofile=tofile)
 		for d in diff_c:
 			if d.startswith("-"):
 				sys.stdout.write(color.red(d))
@@ -619,11 +619,11 @@ def diff_pg(addr, diff_raw, no_owner, no_acl, pre_load=None, post_load=None, pre
 	config.check_set_test_db()
 	project = ProjectFs()
 
-	dump_cur = load_and_dump(project, no_owner, no_acl, pre_load=pre_load, post_load=post_load)
+	dump_cur = load_and_dump(project, True, no_owner, no_acl, pre_load=pre_load, post_load=post_load)
 	sql_remote = dump_remote(addr, no_owner, no_acl)
 	dump_r = load_dump_and_dump(sql_remote, project.name, no_owner, no_acl, pre_load=pre_remoted_load, post_load=post_remoted_load)
 
-	print_diff(dump_r, dump_cur, diff_raw, no_owner, no_acl)
+	print_diff(dump_r, dump_cur, diff_raw, no_owner, no_acl, fromfile=addr.addr, tofile="local project")
 
 def diff_pg_file(addr, fname, diff_raw, no_owner, no_acl, pre_load=None, post_load=None, pre_remoted_load=None, post_remoted_load=None):
 	config.check_set_test_db()
@@ -632,7 +632,7 @@ def diff_pg_file(addr, fname, diff_raw, no_owner, no_acl, pre_load=None, post_lo
 	sql_remote = dump_remote(addr, no_owner, no_acl)
 	dump_r = load_dump_and_dump(sql_remote, "diff", no_owner, no_acl, pre_load=pre_remoted_load, post_load=post_remoted_load)
 
-	print_diff(dump_r, dump_file, diff_raw, no_owner, no_acl)
+	print_diff(dump_r, dump_file, diff_raw, no_owner, no_acl, fromfile=addr.addr, tofile=fname)
 
 def role_list():
 	project = ProjectFs()
