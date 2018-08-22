@@ -163,11 +163,11 @@ def main():
 
 	elif args.cmd == "create-version" and len(args.args) in (1, 2,):
 		(version, git_tag) = args_parse(args.args, 2)
-		project.create_version(version, git_tag, args.force, pre_load=args.pre_load, post_load=args.post_load)
+		project.create_version(version, git_tag, args.force, clean=not args.no_clean, pre_load=args.pre_load, post_load=args.post_load)
 
 	elif args.cmd == "create-update" and len(args.args) in (2,):
 		(git_tag, new_version) = args_parse(args.args, 2)
-		project.create_update(git_tag, new_version, args.force, args.gitversion, pre_load=args.pre_load, post_load=args.post_load)
+		project.create_update(git_tag, new_version, args.force, args.gitversion, clean=not args.no_clean, pre_load=args.pre_load, post_load=args.post_load)
 
 	elif args.cmd == "test-update" and len(args.args) in (2,):
 		(git_tag, new_version) = args_parse(args.args, 1)

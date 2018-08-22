@@ -5,6 +5,7 @@ import re
 import os
 import sys
 import glob
+import getpass
 import difflib
 import tarfile
 import logging
@@ -459,10 +460,15 @@ def load_requires(project, pg, loop_detect=[]):
 			load_requires(p, pg, loop_detect)
 			pg.load_project(p)
 
-def load_and_dump(project, clean=True, no_owner=False, no_acl=False, pre_load=None, post_load=None, updates=None):
-	test_db = "pgdist_test_%s" % (project.name,)
+def get_test_dbname(project_name, dbs=None):
+	if dbs:
+		return "pgdist_test_%s_%s_%s" % (getpass.getuser(), project_name, dbs)
+	else:
+		return "pgdist_test_%s_%s" % (getpass.getuser(), project_name)
+
+def load_and_dump(project, clean=True, no_owner=False, no_acl=False, pre_load=None, post_load=None, updates=None, dbs=None):
 	try:
-		pg = pgsql.PG(config.test_db, dbname=test_db)
+		pg = pgsql.PG(config.test_db, dbname=get_test_dbname(project.name, dbs))
 		pg.init()
 		pg.load_file(pre_load)
 		load_requires(project, pg)
@@ -487,9 +493,8 @@ def load_and_dump(project, clean=True, no_owner=False, no_acl=False, pre_load=No
 	return dump
 
 def load_dump_and_dump(dump_remote, project_name="undef", no_owner=False, no_acl=False, pre_load=None, post_load=None):
-	test_db = "pgdist_test_%s" % (project_name,)
 	try:
-		pg = pgsql.PG(config.test_db, dbname=test_db)
+		pg = pgsql.PG(config.test_db, dbname=get_test_dbname(project_name))
 		pg.init()
 		pg.load_file(pre_load)
 		pg.load_dump(dump_remote)
@@ -504,9 +509,8 @@ def load_dump_and_dump(dump_remote, project_name="undef", no_owner=False, no_acl
 	return dump
 
 def load_file_and_dump(fname, project_name="undef", no_owner=False, no_acl=False, pre_load=None, post_load=None):
-	test_db = "pgdist_test_%s" % (project_name,)
 	try:
-		pg = pgsql.PG(config.test_db, dbname=test_db)
+		pg = pgsql.PG(config.test_db, dbname=get_test_dbname(project_name))
 		pg.init()
 		pg.load_file(pre_load)
 		pg.load_file(fname)
@@ -525,7 +529,7 @@ def test_load(clean=True, pre_load=None, post_load=None):
 	project = ProjectFs()
 	load_and_dump(project, clean=clean, pre_load=pre_load, post_load=post_load)
 
-def create_update(git_tag, new_version, force, gitversion=None, pre_load=None, post_load=None):
+def create_update(git_tag, new_version, force, clean=True, gitversion=None, pre_load=None, post_load=None):
 	project_old = ProjectGit(git_tag)
 	project_new = ProjectFs()
 	if gitversion:
@@ -533,8 +537,8 @@ def create_update(git_tag, new_version, force, gitversion=None, pre_load=None, p
 	else:
 		old_version = re.sub(r"^[^\d]*", "", git_tag)
 
-	dump_old = load_and_dump(project_old, pre_load=pre_load, post_load=post_load)
-	dump_new = load_and_dump(project_new, pre_load=pre_load, post_load=post_load)
+	dump_old = load_and_dump(project_old, clean=clean, pre_load=pre_load, post_load=post_load, dbs="old")
+	dump_new = load_and_dump(project_new, clean=clean, pre_load=pre_load, post_load=post_load, dbs="new")
 
 	if not os.path.isdir(os.path.join(project.project_old, "sql_dist")):
 		os.mkdir(os.path.join(project.project_old, "sql_dist"))
@@ -566,7 +570,7 @@ def create_update(git_tag, new_version, force, gitversion=None, pre_load=None, p
 		pr_new = pg_parser.parse(io.StringIO(dump_new))
 		pr_old.gen_update(build_file, pr_new)
 
-def test_update(git_tag, new_version, updates, gitversion=None, clean=True, pre_load=None, post_load=None):
+def test_update(git_tag, new_version, updates, clean=True, gitversion=None, pre_load=None, post_load=None):
 	if gitversion:
 		old_version = gitversion
 	else:
@@ -578,8 +582,8 @@ def test_update(git_tag, new_version, updates, gitversion=None, clean=True, pre_
 	if not updates:
 		upds.append(Update(project_old.name, old_version, new_version))
 
-	dump_updated = load_and_dump(project, pre_load=pre_load, post_load=post_load, updates=upds)
-	dump_cur = load_and_dump(project_new, pre_load=pre_load, post_load=post_load)
+	dump_updated = load_and_dump(project, clean=clean, pre_load=pre_load, post_load=post_load, updates=upds, dbs="updated")
+	dump_cur = load_and_dump(project_new, clean=clean, pre_load=pre_load, post_load=post_load)
 
 	pr_cur = pg_parser.parse(io.StringIO(dump_cur))
 	pr_updated = pg_parser.parse(io.StringIO(dump_updated))
