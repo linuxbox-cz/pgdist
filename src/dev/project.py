@@ -503,6 +503,24 @@ def load_dump_and_dump(dump_remote, project_name="undef", no_owner=False, no_acl
 	pg.clean()
 	return dump
 
+def load_file_and_dump(fname, project_name="undef", no_owner=False, no_acl=False, pre_load=None, post_load=None):
+	test_db = "pgdist_test_%s" % (project_name,)
+	try:
+		pg = pgsql.PG(config.test_db, dbname=test_db)
+		pg.init()
+		pg.load_file(pre_load)
+		pg.load_file(fname)
+		pg.load_file(post_load)
+		dump = pg.dump(no_owner, no_acl)
+	except pgsql.PgError as e:
+		logging.error("Load dump fail:")
+		print(e.output)
+		pg.clean()
+		sys.exit(1)
+	pg.clean()
+	return dump
+
+
 def test_load(clean=True, pre_load=None, post_load=None):
 	project = ProjectFs()
 	load_and_dump(project, clean=clean, pre_load=pre_load, post_load=post_load)
@@ -567,24 +585,24 @@ def test_update(git_tag, new_version, updates, gitversion=None, clean=True, pre_
 	pr_updated = pg_parser.parse(io.StringIO(dump_updated))
 	pr_updated.diff(pr_cur)
 
-def diff_pg(addr, diff_raw, no_owner, no_acl, pre_load=None, post_load=None, pre_remoted_load=None, post_remoted_load=None):
-	config.check_set_test_db()
-	project = ProjectFs()
-
-	dump_cur = load_and_dump(project, no_owner, no_acl, pre_load=pre_load, post_load=post_load)
-
+def dump_remote(addr, no_owner, no_acl):
 	try:
 		pg_remote = pgsql.PG(addr)
-		dump_remote = pg_remote.dump(no_owner, no_acl)
+		return pg_remote.dump(no_owner, no_acl)
 	except pgsql.PgError as e:
 		logging.error("Dump fail:")
 		print(e.output)
 		sys.exit(1)
 
-	dump_remote = load_dump_and_dump(dump_remote, project.name, no_owner, no_acl, pre_load=pre_remoted_load, post_load=post_remoted_load)
+def read_file(fname):
+	data = io.StringIO()
+	with open(fname, "r") as f:
+		data.write(unicode(f.read(), "UTF8"))
+	return data.getvalue()
 
+def print_diff(dump1, dump2, diff_raw, no_owner, no_acl):
 	if diff_raw:
-		diff_c = difflib.unified_diff(dump_remote.splitlines(1), dump_cur.splitlines(1), fromfile=addr.addr, tofile="project")
+		diff_c = difflib.unified_diff(dump1.splitlines(1), dump2.splitlines(1), fromfile=addr.addr, tofile="project")
 		for d in diff_c:
 			if d.startswith("-"):
 				sys.stdout.write(color.red(d))
@@ -593,9 +611,28 @@ def diff_pg(addr, diff_raw, no_owner, no_acl, pre_load=None, post_load=None, pre
 			else:
 				sys.stdout.write(d)
 	else:
-		pr_cur = pg_parser.parse(io.StringIO(dump_cur))
-		pr_remote = pg_parser.parse(io.StringIO(dump_remote))
-		pr_remote.diff(pr_cur, no_owner=no_owner, no_acl=no_acl)
+		pr1 = pg_parser.parse(io.StringIO(dump2))
+		pr2 = pg_parser.parse(io.StringIO(dump1))
+		pr2.diff(pr1, no_owner=no_owner, no_acl=no_acl)
+
+def diff_pg(addr, diff_raw, no_owner, no_acl, pre_load=None, post_load=None, pre_remoted_load=None, post_remoted_load=None):
+	config.check_set_test_db()
+	project = ProjectFs()
+
+	dump_cur = load_and_dump(project, no_owner, no_acl, pre_load=pre_load, post_load=post_load)
+	sql_remote = dump_remote(addr, no_owner, no_acl)
+	dump_r = load_dump_and_dump(sql_remote, project.name, no_owner, no_acl, pre_load=pre_remoted_load, post_load=post_remoted_load)
+
+	print_diff(dump_r, dump_cur, diff_raw, no_owner, no_acl)
+
+def diff_pg_file(addr, fname, diff_raw, no_owner, no_acl, pre_load=None, post_load=None, pre_remoted_load=None, post_remoted_load=None):
+	config.check_set_test_db()
+
+	dump_file = load_file_and_dump(fname, "diff", no_owner, no_acl, pre_load=pre_remoted_load, post_load=post_remoted_load)
+	sql_remote = dump_remote(addr, no_owner, no_acl)
+	dump_r = load_dump_and_dump(sql_remote, "diff", no_owner, no_acl, pre_load=pre_remoted_load, post_load=post_remoted_load)
+
+	print_diff(dump_r, dump_file, diff_raw, no_owner, no_acl)
 
 def role_list():
 	project = ProjectFs()

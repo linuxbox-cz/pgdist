@@ -27,6 +27,7 @@ PGdist - distribute PotgreSQL functions, tables, etc...
                                           - new-version - version created by create-version
  
     diff-db pgconn [git_tag] - diff project and database
+    diff-db-file pgconn file - diff file and database
 
     role-list - print roles in project
     role-add name [nologin|login] [password] - add role to project
@@ -113,7 +114,9 @@ def main():
 		logging.getLogger().addHandler(handler)
 
 	if args.cmd in ("init", "create-schema", "status", "test-load", "create-version", "add", "rm",
-		"create-update", "test-update", "diff-db", "role-list", "role-add", "role-change", "role-rm",
+		"create-update", "test-update",
+		"diff-db", "diff-db-file",
+		"role-list", "role-add", "role-change", "role-rm",
 		"require-add", "require-rm"):
 
 		sys.path.insert(1, os.path.join(sys.path[0], "dev"))
@@ -170,6 +173,11 @@ def main():
 	elif args.cmd == "diff-db" and len(args.args) in (1,):
 		(pgconn,) = args_parse(args.args, 1)
 		project.diff_pg(address.Address(pgconn), args.diff_raw, args.no_owner, args.no_acl,
+			pre_load=args.pre_load, post_load=args.post_load, pre_remoted_load=args.pre_remoted_load, post_remoted_load=args.post_remoted_load)
+
+	elif args.cmd == "diff-db-file" and len(args.args) in (2,):
+		(pgconn, file) = args_parse(args.args, 2)
+		project.diff_pg_file(address.Address(pgconn), file, args.diff_raw, args.no_owner, args.no_acl,
 			pre_load=args.pre_load, post_load=args.post_load, pre_remoted_load=args.pre_remoted_load, post_remoted_load=args.post_remoted_load)
 
 	elif args.cmd == "role-list" and len(args.args) in (0,):
