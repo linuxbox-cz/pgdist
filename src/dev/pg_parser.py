@@ -235,10 +235,6 @@ def parse(dump_stream):
 			if x:
 				project.extentions[x.group('extension_name')] = Extention(command, x.group('extension_name'), x.group('schema_name'))
 				continue
-			x = re.match(r"COMMENT ON EXTENSION (?P<name>\S+) IS '(?P<comment>.*)';", command)
-			if x:
-				project.extentions[x.group('name')].comment = x.group('comment')
-				continue
 
 			# TYPE ENUM
 
@@ -461,6 +457,11 @@ def parse(dump_stream):
 				project.functions[schema(set_schema, x.group('name')) + str(args)].grant.append(command)
 				continue
 
+			x = re.match(r"ALTER .* PRIVILEGES FOR ROLE \S+ IN SCHEMA (?P<schema_name>\S+) .*;$", command)
+			if x:
+				project.schemas[x.group('schema_name')].grant.append(command)
+				continue
+
 #			x = re.match(r"GRANT \S+ TO \S+ GRANTED BY \S+;$", command)
 #			if x:
 #				# TODO
@@ -523,6 +524,21 @@ def parse(dump_stream):
 #			if x:
 #				# TODO
 #				continue
+
+			x = re.match(r"COMMENT ON EXTENSION (?P<name>\S+) IS '(?P<comment>.*)';", command)
+			if x:
+				project.extentions[x.group('name')].comment = command
+				continue
+
+			x = re.match(r"COMMENT ON TABLE (?P<table_name>\S+) IS '(?P<comment>.*)'", command)
+			if x:
+				project.tables[schema(set_schema, x.group('table_name'))].comment = command
+				continue
+
+			x = re.match(r"COMMENT ON COLUMN (?P<table_name>\S+)\.(?P<column_name>\S+) IS '(?P<comment>.*)'", command)
+			if x:
+				project.tables[schema(set_schema, x.group('table_name'))].comment = command
+				continue
 
 			# LANGUAGE
 
@@ -604,10 +620,13 @@ def parse(dump_stream):
 
 			# RULE
 
-#			x = re.match(r"CREATE RULE \S+ AS", command)
-#			if x:
-#				# TODO
-#				continue
+			x = re.match(r"CREATE RULE \S+ AS\s+ON \S+ TO (?P<table_name>\S+)\s+DO.*", command, re.DOTALL)
+			if x:
+				if schema(set_schema, x.group('table_name')) in project.tables:
+					project.tables[schema(set_schema, x.group('table_name'))].rule.append(command)
+				else:
+					project.views[schema(set_schema, x.group('table_name'))].rule.append(command)
+				continue
 
 			# EVENT TRIGGER
 
@@ -673,20 +692,6 @@ def parse(dump_stream):
 
 		# ######################################
 
-#			x = re.match(r"CREATE POLICY \S+ ON \S+ TO \S+ USING", command)
-#			if x:
-#				# TODO
-#				continue
-
-#			x = re.match(r"ALTER DEFAULT PRIVILEGES FOR ROLE \S+ IN SCHEMA \S+ REVOKE ALL ON TABLES  FROM \S+;", command)
-#			if x:
-#				# TODO
-#				continue
-
-#			x = re.match(r"ALTER DEFAULT PRIVILEGES FOR ROLE \S+ IN SCHEMA \S+ .* ON TABLES  TO \S+;", command)
-#			if x:
-#				# TODO
-#				continue
 
 			logging.warning("Parser warning, unknown command: %s" % (command,))
 

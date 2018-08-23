@@ -23,8 +23,10 @@ class Element:
 		else:
 			self.schema = None
 		self.owner = None
+		self.comment = None
 		self.grant = []
 		self.revoke = []
+		self.rule = []
 
 	def __str__(self):
 		return self.name
@@ -41,8 +43,10 @@ class Element:
 		element2.grant.sort()
 		self.revoke.sort()
 		element2.revoke.sort()
+		self.rule.sort()
+		element2.rule.sort()
 
-		if not no_acl and self.grant != element2.grant or self.revoke != element2.revoke:
+		if not no_acl and self.grant != element2.grant or self.revoke != element2.revoke or self.rule != element2.rule or self.comment != element2.comment:
 			print("%s %s change privileges:" % (self.element_name, self.name))
 			for grant in self.grant:
 				if grant not in element2.grant:
@@ -56,6 +60,16 @@ class Element:
 			for revoke in element2.revoke:
 				if revoke not in self.revoke:
 					print(color.green("\t+"+rmln(revoke)))
+			for rule in self.rule:
+				if rule not in element2.rule:
+					print(color.red("\t-"+rmln(rule)))
+			for rule in element2.rule:
+				if rule not in self.rule:
+					print(color.green("\t+"+rmln(rule)))
+			if self.comment:
+				print(color.red("\t-"+rmln(self.comment)))
+			if element2.comment:
+				print(color.green("\t+"+rmln(element2.comment)))
 			print("")
 
 	def _diff(self, element2):
@@ -198,6 +212,7 @@ class Table(Element):
 		self.indexes = []
 		self.triggers = []
 		self.constraints = []
+		self.columns_comment = []
 
 	def _diff(self, table2):
 		columns1 = sorted(self.columns)
@@ -269,6 +284,22 @@ class Table(Element):
 				elif d.startswith("+"):
 					print("\t"+color.green(d))
 			print("")
+
+
+		self.columns_comment.sort()
+		table2.columns_comment.sort()
+		if self.columns_comment != table2.columns_comment:
+			print("%s %s have different columns_comment:" % (self.element_name, self.name))
+			diff_c = difflib.unified_diff(self.columns_comment, table2.columns_comment, fromfile="removeline542358", tofile="removeline542358")
+			for d in diff_c:
+				if "removeline542358" in d:
+					pass
+				elif d.startswith("-"):
+					print("\t"+color.red(d))
+				elif d.startswith("+"):
+					print("\t"+color.green(d))
+			print("")
+
 
 	def update_element(self, file, table2):
 		if self.command == table2.command:
