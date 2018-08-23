@@ -591,10 +591,28 @@ def test_update(git_tag, new_version, updates, clean=True, gitversion=None, pre_
 
 def dump_remote(addr, no_owner, no_acl):
 	try:
-		pg_remote = pgsql.PG(addr)
-		return pg_remote.dump(no_owner, no_acl)
+		pg = pgsql.PG(addr)
+		return pg.dump(no_owner, no_acl)
 	except pgsql.PgError as e:
 		logging.error("Dump fail:")
+		print(e.output)
+		sys.exit(1)
+
+def get_roles(addr):
+	try:
+		pg = pgsql.PG(addr)
+		return pg.get_roles()
+	except pgsql.PgError as e:
+		logging.error("Get roles fail:")
+		print(e.output)
+		sys.exit(1)
+
+def create_roles(roles):
+	try:
+		pg = pgsql.PG(config.test_db)
+		return pg.create_roles(roles=roles)
+	except pgsql.PgError as e:
+		logging.error("Get roles fail:")
 		print(e.output)
 		sys.exit(1)
 
@@ -624,7 +642,9 @@ def diff_pg(addr, diff_raw, no_owner, no_acl, pre_load=None, post_load=None, pre
 	project = ProjectFs()
 
 	dump_cur = load_and_dump(project, True, no_owner, no_acl, pre_load=pre_load, post_load=post_load)
+	roles_remote = get_roles(addr)
 	sql_remote = dump_remote(addr, no_owner, no_acl)
+	create_roles(roles_remote)
 	dump_r = load_dump_and_dump(sql_remote, project.name, no_owner, no_acl, pre_load=pre_remoted_load, post_load=post_remoted_load)
 
 	print_diff(dump_r, dump_cur, diff_raw, no_owner, no_acl, fromfile=addr.addr, tofile="local project")
@@ -632,9 +652,12 @@ def diff_pg(addr, diff_raw, no_owner, no_acl, pre_load=None, post_load=None, pre
 def diff_pg_file(addr, fname, diff_raw, no_owner, no_acl, pre_load=None, post_load=None, pre_remoted_load=None, post_remoted_load=None):
 	config.check_set_test_db()
 
-	dump_file = load_file_and_dump(fname, "diff", no_owner, no_acl, pre_load=pre_remoted_load, post_load=post_remoted_load)
+	roles_remote = get_roles(addr)
 	sql_remote = dump_remote(addr, no_owner, no_acl)
+	create_roles(roles_remote)
 	dump_r = load_dump_and_dump(sql_remote, "diff", no_owner, no_acl, pre_load=pre_remoted_load, post_load=post_remoted_load)
+
+	dump_file = load_file_and_dump(fname, "diff", no_owner, no_acl, pre_load=pre_remoted_load, post_load=post_remoted_load)
 
 	print_diff(dump_r, dump_file, diff_raw, no_owner, no_acl, fromfile=addr.addr, tofile=fname)
 

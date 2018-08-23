@@ -26,17 +26,18 @@ class PG:
 			self.dbname = None
 		self.loaded_projects_name = []
 
-	def psql(self, cmd=None, single_transaction=True, change_db=False, file=None, cwd=None):
-		return self.run(c='psql', cmd=cmd, single_transaction=single_transaction, change_db=change_db, file=file, cwd=cwd)
+	def psql(self, cmd=None, single_transaction=True, change_db=False, file=None, cwd=None, tuples_only=False):
+		return self.run(c='psql', cmd=cmd, single_transaction=single_transaction, change_db=change_db, file=file, cwd=cwd, tuples_only=tuples_only)
 
 	def pg_dump(self, change_db=False, no_owner=False, no_acl=False):
 		return self.run(c='pg_dump', single_transaction=False, change_db=change_db, no_owner=no_owner, no_acl=no_acl)
 
-	def run(self, c, cmd=None, single_transaction=True, change_db=False, file=None, cwd=None, no_owner=False, no_acl=False):
+	def run(self, c, cmd=None, single_transaction=True, change_db=False, file=None, cwd=None, no_owner=False, no_acl=False, tuples_only=False):
 		args = [c]
 		if c == "psql":
 			args.append("--no-psqlrc")
-			args.append("--echo-queries")
+			if not tuples_only:
+				args.append("--echo-queries")
 			args.append("--set")
 			args.append("ON_ERROR_STOP=1")
 		if change_db and self.dbname:
@@ -54,6 +55,9 @@ class PG:
 			args.append("--no-owner")
 		if no_acl:
 			args.append("--no-acl")
+		if tuples_only:
+			args.append("--tuples-only")
+			args.append("--no-align")
 
 		if self.address.ssh:
 			ssh_args = []
@@ -97,17 +101,24 @@ class PG:
 			logging.error("Error: clean only test database")
 			sys.exit(1)
 
-	def create_roles(self, project):
-		if project.roles:
+	def create_roles(self, project=None, roles=None):
+		if project:
+			roles = map(lambda x: x.name, project.roles)
+		if roles:
 			creates = []
-			for role in project.roles:
+			for role in roles:
 				creates.append("""
 					IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = '%s') THEN
 						CREATE ROLE %s NOLOGIN;
-					END IF;""" % (role.name, role.name))
+					END IF;""" % (role, role))
 
 			cmd = """DO $do$ BEGIN %s END $do$;""" % ("\n".join(creates),)
 			self.psql(cmd=cmd)
+
+	def get_roles(self):
+		cmd = """SELECT string_agg(rolname, ',') FROM pg_roles;"""
+		(retcode, output) = self.psql(cmd=cmd, tuples_only=True)
+		return output.strip().split(",")
 
 	def load_project(self, project):
 		self.create_roles(project)
