@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 import os
 import sys
 import argparse
+import subprocess
 import logging
 import logging.handlers
 
@@ -75,6 +76,7 @@ def main():
 	parser.add_argument("args", nargs="*")
 
 	# develop projects
+	parser.add_argument("--less", help="print output in less", action="store_true")
 	parser.add_argument("--all", help="use all files", action="store_true")
 	parser.add_argument("-f", "--force", help="overwriting and removing files", action="store_true")
 	parser.add_argument("-c", "--config", help="configuration file")
@@ -116,6 +118,10 @@ def main():
 			handler.setFormatter(logging.Formatter(args.syslog_ident+": %(message)s"))
 		logging.getLogger().addHandler(handler)
 
+	if args.less:
+		pager = subprocess.Popen(["less", "-FKSMIR"], stdin=subprocess.PIPE, stdout=sys.stdout)
+		sys.stdout = pager.stdin
+
 	if args.cmd in ("init", "create-schema", "status", "test-load", "create-version", "add", "rm",
 		"create-update", "test-update",
 		"diff-db", "diff-db-file",
@@ -130,7 +136,10 @@ def main():
 		import project
 
 		config.load(args.config)
-		color.set(args.color)
+		if args.less and args.color == "auto":
+			color.set("always")
+		else:
+			color.set(args.color)
 
 	if args.cmd in ("list", "install", "update", "clean", "set-version", "pgdist-update"):
 		sys.path.insert(1, os.path.join(sys.path[0], "mng"))
@@ -234,6 +243,11 @@ def main():
 	else:
 		parser.print_help()
 		sys.exit(1)
+
+	if args.less:
+		pager.stdin.close()
+		pager.wait()
+
 	sys.exit(0)
 
 
