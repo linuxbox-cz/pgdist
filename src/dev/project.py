@@ -211,6 +211,7 @@ class ProjectGit(ProjectBase):
 		else:
 			# TODO err msg
 			sys.exit(1)
+		logging.debug("Git archive: %s" % (" ".join(args),))
 		process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE, cwd=self.directory)
 		output, err = process.communicate()
 		retcode = process.poll()
@@ -475,7 +476,7 @@ def load_and_dump(project, clean=True, no_owner=False, no_acl=False, pre_load=No
 		pg.load_project(project)
 		if updates:
 			for update in updates:
-				pg_test.load_update(update)
+				pg.load_update(update)
 		pg.load_file(post_load)
 		dump = pg.dump(no_owner, no_acl)
 	except pgsql.PgError as e:
@@ -529,7 +530,7 @@ def test_load(clean=True, pre_load=None, post_load=None):
 	project = ProjectFs()
 	load_and_dump(project, clean=clean, pre_load=pre_load, post_load=post_load)
 
-def create_update(git_tag, new_version, force, clean=True, gitversion=None, pre_load=None, post_load=None):
+def create_update(git_tag, new_version, force, gitversion=None, clean=True, pre_load=None, post_load=None):
 	project_old = ProjectGit(git_tag)
 	project_new = ProjectFs()
 	if gitversion:
@@ -540,8 +541,8 @@ def create_update(git_tag, new_version, force, clean=True, gitversion=None, pre_
 	dump_old = load_and_dump(project_old, clean=clean, pre_load=pre_load, post_load=post_load, dbs="old")
 	dump_new = load_and_dump(project_new, clean=clean, pre_load=pre_load, post_load=post_load, dbs="new")
 
-	if not os.path.isdir(os.path.join(project.project_old, "sql_dist")):
-		os.mkdir(os.path.join(project.project_old, "sql_dist"))
+	if not os.path.isdir(os.path.join(project_old.directory, "sql_dist")):
+		os.mkdir(os.path.join(project_old.directory, "sql_dist"))
 
 	# first part can be without --p%02d (--p01)
 	fname = "%s--%s--%s.sql" % (to_fname(project_old.name), to_fname(old_version), to_fname(new_version))
