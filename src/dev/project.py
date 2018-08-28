@@ -268,7 +268,7 @@ class Version:
 		pass
 
 def to_fname(fname):
-	return re.sub(r"[^a-zA-Z0-9.]", "_", fname)
+	return re.sub(r"[^-a-zA-Z0-9.]", "_", fname)
 
 def find_directory():
 	d = os.getcwd()
@@ -583,7 +583,7 @@ def test_update(git_tag, new_version, updates, clean=True, gitversion=None, pre_
 	if not updates:
 		upds.append(Update(project_old.name, old_version, new_version))
 
-	dump_updated = load_and_dump(project, clean=clean, pre_load=pre_load, post_load=post_load, updates=upds, dbs="updated")
+	dump_updated = load_and_dump(project_old, clean=clean, pre_load=pre_load, post_load=post_load, updates=upds, dbs="updated")
 	dump_cur = load_and_dump(project_new, clean=clean, pre_load=pre_load, post_load=post_load)
 
 	pr_cur = pg_parser.parse(io.StringIO(dump_cur))
