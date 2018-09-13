@@ -39,10 +39,13 @@ CREATE TABLE pgdist.history (
 	comment TEXT
 );
 
-INSERT INTO pgdist.pgdist_version VALUES (1);
-INSERT INTO pgdist.history (project, version, part, comment) VALUES ('pgdist', 1, 1, 'Create PGdist info schema.');
+INSERT INTO pgdist.pgdist_version VALUES (%d);
+INSERT INTO pgdist.history (project, version, part, comment) VALUES ('pgdist', %d, 1, 'Create PGdist info schema.');
 
-"""
+""" % (PGDIST_VERSION, PGDIST_VERSION)
+
+PGDIST_UPDATES = [
+]
 
 class PgError(Exception):
     def __init__(self, returncode, cmd, output=None):
@@ -94,7 +97,11 @@ def run(c, conninfo, cmd=None, single_transaction=True, dbname=None, file=None, 
 
 
 def connect(conninfo, dbname=None):
-	conn = psycopg2.extras.DictConnection(conninfo.dsn(dbname))
+	try:
+		conn = psycopg2.extras.DictConnection(conninfo.dsn(dbname))
+	except Exception as e:
+		logging.error("Error connect: %s" % (e,))
+		sys.exit(1)
 	conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
 	return conn
 
@@ -110,31 +117,39 @@ def list_database(conninfo):
 
 	return databases
 
-def check_pgdist_installed(conn):
+def check_pgdist_installed(dbname, conn):
 	cursor = conn.cursor()
 	cursor.execute("SELECT nspname FROM pg_namespace WHERE nspname = 'pgdist';")
 	for row in cursor:
 		return True
 	return False
 
-def check_pgdist_version(conn):
+def check_pgdist_version(dbname, conn):
 	cursor = conn.cursor()
 	cursor.execute("SELECT version FROM pgdist.pgdist_version;")
 	for row in cursor:
 		if row["version"] < PGDIST_VERSION:
-			logging.error("Error: old version pgdist in database, run pgdist-update")
+			logging.error("Error: old version pgdist in database %s, run pgdist-update" % (dbname,))
 			sys.exit(1)
 		if row["version"] > PGDIST_VERSION:
-			logging.error("Error: old version pgdist, update pgdist")
+			logging.error("Error: old version pgdist for database %s, update pgdist" % (dbname,))
 			sys.exit(1)
 		return True
 
-def pgdist_install(conn):
+def pgdist_install(dbname, conn):
 	cursor = conn.cursor()
-	if not check_pgdist_installed(conn):
-		logging.debug("Create PGdist info schema into database")
+	if not check_pgdist_installed(dbname, conn):
+		logging.debug("Create PGdist info schema into database %s" % (dbname,))
 		cursor.execute(CREATE_PGDIST)
-	# TODO will make update after we have updates
+	while True:
+		cursor.execute("SELECT version FROM pgdist.pgdist_version;")
+		for row in cursor.fetchall():
+			cur_version = row["version"]
+			if cur_version >= PGDIST_VERSION:
+				return
+			logging.debug("Update PGdist info schema into database %s to version %d" % (dbname, cur_version+1))
+			cursor.execute(PGDIST_UPDATES[cur_version-1])
+			cursor.execute("UPDATE pgdist.pgdist_version SET version=%s;", (cur_version+1,))
 
 def pgdist_update(dbname, conninfo):
 	if dbname:
@@ -143,9 +158,10 @@ def pgdist_update(dbname, conninfo):
 		dbs = list_database(conninfo)
 	
 	for db in dbs:
-		conn = connect(conninfo, dbname)
+		conn = connect(conninfo, db)
 		cursor = conn.cursor()
-		pgdist_install(conn)
+		if check_pgdist_installed(db, conn):
+			pgdist_install(db, conn)
 		conn.close()
 
 def create_role(conn, role):
@@ -171,12 +187,13 @@ def create_role(conn, role):
 			cursor.execute("CREATE ROLE %s %s PASSWORD %%s;" % (role.name, login), (password, ))
 			open("/etc/lbox/postgresql/roles/"+role.name, 'w').write("PGPASSWORD=%s\n" % (password, ))
 		else:
+			logging.debug("CREATE ROLE %s %s" % (role.name, login))
 			cursor.execute("CREATE ROLE %s %s;" % (role.name, login))
 
 def install(dbname, project, ver, conninfo, directory, verbose):
 	conn = connect(conninfo, dbname)
 	cursor = conn.cursor()
-	pgdist_install(conn)
+	pgdist_install(dbname, conn)
 	for part in ver.parts:
 		for role in part.roles:
 			create_role(conn, role)
@@ -195,25 +212,34 @@ def install(dbname, project, ver, conninfo, directory, verbose):
 def update(dbname, project, update, conninfo, directory, verbose):
 	conn = connect(conninfo, dbname)
 	cursor = conn.cursor()
-	pgdist_install(conn)
-	for part in update.parts:
-		for role in part.roles:
-			create_role(conn, role)
-	for part in update.parts:
-		logging.info("update %s in %s %s > %s part %d/%d" % (project.name, dbname, str(update.version_old), str(update.version_new), part.part, len(ver.parts)))
-		run("psql", conninfo, dbname=dbname, file=os.path.join(directory, part.fname), single_transaction=part.single_transaction, debug=verbose)
+	pgdist_install(dbname, conn)
+	if update.skip:
 		cursor.execute("INSERT INTO pgdist.history (project, version, part, comment) VALUES (%s, %s, %s, %s);",
-			(project.name, str(update.version_new), part.part, "updated from version %s to %s, part %d/%d" % (str(update.version_new), str(update.version_old), part.part, len(update.parts))))
+			(project.name, str(update.version_new), 1, "skip from version %s to %s" % (str(update.version_new), str(update.version_old))))
 		cursor.execute("UPDATE pgdist.installed SET version=%s, from_version=%s,  part=%s, parts=%s WHERE project=%s RETURNING *;",
-			(str(update.version_new), str(update.version_old), part.part, len(update.parts), project.name))
+			(str(update.version_new), str(update.version_old), 1, 1, project.name))
 		if not cursor.fetchone():
 			cursor.execute("INSERT INTO pgdist.installed (project, version, part, parts) VALUES (%s, %s, %s, %s);",
-				(project.name, str(update.version), part.part, len(update.parts)))
+				(project.name, str(update.version), 1, 1))
+	else:
+		for part in update.parts:
+			for role in part.roles:
+				create_role(conn, role)
+		for part in update.parts:
+			logging.info("update %s in %s %s > %s part %d/%d" % (project.name, dbname, str(update.version_old), str(update.version_new), part.part, len(update.parts)))
+			run("psql", conninfo, dbname=dbname, file=os.path.join(directory, part.fname), single_transaction=part.single_transaction, debug=verbose)
+			cursor.execute("INSERT INTO pgdist.history (project, version, part, comment) VALUES (%s, %s, %s, %s);",
+				(project.name, str(update.version_new), part.part, "updated from version %s to %s, part %d/%d" % (str(update.version_new), str(update.version_old), part.part, len(update.parts))))
+			cursor.execute("UPDATE pgdist.installed SET version=%s, from_version=%s,  part=%s, parts=%s WHERE project=%s RETURNING *;",
+				(str(update.version_new), str(update.version_old), part.part, len(update.parts), project.name))
+			if not cursor.fetchone():
+				cursor.execute("INSERT INTO pgdist.installed (project, version, part, parts) VALUES (%s, %s, %s, %s);",
+					(project.name, str(update.version), part.part, len(update.parts)))
 
 def clean(project_name, dbname, conninfo):
 	conn = connect(conninfo, dbname)
 	cursor = conn.cursor()
-	pgdist_install(conn)
+	pgdist_install(dbname, conn)
 	logging.info("clean %s from %s" % (project.name, dbname))
 	cursor.execute("DELETE FROM pgdist.installed WHERE project = %s RETURNING *", (project_name,))
 	for row in cursor.fetchall():
@@ -224,7 +250,7 @@ def clean(project_name, dbname, conninfo):
 def set_version(project_name, dbname, version, conninfo):
 	conn = connect(conninfo, dbname)
 	cursor = conn.cursor()
-	pgdist_install(conn)
+	pgdist_install(dbname, conn)
 	logging.info("set version %s in %s to %s" % (project_name, dbname, version))
 	cursor.execute("INSERT INTO pgdist.history (project, version, part, comment) VALUES (%s, %s, %s, %s);",
 		(project_name, version, 1, "set version %s" % (version,)))

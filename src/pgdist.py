@@ -45,6 +45,7 @@ PGdist Server - manage projects in PostgreSQL database
 
     list [project [dbname]] - show list of installed projects in database
     install project dbname [version] - install project to database
+    check-update [project [dbname [version]]] - check update project
     update [project [dbname [version]]] - update project
     clean project [dbname] - remove all info about project
     set-version project version dbname - force change version without run scripts
@@ -100,6 +101,7 @@ def main():
 	parser.add_argument("--directory", help="directory contains script install and update", default="/usr/share/pgdist/install")
 	parser.add_argument("--syslog-facility", dest="syslog_facility", help="syslog facility")
 	parser.add_argument("--syslog-ident", dest="syslog_ident", help="syslog ident")
+	parser.add_argument("--skip", help="skip updates while update to some version", action="store_true")
 
 	args = parser.parse_args()
 
@@ -141,7 +143,7 @@ def main():
 		else:
 			color.set(args.color)
 
-	if args.cmd in ("list", "install", "update", "clean", "set-version", "pgdist-update"):
+	if args.cmd in ("list", "install", "check-update", "update", "clean", "set-version", "pgdist-update"):
 		sys.path.insert(1, os.path.join(sys.path[0], "mng"))
 		import conninfo
 		import project
@@ -224,9 +226,13 @@ def main():
 		(project_name, dbname, version) = args_parse(args.args, 3)
 		project.install(project_name, dbname, version, conninfo.ConnInfo(args), args.directory, args.verbose)
 
+	elif args.cmd == "check-update" and len(args.args) in (0, 1, 2, 3,):
+		(project_name, dbname, version) = args_parse(args.args, 3)
+		project.check_update(project_name, dbname, version, conninfo.ConnInfo(args), args.directory, args.verbose, args.skip)
+
 	elif args.cmd == "update" and len(args.args) in (0, 1, 2, 3,):
 		(project_name, dbname, version) = args_parse(args.args, 3)
-		project.update(project_name, dbname, version, conninfo.ConnInfo(args), args.directory, args.verbose)
+		project.update(project_name, dbname, version, conninfo.ConnInfo(args), args.directory, args.verbose, args.skip)
 
 	elif args.cmd == "clean" and len(args.args) in (1, 2,):
 		(project_name, dbname) = args_parse(args.args, 2)
@@ -236,7 +242,7 @@ def main():
 		(project_name, version, dbname) = args_parse(args.args, 3)
 		project.set_version(project_name, dbname, version, conninfo.ConnInfo(args))
 
-	elif args.cmd == "pgdist-update" and len(args.args) in (1,):
+	elif args.cmd == "pgdist-update" and len(args.args) in (0,1):
 		(dbname,) = args_parse(args.args, 1)
 		project.pgdist_update(dbname, conninfo.ConnInfo(args))
 
