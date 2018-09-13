@@ -444,6 +444,7 @@ def create_version(version, git_tag, force):
 					build_file.write(line)
 				src_file.close()
 			build_file.write("\n")
+			build_file.write(";-- end sqldist file\n")
 			build_file.write("\n")
 			build_file.write("--\n")
 			build_file.write("-- end sqldist project\n")
