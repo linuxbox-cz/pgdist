@@ -15,7 +15,8 @@ def rmln(s):
 	return s
 
 class Element:
-	def __init__(self, command=None, name=None):
+	def __init__(self, element_name, command=None, name=None):
+		self.element_name = element_name
 		self.command = command
 		self.name = name
 		if "." in self.name:
@@ -182,31 +183,26 @@ class Project:
 
 class Schema(Element):
 	def __init__(self, command, name):
-		Element.__init__(self, command, name)
-		self.element_name = "Schema"
+		Element.__init__(self, "Schema", command, name)
 
 class Extention(Element):
 	def __init__(self, command, name, schema_name):
-		Element.__init__(self, command, name)
-		self.element_name = "Extention"
+		Element.__init__(self, "Extention", command, name)
 		self.schema_name = schema_name
 
 class Enum(Element):
 	def __init__(self, command, name, labels):
-		Element.__init__(self, command, name)
-		self.element_name = "Enum"
+		Element.__init__(self, "Enum", command, name)
 		self.labels = labels
 
 class Type(Element):
 	def __init__(self, command, name, attributes):
-		Element.__init__(self, command, name)
-		self.element_name = "Type"
+		Element.__init__(self, "Type", command, name)
 		self.attributes = attributes
 
 class Table(Element):
 	def __init__(self, command, name, columns):
-		Element.__init__(self, command, name)
-		self.element_name = "Table"
+		Element.__init__(self, "Table", command, name)
 		self.columns = columns
 		self.defaults = []
 		self.indexes = []
@@ -372,12 +368,12 @@ class Table(Element):
 		file.write("\n")
 
 class Range(Element):
-	pass
+	def __init__(self, command, name):
+		Element.__init__(self, "Range", command, name)
 
 class Function(Element):
 	def __init__(self, command, name, args):
-		Element.__init__(self, command, name+args)
-		self.element_name = "Function"
+		Element.__init__(self, "Function", command, name+args)
 		self.fname = name
 		self.args = args
 
@@ -394,9 +390,11 @@ class Function(Element):
 		return re.sub(r"^", "--", re.sub(r"\s*AS\s*[$]\S*[$].*", "", self.command, flags=re.MULTILINE|re.DOTALL), flags=re.MULTILINE)
 
 class Sequence(Element):
-	pass
+	def __init__(self, command, name):
+		Element.__init__(self, "Sequence", command, name)
 
 class View(Element):
-	pass
+	def __init__(self, command, name):
+		Element.__init__(self, "View", command, name)
 
 
