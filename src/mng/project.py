@@ -337,7 +337,7 @@ def prlist(project_name, dbname, conninfo, directory, show_all):
 			else:
 				print(" %-20s%-10s" % (project.name, project.newest_version()))
 			for update in project.updates:
-				if show_all or update.version_old >= min([x.version for x in project.installed]):
+				if show_all or (project.installed and update.version_old >= min([x.version for x in project.installed])):
 					print("                               update: %s" % (update,))
 	if not find_projects:
 		print(" No projects found")
