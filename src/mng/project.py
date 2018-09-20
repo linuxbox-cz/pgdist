@@ -32,6 +32,7 @@ class ProjectVersionPart:
 		self.part = part
 		self.roles = []
 		self.single_transaction = True
+		self.dbparam = ""
 		with(open(os.path.join(directory, fname))) as f:
 			for line in f:
 				# single_transaction
@@ -46,6 +47,10 @@ class ProjectVersionPart:
 				x = re.match(r"--\s*role:\s+(?P<role>\S+)(\s+(?P<param>.*))?", line)
 				if x:
 					self.roles.append(Role(x.group("role"), x.group("param").split("--")[0].split(" ")))
+				# dbparam
+				x = re.match(r"--\s*dbparam:\s+(?P<param>.*)", line)
+				if x:
+					self.dbparam = x.group("param")
 				# end pgdist header
 				x = re.match(r"--\s*end\s+pgdist\s+header", line)
 				if x:
@@ -57,7 +62,7 @@ class ProjectVersion:
 		self.parts = []
 
 	def cmp_text(self, version):
-		return self.version == version
+		return self.version == LooseVersion(version)
 
 	def add_part(self, fname, directory, part):
 		self.parts.insert(part, ProjectVersionPart(fname, directory, part))
@@ -99,7 +104,7 @@ class ProjectUpdate:
 		return "%s -> %s" % (self.version_old, self.version_new)
 
 	def cmp_text(self, version_old, version_new):
-		return self.version_old == version_old and self.version_new == version_new
+		return self.version_old == LooseVersion(version_old) and self.version_new == LooseVersion(version_new)
 
 	def add_part(self, fname, directory, part):
 		self.parts.insert(part, ProjectUpdatePart(fname, directory, part))
@@ -182,10 +187,10 @@ class Project:
 	def get_instalated(self, dbname):
 		return [x for x in self.installed if x.dbname == dbname]
 
-	def install(self, dbname, version, conninfo, directory, verbose):
+	def install(self, dbname, version, conninfo, directory, verbose, create_db):
 		for ver in self.versions:
 			if ver.version == version:
-				pg.install(dbname, self, ver, conninfo, directory, verbose)
+				pg.install(dbname, self, ver, conninfo, directory, verbose, create_db)
 				return
 		
 	def find_updates(self, version1, version2, skip):
@@ -251,7 +256,7 @@ def get_project_name(directory, fname):
 	return None
 
 
-def get_projects(project_name, dbname, conninfo, directory):
+def get_projects(project_name, dbname, conninfo, directory, check_db_exists=False):
 	projects = {}
 
 	if not os.path.isdir(directory):
@@ -299,7 +304,12 @@ def get_projects(project_name, dbname, conninfo, directory):
 		if version_old and version_new:
 			projects[pr_name].add_update(directory, fname, version_old, version_new, part)
 
-	if dbname:
+	if check_db_exists:
+		if dbname in pg.list_database(conninfo):
+			dbs = [dbname]
+		else:
+			dbs = []
+	elif dbname:
 		dbs = [dbname]
 	else:
 		dbs = pg.list_database(conninfo)
@@ -380,9 +390,9 @@ def prlist(project_name, dbname, conninfo, directory, show_all):
 
 	print("")
 
-def install(project_name, dbname, version, conninfo, directory, verbose):
-	projects = get_projects(project_name, dbname, conninfo, directory)
-	projects = [x for x in projects if x.name == project_name]
+def install(project_name, dbname, version, conninfo, directory, verbose, create_db):
+	projects = get_projects(project_name, dbname, conninfo, directory, check_db_exists=create_db)
+
 	if not projects:
 		logging.error("Project %s not found" % (project_name,))
 		sys.exit(1)
@@ -397,9 +407,9 @@ def install(project_name, dbname, version, conninfo, directory, verbose):
 
 
 	if not ins:
-		project.install(dbname, need_ver, conninfo, directory, verbose)
+		project.install(dbname, need_ver, conninfo, directory, verbose, create_db)
 	elif need_ver > ins[0].version:
-		update(project_name, dbname, version, conninfo, directory, verbose)
+		update(project_name, dbname, version, conninfo, directory, verbose, False)
 	else:
 		logging.error("Project %s is installed." % (project_name,))
 		sys.exit(1)
@@ -420,20 +430,29 @@ def update(project_name, dbname, version, conninfo, directory, verbose, skip, ch
 
 	check_succesfull_installed(projects)
 
-	print("")
-	print("============================================================================")
-
-	print(" %-20s%-20s%s" % ("project", "dbname", "update"))
+	exists_updates = False
 	for project in projects:
 		for ins in project.installed:
 			updates = project.find_updates(ins.version, version, skip)
 			ins.updates = updates
 			if updates:
-				for update in updates:
-					print(" %-20s%-20s%s" % (project.name, ins.dbname, update))
+				exists_updates = True
 
-	print("============================================================================")
-	print("")
+	if exists_updates:
+		print("")
+		print("============================================================================")
+
+		print(" %-20s%-20s%s" % ("project", "dbname", "update"))
+		for project in projects:
+			for ins in project.installed:
+				if updates:
+					for update in ins.updates:
+						print(" %-20s%-20s%s" % (project.name, ins.dbname, update))
+
+		print("============================================================================")
+		print("")
+	else:
+		print("Nothing to do.")
 
 	if check:
 		return
@@ -442,6 +461,7 @@ def update(project_name, dbname, version, conninfo, directory, verbose, skip, ch
 		for ins in project.installed:
 			for update in ins.updates:
 				project.update(ins.dbname, update, conninfo, directory, verbose)
+	print("Complete!")
 
 def check_succesfull_installed(projects):
 	for project in projects:

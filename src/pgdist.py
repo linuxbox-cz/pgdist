@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 
 import os
 import sys
+import atexit
 import argparse
 import subprocess
 import logging
@@ -42,6 +43,9 @@ PGdist - distribute PotgreSQL functions, tables, etc...
     require-add project git git_tree_ish - add require to another project
     require-rm project - remove require to another project
 
+    dbparam-set [params] - parameters with create a database
+    dbparam-get - print parameters to create a database
+
 PGdist Server - manage projects in PostgreSQL database
 
     list [project [dbname]] - show list of installed projects in database
@@ -70,6 +74,7 @@ Configuration:
 def main():
 	logging.basicConfig(format="%(message)s")
 	parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter, description=description, add_help=False)
+	less = False
 
 	# common argument
 	parser.add_argument("-v", "--verbose", help="increase output verbosity", action="store_true")
@@ -101,6 +106,7 @@ def main():
 	parser.add_argument("-h", "--host", dest="host", help="Specifies the host name of the machine on which the server is running.")
 	parser.add_argument("-p", "--port", dest="port", help="Specifies the TCP port or the local Unix-domain socket file.")
 	parser.add_argument("-U", "--username", dest="user", help="Connect to the database as the user username.")
+	parser.add_argument("-C", "--create", dest="create", help="Create the database.", action="store_true")
 	parser.add_argument("--directory", help="directory contains script install and update", default="/usr/share/pgdist/install")
 	parser.add_argument("--syslog-facility", dest="syslog_facility", help="syslog facility")
 	parser.add_argument("--syslog-ident", dest="syslog_ident", help="syslog ident")
@@ -123,22 +129,11 @@ def main():
 			handler.setFormatter(logging.Formatter(args.syslog_ident+": %(message)s"))
 		logging.getLogger().addHandler(handler)
 
-	if args.less:
-		less = True
-	elif args.noless:
-		less = False
-	else:
-		less = sys.stdout.isatty()
-
-	if less:
-		pager = subprocess.Popen(["less", "-FKSMIR"], stdin=subprocess.PIPE, stdout=sys.stdout)
-		sys.stdout = pager.stdin
-
 	if args.cmd in ("init", "create-schema", "status", "test-load", "create-version", "add", "rm",
 		"create-update", "test-update",
 		"diff-db", "diff-db-file", "diff-file-db",
 		"role-list", "role-add", "role-change", "role-rm",
-		"require-add", "require-rm"):
+		"require-add", "require-rm", "dbparam-set", "dbparam-get"):
 
 		sys.path.insert(1, os.path.join(sys.path[0], "dev"))
 		import color
@@ -146,6 +141,18 @@ def main():
 		import config
 		import pg_parser
 		import project
+
+		if args.less:
+			less = True
+		elif args.noless or args.cmd not in ("diff-db", "diff-db-file", "diff-file-db"):
+			less = False
+		else:
+			less = sys.stdout.isatty()
+
+		if less:
+			pager = subprocess.Popen(["less", "-FKSMIR"], stdin=subprocess.PIPE, stdout=sys.stdout)
+			sys.stdout = pager.stdin
+			atexit.register(close_less, pager)
 
 		config.load(args.config)
 		if less and args.color == "auto":
@@ -235,6 +242,13 @@ def main():
 		(project_name, ) = args_parse(args.args, 1)
 		project.require_rm(project_name)
 
+	elif args.cmd == "dbparam-set" and len(args.args) in (0, 1):
+		(dbparam, ) = args_parse(args.args, 1)
+		project.dbparam_set(dbparam)
+
+	elif args.cmd == "dbparam-get" and len(args.args) in (0,):
+		project.dbparam_get()
+
 	# install projects
 	elif args.cmd == "list" and len(args.args) in (0, 1, 2,):
 		(project_name, dbname) = args_parse(args.args, 2)
@@ -242,7 +256,7 @@ def main():
 
 	elif args.cmd == "install" and len(args.args) in (2, 3,):
 		(project_name, dbname, version) = args_parse(args.args, 3)
-		project.install(project_name, dbname, version, conninfo.ConnInfo(args), args.directory, args.verbose)
+		project.install(project_name, dbname, version, conninfo.ConnInfo(args), args.directory, args.verbose, args.create)
 
 	elif args.cmd == "check-update" and len(args.args) in (0, 1, 2, 3,):
 		(project_name, dbname, version) = args_parse(args.args, 3)
@@ -268,12 +282,11 @@ def main():
 		parser.print_help()
 		sys.exit(1)
 
-	if less:
-		pager.stdin.close()
-		pager.wait()
-
 	sys.exit(0)
 
+def close_less(pager):
+	pager.stdin.close()
+	pager.wait()
 
 def args_parse(args, n):
 	return args + [None] * (n - len(args))

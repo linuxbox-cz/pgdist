@@ -67,7 +67,7 @@ class PG:
 			args.append(self.address.ssh)
 			args.append(" ".join(ssh_args))
 		logging.debug(args)
-		process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=subprocess.PIPE, cwd=cwd)
+		process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=subprocess.PIPE, cwd=cwd or ".")
 		if cmd:
 			cmd = cmd.encode(encoding="UTF8")
 		output, unused_err = process.communicate(cmd)

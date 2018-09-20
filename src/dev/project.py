@@ -71,6 +71,7 @@ class ProjectBase:
 		self.parts = []
 		self.roles = []
 		self.requires = []
+		self.dbparam = None
 
 	def load_conf(self, file):
 		part = None
@@ -106,6 +107,11 @@ class ProjectBase:
 			if x:
 				self.requires.append(Require(x.group("project_name"), x.group("git"), x.group("git_tree_ish")))
 				continue
+			# requires
+			x = re.match(r"--\s*dbparam:\s+(?P<dbparam>.+)", line)
+			if x:
+				self.dbparam = x.group("dbparam")
+				continue
 			# part data
 			# import file
 			if part:
@@ -127,6 +133,9 @@ class ProjectBase:
 		if self.requires:
 			for require in self.requires:
 				new_conf.write("-- require: %s\n" % (require,))
+			new_conf.write("\n")
+		if self.dbparam:
+			new_conf.write("-- dbparam: %s\n" % (self.dbparam,))
 			new_conf.write("\n")
 		new_conf.write("-- end header\n")
 		for part in self.parts:
@@ -212,7 +221,7 @@ class ProjectGit(ProjectBase):
 			# TODO err msg
 			sys.exit(1)
 		logging.debug("Git archive: %s" % (" ".join(args),))
-		process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE, cwd=self.directory)
+		process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE, cwd=self.directory or ".")
 		output, err = process.communicate()
 		retcode = process.poll()
 		if retcode != 0:
@@ -272,14 +281,19 @@ def to_fname(fname):
 
 def find_directory():
 	d = os.getcwd()
+	dd = 0
 	while d:
 		logging.debug("Search base directory in: %s" % (d, ))
 		if os.path.isdir(os.path.join(d, "sql")) and os.path.isfile(os.path.join(d, "sql", "pg_project.sql")):
-			return d
+			if dd == 0:
+				return ''
+			else:
+				return os.path.join(*([".."]*dd))
 		d1, x = os.path.split(d)
 		if d1 == d:
 			break
 		d = d1
+		dd =+ 1
 	logging.error("Base directory not found.")
 	sys.exit(1)
 
@@ -417,12 +431,16 @@ def create_version(version, git_tag, force):
 		with open(build_fname, "w") as build_file:
 			build_file.write("--\n")
 			build_file.write("-- pgdist project\n")
+			build_file.write("--\n")
 			build_file.write("-- name: %s\n" % (project.name,))
 			build_file.write("-- version: %s\n" % (version))
-			if i == 0 and project.roles:
-				build_file.write("--\n")
-				for user in project.roles:
-					build_file.write("-- role: %s\n" % (user,))
+			if i == 0:
+				if project.dbparam:
+					build_file.write("-- dbparam: %s\n" % (project.dbparam,))
+				if project.roles:
+					build_file.write("--\n")
+					for user in project.roles:
+						build_file.write("-- role: %s\n" % (user,))
 			build_file.write("--\n")
 			build_file.write("-- part: %s\n" % (i+1))
 			if part.single_transaction:
@@ -443,8 +461,8 @@ def create_version(version, git_tag, force):
 				for line in src_file:
 					build_file.write(line)
 				src_file.close()
-			build_file.write("\n")
-			build_file.write(";-- end sqldist file\n")
+				build_file.write("\n")
+				build_file.write(";-- end sqldist file\n")
 			build_file.write("\n")
 			build_file.write("--\n")
 			build_file.write("-- end sqldist project\n")
@@ -554,7 +572,8 @@ def create_update(git_tag, new_version, force, gitversion=None, clean=True, pre_
 	logging.debug("Create file: %s" % (build_fname,))
 	with open(build_fname, "w") as build_file:
 		build_file.write("--\n")
-		build_file.write("-- pgdist %s - update file\n" % (project_old.name,))
+		build_file.write("-- pgdist update\n")
+		build_file.write("--\n")
 		build_file.write("-- name: %s\n" % (project_old.name,))
 		build_file.write("-- old version: %s\n" % (old_version))
 		build_file.write("-- new version: %s\n" % (new_version))
@@ -571,6 +590,9 @@ def create_update(git_tag, new_version, force, gitversion=None, clean=True, pre_
 		pr_old = pg_parser.parse(io.StringIO(dump_old))
 		pr_new = pg_parser.parse(io.StringIO(dump_new))
 		pr_old.gen_update(build_file, pr_new)
+	print("Edit created file: %s" % (build_fname))
+	print("and test it by 'pgdist test-update %s %s'" % (git_tag, new_version))
+
 
 def test_update(git_tag, new_version, updates, clean=True, gitversion=None, pre_load=None, post_load=None):
 	if gitversion:
@@ -723,3 +745,15 @@ def require_rm(project_name):
 		sys.exit(1)
 	project.requires.remove(require)
 	project.save_conf()
+
+def dbparam_set(dbparam):
+	project = ProjectFs()
+	project.dbparam = dbparam
+	project.save_conf()
+
+def dbparam_get():
+	project = ProjectFs()
+	if project.dbparam:
+		print(project.dbparam)
+	else:
+		print("No dbparam.")

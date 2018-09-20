@@ -177,20 +177,32 @@ def create_role(conn, role):
 			logging.debug("ALTER ROLE %s NOLOGIN;" % (role.name,))
 			cursor.execute("ALTER ROLE %s NOLOGIN;" % (role.name,))
 	else:
+		login = ""
 		if role.login:
 			login = "LOGIN"
 		if role.nologin:
 			login = "NOLOGIN"
 		if role.password:
 			password = ''.join(random.SystemRandom().choice(string.ascii_letters + string.digits ) for _ in range(12))
-			logging.debug("CREATE ROLE %s %s" % (role.name, login))
+			print("CREATE ROLE %s %s" % (role.name, login))
 			cursor.execute("CREATE ROLE %s %s PASSWORD %%s;" % (role.name, login), (password, ))
 			open("/etc/lbox/postgresql/roles/"+role.name, 'w').write("PGPASSWORD=%s\n" % (password, ))
 		else:
-			logging.debug("CREATE ROLE %s %s" % (role.name, login))
+			print("CREATE ROLE %s %s" % (role.name, login))
 			cursor.execute("CREATE ROLE %s %s;" % (role.name, login))
 
-def install(dbname, project, ver, conninfo, directory, verbose):
+def install(dbname, project, ver, conninfo, directory, verbose, create_db):
+	if ver.parts and create_db:
+		if not dbname in list_database(conninfo):
+			conn = connect(conninfo)
+			for part in ver.parts:
+				for role in part.roles:
+					create_role(conn, role)
+			cursor = conn.cursor()
+			cmd = "CREATE DATABASE %s %s" % (dbname, ver.parts[0].dbparam)
+			print(cmd)
+			cursor.execute(cmd)
+			conn.close()
 	conn = connect(conninfo, dbname)
 	cursor = conn.cursor()
 	pgdist_install(dbname, conn)
@@ -198,7 +210,10 @@ def install(dbname, project, ver, conninfo, directory, verbose):
 		for role in part.roles:
 			create_role(conn, role)
 	for part in ver.parts:
-		logging.info("install %s to %s version %s part %d/%d" % (project.name, dbname, str(ver.version), part.part, len(ver.parts)))
+		if len(ver.parts) == 1:
+			print("Install %s %s to %s" % (project.name, str(ver.version), dbname))
+		else:
+			print("Install %s %s part %d/%d to %s" % (project.name, str(ver.version), part.part, len(ver.parts), dbname))
 		run("psql", conninfo, dbname=dbname, file=os.path.join(directory, part.fname), single_transaction=part.single_transaction, debug=verbose)
 		cursor.execute("INSERT INTO pgdist.history (project, version, part, comment) VALUES (%s, %s, %s, %s);",
 			(project.name, str(ver.version), part.part, "installed new version %s, part %d/%d" % (str(ver.version), part.part, len(ver.parts))))
@@ -207,6 +222,7 @@ def install(dbname, project, ver, conninfo, directory, verbose):
 		if not cursor.fetchone():
 			cursor.execute("INSERT INTO pgdist.installed (project, version, part, parts) VALUES (%s, %s, %s, %s);",
 				(project.name, str(ver.version), part.part, len(ver.parts)))
+	print("Complete!")
 
 
 def update(dbname, project, update, conninfo, directory, verbose):
@@ -226,7 +242,10 @@ def update(dbname, project, update, conninfo, directory, verbose):
 			for role in part.roles:
 				create_role(conn, role)
 		for part in update.parts:
-			logging.info("update %s in %s %s > %s part %d/%d" % (project.name, dbname, str(update.version_old), str(update.version_new), part.part, len(update.parts)))
+			if len(update.parts) == 1:
+				print("Update %s in %s %s > %s" % (project.name, dbname, str(update.version_old), str(update.version_new)))
+			else:
+				print("Update %s in %s %s > %s part %d/%d" % (project.name, dbname, str(update.version_old), str(update.version_new), part.part, len(update.parts)))
 			run("psql", conninfo, dbname=dbname, file=os.path.join(directory, part.fname), single_transaction=part.single_transaction, debug=verbose)
 			cursor.execute("INSERT INTO pgdist.history (project, version, part, comment) VALUES (%s, %s, %s, %s);",
 				(project.name, str(update.version_new), part.part, "updated from version %s to %s, part %d/%d" % (str(update.version_new), str(update.version_old), part.part, len(update.parts))))
