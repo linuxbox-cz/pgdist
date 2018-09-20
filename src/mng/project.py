@@ -253,6 +253,11 @@ def get_project_name(directory, fname):
 
 def get_projects(project_name, dbname, conninfo, directory):
 	projects = {}
+
+	if not os.path.isdir(directory):
+		logging.info("No such projects directory: '%s'" % (directory,))
+		return []
+
 	for fname in os.listdir(directory):
 		version = None
 		version_old = None
@@ -343,10 +348,9 @@ def prlist(project_name, dbname, conninfo, directory, show_all):
 		print(" No projects found")
 	print("============================================================================")
 
+	find_projects = False
 	print("")
-
-	if projects:
-		print("Installed projects:")
+	print("Installed projects:")
 
 	if dbname:
 		dbs = [dbname]
@@ -361,6 +365,7 @@ def prlist(project_name, dbname, conninfo, directory, show_all):
 	for db in dbs:
 		for project in projects:
 			for ins in project.get_instalated(db):
+				find_projects = True
 				if show_all:
 					if ins.from_version:
 						fromv = str(ins.from_version)
@@ -369,6 +374,8 @@ def prlist(project_name, dbname, conninfo, directory, show_all):
 					print(" %-20s%-20s%-10s%-10s%-5s%-4s" % (project.name, ins.dbname, str(ins.version), fromv, ins.part, ins.parts))
 				else:
 					print(" %-20s%-20s%s" % (project.name, ins.dbname, ins.version))
+	if not find_projects:
+		print(" No installed projects found")
 	print("============================================================================")
 
 	print("")
