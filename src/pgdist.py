@@ -79,6 +79,7 @@ def main():
 
 	# develop projects
 	parser.add_argument("--less", help="print output in less", action="store_true")
+	parser.add_argument("--noless", help="don't print output in less", action="store_true")
 	parser.add_argument("--all", help="use all files", action="store_true")
 	parser.add_argument("-f", "--force", help="overwriting and removing files", action="store_true")
 	parser.add_argument("-c", "--config", help="configuration file")
@@ -123,6 +124,13 @@ def main():
 		logging.getLogger().addHandler(handler)
 
 	if args.less:
+		less = True
+	elif args.noless:
+		less = False
+	else:
+		less = sys.stdout.isatty()
+
+	if less:
 		pager = subprocess.Popen(["less", "-FKSMIR"], stdin=subprocess.PIPE, stdout=sys.stdout)
 		sys.stdout = pager.stdin
 
@@ -140,7 +148,7 @@ def main():
 		import project
 
 		config.load(args.config)
-		if args.less and args.color == "auto":
+		if less and args.color == "auto":
 			color.set("always")
 		else:
 			color.set(args.color)
@@ -260,7 +268,7 @@ def main():
 		parser.print_help()
 		sys.exit(1)
 
-	if args.less:
+	if less:
 		pager.stdin.close()
 		pager.wait()
 
