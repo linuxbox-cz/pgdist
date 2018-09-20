@@ -32,6 +32,7 @@ PGdist - distribute PotgreSQL functions, tables, etc...
  
     diff-db pgconn [git_tag] - diff project and database
     diff-db-file pgconn file - diff file and database
+    diff-file-db pgconn file - diff database and file
 
     role-list - print roles in project
     role-add name [nologin|login] [password] - add role to project
@@ -82,6 +83,7 @@ def main():
 	parser.add_argument("-f", "--force", help="overwriting and removing files", action="store_true")
 	parser.add_argument("-c", "--config", help="configuration file")
 	parser.add_argument("--color", help="never, always or auto colorred output", default="auto", choices=["auto", "never", "always"])
+	parser.add_argument("--swap", help="Swap compare data, commands diff-...", default=False, action="store_true")
 	parser.add_argument("--gitversion", help="use as version for git tag")
 	parser.add_argument("--no-owner", dest="no_owner", help="do not dump and compare ownership of objects", action="store_true")
 	parser.add_argument("--no-acl", dest="no_acl", help="do not dump and compare access privileges (grant/revoke commands)", action="store_true")
@@ -126,7 +128,7 @@ def main():
 
 	if args.cmd in ("init", "create-schema", "status", "test-load", "create-version", "add", "rm",
 		"create-update", "test-update",
-		"diff-db", "diff-db-file",
+		"diff-db", "diff-db-file", "diff-file-db",
 		"role-list", "role-add", "role-change", "role-rm",
 		"require-add", "require-rm"):
 
@@ -187,12 +189,20 @@ def main():
 	elif args.cmd == "diff-db" and len(args.args) in (1,):
 		(pgconn,) = args_parse(args.args, 1)
 		project.diff_pg(address.Address(pgconn), args.diff_raw, args.no_owner, args.no_acl,
-			pre_load=args.pre_load, post_load=args.post_load, pre_remoted_load=args.pre_remoted_load, post_remoted_load=args.post_remoted_load)
+			pre_load=args.pre_load, post_load=args.post_load, pre_remoted_load=args.pre_remoted_load, post_remoted_load=args.post_remoted_load,
+			swap=args.swap)
 
 	elif args.cmd == "diff-db-file" and len(args.args) in (2,):
 		(pgconn, file) = args_parse(args.args, 2)
 		project.diff_pg_file(address.Address(pgconn), file, args.diff_raw, args.no_owner, args.no_acl,
-			pre_load=args.pre_load, post_load=args.post_load, pre_remoted_load=args.pre_remoted_load, post_remoted_load=args.post_remoted_load)
+			pre_load=args.pre_load, post_load=args.post_load, pre_remoted_load=args.pre_remoted_load, post_remoted_load=args.post_remoted_load,
+			swap=args.swap)
+
+	elif args.cmd == "diff-file-db" and len(args.args) in (2,):
+		(file, pgconn) = args_parse(args.args, 2)
+		project.diff_pg_file(address.Address(pgconn), file, args.diff_raw, args.no_owner, args.no_acl,
+			pre_load=args.pre_load, post_load=args.post_load, pre_remoted_load=args.pre_remoted_load, post_remoted_load=args.post_remoted_load,
+			swap=not args.swap)
 
 	elif args.cmd == "role-list" and len(args.args) in (0,):
 		project.role_list()

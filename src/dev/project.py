@@ -624,7 +624,10 @@ def read_file(fname):
 		data.write(unicode(f.read(), "UTF8"))
 	return data.getvalue()
 
-def print_diff(dump1, dump2, diff_raw, no_owner, no_acl, fromfile, tofile):
+def print_diff(dump1, dump2, diff_raw, no_owner, no_acl, fromfile, tofile, swap=False):
+	if swap:
+		dump1, dump2 = dump2, dump1
+		fromfile, tofile = tofile, fromfile
 	if diff_raw:
 		diff_c = difflib.unified_diff(dump1.splitlines(1), dump2.splitlines(1), fromfile=fromfile, tofile=tofile)
 		for d in diff_c:
@@ -639,7 +642,7 @@ def print_diff(dump1, dump2, diff_raw, no_owner, no_acl, fromfile, tofile):
 		pr2 = pg_parser.parse(io.StringIO(dump1))
 		pr2.diff(pr1, no_owner=no_owner, no_acl=no_acl)
 
-def diff_pg(addr, diff_raw, no_owner, no_acl, pre_load=None, post_load=None, pre_remoted_load=None, post_remoted_load=None):
+def diff_pg(addr, diff_raw, no_owner, no_acl, pre_load=None, post_load=None, pre_remoted_load=None, post_remoted_load=None, swap=False):
 	config.check_set_test_db()
 	project = ProjectFs()
 
@@ -649,9 +652,9 @@ def diff_pg(addr, diff_raw, no_owner, no_acl, pre_load=None, post_load=None, pre
 	create_roles(roles_remote)
 	dump_r = load_dump_and_dump(sql_remote, project.name, no_owner, no_acl, pre_load=pre_remoted_load, post_load=post_remoted_load)
 
-	print_diff(dump_r, dump_cur, diff_raw, no_owner, no_acl, fromfile=addr.addr, tofile="local project")
+	print_diff(dump_r, dump_cur, diff_raw, no_owner, no_acl, fromfile=addr.addr, tofile="local project", swap=swap)
 
-def diff_pg_file(addr, fname, diff_raw, no_owner, no_acl, pre_load=None, post_load=None, pre_remoted_load=None, post_remoted_load=None):
+def diff_pg_file(addr, fname, diff_raw, no_owner, no_acl, pre_load=None, post_load=None, pre_remoted_load=None, post_remoted_load=None, swap=False):
 	config.check_set_test_db()
 
 	roles_remote = get_roles(addr)
@@ -659,9 +662,9 @@ def diff_pg_file(addr, fname, diff_raw, no_owner, no_acl, pre_load=None, post_lo
 	create_roles(roles_remote)
 	dump_r = load_dump_and_dump(sql_remote, "diff", no_owner, no_acl, pre_load=pre_remoted_load, post_load=post_remoted_load)
 
-	dump_file = load_file_and_dump(fname, "diff", no_owner, no_acl, pre_load=pre_remoted_load, post_load=post_remoted_load)
+	dump_file = load_file_and_dump(fname, "diff", no_owner, no_acl, pre_load=pre_load, post_load=post_load)
 
-	print_diff(dump_r, dump_file, diff_raw, no_owner, no_acl, fromfile=addr.addr, tofile=fname)
+	print_diff(dump_r, dump_file, diff_raw, no_owner, no_acl, fromfile=addr.addr, tofile=fname, swap=swap)
 
 def role_list():
 	project = ProjectFs()
