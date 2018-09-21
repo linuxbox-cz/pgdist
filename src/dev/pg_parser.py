@@ -357,6 +357,11 @@ def parse(dump_stream):
 				project.tables[schema(set_schema, x.group('name'))].constraints.append(x.group('constraint'))
 				continue
 
+			x = re.match(r"ALTER TABLE ONLY (?P<name>\S+)\s*ALTER (?P<conf>COLUMN.*);", command, re.M)
+			if x:
+				project.tables[schema(set_schema, x.group('name'))].columns_conf.append(x.group('conf'))
+				continue
+
 			x = re.match(r"CREATE (?P<index>(UNIQUE )?INDEX (?P<name>\S+) ON (?P<table_name>\S+) .*);$", command)
 			if x:
 				project.tables[schema(set_schema, x.group('table_name'))].indexes.append(x.group('index'))
@@ -367,10 +372,10 @@ def parse(dump_stream):
 				project.tables[schema(set_schema, x.group('table_name'))].triggers.append(x.group('trigger'))
 				continue
 
-#			x = re.match(r"ALTER TABLE ONLY \S+ ALTER COLUMN \S+ SET STATISTICS \S+;$", command)
-#			if x:
-#				# TODO
-#				continue
+			x = re.match(r"ALTER TABLE (?P<table_name>\S+) (?P<trigger>DISABLE TRIGGER \S+);$", command)
+			if x:
+				project.tables[schema(set_schema, x.group('table_name'))].triggers.append(x.group('trigger'))
+				continue
 
 #			x = re.match(r"ALTER TABLE ONLY \S+ FORCE ROW LEVEL SECURITY;$", command)
 #			if x:
@@ -381,12 +386,6 @@ def parse(dump_stream):
 #			if x:
 #				# TODO
 #				continue
-
-#			x = re.match(r"ALTER TABLE \S+ DISABLE TRIGGER \S+;$", command)
-#			if x:
-#				# TODO
-#				continue
-
 
 			# SEQUENCE
 

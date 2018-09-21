@@ -209,6 +209,7 @@ class Table(Element):
 		self.triggers = []
 		self.constraints = []
 		self.columns_comment = []
+		self.columns_conf = []
 
 	def _diff(self, table2):
 		columns1 = sorted(self.columns)
@@ -285,8 +286,22 @@ class Table(Element):
 		self.columns_comment.sort()
 		table2.columns_comment.sort()
 		if self.columns_comment != table2.columns_comment:
-			print("%s %s have different columns_comment:" % (self.element_name, self.name))
+			print("%s %s have different columns comment:" % (self.element_name, self.name))
 			diff_c = difflib.unified_diff(self.columns_comment, table2.columns_comment, fromfile="removeline542358", tofile="removeline542358")
+			for d in diff_c:
+				if "removeline542358" in d:
+					pass
+				elif d.startswith("-"):
+					print("\t"+color.red(d))
+				elif d.startswith("+"):
+					print("\t"+color.green(d))
+			print("")
+
+		self.columns_conf.sort()
+		table2.columns_conf.sort()
+		if self.columns_conf != table2.columns_conf:
+			print("%s %s have different columns conf:" % (self.element_name, self.name))
+			diff_c = difflib.unified_diff(self.columns_conf, table2.columns_conf, fromfile="removeline542358", tofile="removeline542358")
 			for d in diff_c:
 				if "removeline542358" in d:
 					pass
