@@ -203,19 +203,19 @@ def main():
 
 	elif args.cmd == "diff-db" and len(args.args) in (1,):
 		(pgconn,) = args_parse(args.args, 1)
-		project.diff_pg(address.Address(pgconn), args.diff_raw, args.no_owner, args.no_acl,
+		project.diff_pg(address.Address(pgconn), args.diff_raw, not args.no_clean, args.no_owner, args.no_acl,
 			pre_load=args.pre_load, post_load=args.post_load, pre_remoted_load=args.pre_remoted_load, post_remoted_load=args.post_remoted_load,
 			swap=args.swap)
 
 	elif args.cmd == "diff-db-file" and len(args.args) in (2,):
 		(pgconn, file) = args_parse(args.args, 2)
-		project.diff_pg_file(address.Address(pgconn), file, args.diff_raw, args.no_owner, args.no_acl,
+		project.diff_pg_file(address.Address(pgconn), file, args.diff_raw, not args.no_clean, args.no_owner, args.no_acl,
 			pre_load=args.pre_load, post_load=args.post_load, pre_remoted_load=args.pre_remoted_load, post_remoted_load=args.post_remoted_load,
 			swap=args.swap)
 
 	elif args.cmd == "diff-file-db" and len(args.args) in (2,):
 		(file, pgconn) = args_parse(args.args, 2)
-		project.diff_pg_file(address.Address(pgconn), file, args.diff_raw, args.no_owner, args.no_acl,
+		project.diff_pg_file(address.Address(pgconn), file, args.diff_raw, not args.no_clean, args.no_owner, args.no_acl,
 			pre_load=args.pre_load, post_load=args.post_load, pre_remoted_load=args.pre_remoted_load, post_remoted_load=args.post_remoted_load,
 			swap=not args.swap)
 
