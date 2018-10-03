@@ -46,6 +46,10 @@ PGdist - distribute PotgreSQL functions, tables, etc...
     dbparam-set [params] - parameters with create a database
     dbparam-get - print parameters to create a database
 
+    data-add table [column1 [...]] - add table to compare data
+    data-rm table - remove table to compare data
+    data-list
+
 PGdist Server - manage projects in PostgreSQL database
 
     list [project [dbname]] - show list of installed projects in database
@@ -133,7 +137,8 @@ def main():
 		"create-update", "test-update",
 		"diff-db", "diff-db-file", "diff-file-db",
 		"role-list", "role-add", "role-change", "role-rm",
-		"require-add", "require-rm", "dbparam-set", "dbparam-get"):
+		"require-add", "require-rm", "dbparam-set", "dbparam-get",
+		"data-add", "data-rm", "data-list"):
 
 		sys.path.insert(1, os.path.join(sys.path[0], "dev"))
 		import color
@@ -248,6 +253,18 @@ def main():
 
 	elif args.cmd == "dbparam-get" and len(args.args) in (0,):
 		project.dbparam_get()
+
+	elif args.cmd == "data-add" and len(args.args) >= 1:
+		table = args.args[0]
+		columns = args.args[1:]
+		project.tabledata_add(table, columns)
+
+	elif args.cmd == "data-rm" and len(args.args) in (1,):
+		(table, ) = args_parse(args.args, 1)
+		project.tabledata_rm(table)
+
+	elif args.cmd == "data-list" and len(args.args) in (0,):
+		project.tabledata_list()
 
 	# install projects
 	elif args.cmd == "list" and len(args.args) in (0, 1, 2,):

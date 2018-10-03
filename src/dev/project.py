@@ -61,6 +61,23 @@ class Require:
 	def __str__(self):
 		return "%s %s %s" % (self.project_name, self.git, self.tree_ish)
 
+class TableData:
+	def __init__(self, table_name, columns=None):
+		self.table_name = table_name
+		if columns:
+			self.columns = map(lambda x: x.strip(), columns)
+		else:
+			self.columns = None
+
+	def __str__(self):
+		if self.columns:
+			return "%s (%s)" % (self.table_name, ", ".join(self.columns))
+		else:
+			return "%s" % (self.table_name)
+
+	def __cmp__(self, other):
+		return cmp(self.table_name, other.table_name)
+
 class ProjectBase:
 	def init(self, directory=None):
 		if directory:
@@ -71,6 +88,7 @@ class ProjectBase:
 		self.parts = []
 		self.roles = []
 		self.requires = []
+		self.table_data = []
 		self.dbparam = None
 
 	def load_conf(self, file):
@@ -107,10 +125,19 @@ class ProjectBase:
 			if x:
 				self.requires.append(Require(x.group("project_name"), x.group("git"), x.group("git_tree_ish")))
 				continue
-			# requires
+			# dbparam
 			x = re.match(r"--\s*dbparam:\s+(?P<dbparam>.+)", line)
 			if x:
 				self.dbparam = x.group("dbparam")
+				continue
+			# table_data
+			x = re.match(r"--\s*table_data:\s+(?P<table_name>\S+)(\s*\((?P<columns>.+)\))?", line)
+			if x:
+				if x.group("columns"):
+					self.table_data.append(TableData(x.group("table_name"), x.group("columns").split(",")))
+				else:
+					self.table_data.append(TableData(x.group("table_name")))
+				self.table_data.sort()
 				continue
 			# part data
 			# import file
@@ -133,6 +160,10 @@ class ProjectBase:
 		if self.requires:
 			for require in self.requires:
 				new_conf.write("-- require: %s\n" % (require,))
+			new_conf.write("\n")
+		if self.table_data:
+			for td in self.table_data:
+				new_conf.write("-- table_data: %s\n" % (td,))
 			new_conf.write("\n")
 		if self.dbparam:
 			new_conf.write("-- dbparam: %s\n" % (self.dbparam,))
@@ -177,6 +208,12 @@ class ProjectBase:
 		for require in self.requires:
 			if require.project_name == project_name:
 				return require
+		return None
+
+	def get_tabledata(self, name):
+		for td in self.table_data:
+			if td.table_name == name:
+				return td
 		return None
 
 class ProjectNew(ProjectBase):
@@ -293,7 +330,7 @@ def find_directory():
 		if d1 == d:
 			break
 		d = d1
-		dd =+ 1
+		dd += 1
 	logging.error("Base directory not found.")
 	sys.exit(1)
 
@@ -498,6 +535,7 @@ def load_and_dump(project, clean=True, no_owner=False, no_acl=False, pre_load=No
 				pg.load_update(update)
 		pg.load_file(post_load)
 		dump = pg.dump(no_owner, no_acl)
+		table_data = pg.dump_data(project)
 	except pgsql.PgError as e:
 		logging.error("Load project fail:")
 		print(e.output)
@@ -510,7 +548,7 @@ def load_and_dump(project, clean=True, no_owner=False, no_acl=False, pre_load=No
 		pg.clean()
 	else:
 		print("Check database: %s" % pg.dbname)
-	return dump
+	return dump, table_data
 
 def load_dump_and_dump(dump_remote, project_name="undef", clean=True, no_owner=False, no_acl=False, pre_load=None, post_load=None, dbs=None):
 	try:
@@ -568,8 +606,8 @@ def create_update(git_tag, new_version, force, gitversion=None, clean=True, pre_
 	else:
 		old_version = re.sub(r"^[^\d]*", "", git_tag)
 
-	dump_old = load_and_dump(project_old, clean=clean, pre_load=pre_load, post_load=post_load, dbs="old")
-	dump_new = load_and_dump(project_new, clean=clean, pre_load=pre_load, post_load=post_load, dbs="new")
+	dump_old, x = load_and_dump(project_old, clean=clean, pre_load=pre_load, post_load=post_load, dbs="old")
+	dump_new, x = load_and_dump(project_new, clean=clean, pre_load=pre_load, post_load=post_load, dbs="new")
 
 	if not os.path.isdir(os.path.join(project_old.directory, "sql_dist")):
 		os.mkdir(os.path.join(project_old.directory, "sql_dist"))
@@ -617,8 +655,8 @@ def test_update(git_tag, new_version, updates, clean=True, gitversion=None, pre_
 	if not updates:
 		upds.append(Update(project_old.name, old_version, new_version))
 
-	dump_updated = load_and_dump(project_old, clean=clean, pre_load=pre_load, post_load=post_load, updates=upds, dbs="updated")
-	dump_cur = load_and_dump(project_new, clean=clean, pre_load=pre_load, post_load=post_load)
+	dump_updated, table_data_updated = load_and_dump(project_old, clean=clean, pre_load=pre_load, post_load=post_load, updates=upds, dbs="updated")
+	dump_cur, table_data_cur = load_and_dump(project_new, clean=clean, pre_load=pre_load, post_load=post_load)
 
 	pr_cur = pg_parser.parse(io.StringIO(dump_cur))
 	pr_updated = pg_parser.parse(io.StringIO(dump_updated))
@@ -628,6 +666,15 @@ def dump_remote(addr, no_owner, no_acl):
 	try:
 		pg = pgsql.PG(addr)
 		return pg.dump(no_owner, no_acl)
+	except pgsql.PgError as e:
+		logging.error("Dump fail:")
+		print(e.output)
+		sys.exit(1)
+
+def dump_remote_data(project, addr):
+	try:
+		pg = pgsql.PG(addr)
+		return pg.dump_data(project)
 	except pgsql.PgError as e:
 		logging.error("Dump fail:")
 		print(e.output)
@@ -657,7 +704,7 @@ def read_file(fname):
 		data.write(unicode(f.read(), "UTF8"))
 	return data.getvalue()
 
-def print_diff(dump1, dump2, diff_raw, no_owner, no_acl, fromfile, tofile, swap=False):
+def print_diff(dump1, dump2, data1, data2, diff_raw, no_owner, no_acl, fromfile, tofile, swap=False):
 	if swap:
 		dump1, dump2 = dump2, dump1
 		fromfile, tofile = tofile, fromfile
@@ -672,20 +719,23 @@ def print_diff(dump1, dump2, diff_raw, no_owner, no_acl, fromfile, tofile, swap=
 				sys.stdout.write(d)
 	else:
 		pr1 = pg_parser.parse(io.StringIO(dump2))
+		pr1.set_data(data1)
 		pr2 = pg_parser.parse(io.StringIO(dump1))
+		pr2.set_data(data2)
 		pr2.diff(pr1, no_owner=no_owner, no_acl=no_acl)
 
 def diff_pg(addr, diff_raw, clean, no_owner, no_acl, pre_load=None, post_load=None, pre_remoted_load=None, post_remoted_load=None, swap=False):
 	config.check_set_test_db()
 	project = ProjectFs()
 
-	dump_cur = load_and_dump(project, clean, no_owner, no_acl, pre_load=pre_load, post_load=post_load)
+	dump_cur, table_data_cur = load_and_dump(project, clean, no_owner, no_acl, pre_load=pre_load, post_load=post_load)
 	roles_remote = get_roles(addr)
 	sql_remote = dump_remote(addr, no_owner, no_acl)
+	table_data_remote = dump_remote_data(project, addr)
 	create_roles(roles_remote)
 	dump_r = load_dump_and_dump(sql_remote, project.name, clean, no_owner, no_acl, pre_load=pre_remoted_load, post_load=post_remoted_load, dbs="remote")
 
-	print_diff(dump_r, dump_cur, diff_raw, no_owner, no_acl, fromfile=addr.addr, tofile="local project", swap=swap)
+	print_diff(dump_r, dump_cur, table_data_remote, table_data_cur, diff_raw, no_owner, no_acl, fromfile=addr.addr, tofile="local project", swap=swap)
 
 def diff_pg_file(addr, fname, diff_raw, clean, no_owner, no_acl, pre_load=None, post_load=None, pre_remoted_load=None, post_remoted_load=None, swap=False):
 	config.check_set_test_db()
@@ -697,7 +747,7 @@ def diff_pg_file(addr, fname, diff_raw, clean, no_owner, no_acl, pre_load=None, 
 
 	dump_file = load_file_and_dump(fname, "project", clean, no_owner, no_acl, pre_load=pre_load, post_load=post_load, dbs="file")
 
-	print_diff(dump_r, dump_file, diff_raw, no_owner, no_acl, fromfile=addr.addr, tofile=fname, swap=swap)
+	print_diff(dump_r, dump_file, diff_raw, None, None, no_owner, no_acl, fromfile=addr.addr, tofile=fname, swap=swap)
 
 def role_list():
 	project = ProjectFs()
@@ -705,8 +755,6 @@ def role_list():
 		print(role)
 
 def role_add(name, arg1, arg2):
-	new_conf = io.StringIO()
-	directory = find_directory()
 	project = ProjectFs()
 	if project.get_role(name):
 		logging.error("Error: user %s exists" % (name,))
@@ -719,8 +767,6 @@ def role_add(name, arg1, arg2):
 	project.save_conf()
 
 def role_change(name, arg1, arg2):
-	new_conf = io.StringIO()
-	directory = find_directory()
 	project = ProjectFs()
 	role = project.get_role(name)
 	if not role:
@@ -768,3 +814,28 @@ def dbparam_get():
 		print(project.dbparam)
 	else:
 		print("No dbparam.")
+
+def tabledata_add(name, columns):
+	project = ProjectFs()
+	td = project.get_tabledata(name)
+	if td:
+		td.columns = columns
+	else:
+		td = TableData(name, columns)
+		project.table_data.append(td)
+		project.table_data.sort()
+	project.save_conf()
+
+def tabledata_rm(name):
+	project = ProjectFs()
+	td = project.get_tabledata(name)
+	if not td:
+		logging.error("Error: data %s not exists" % (name,))
+		sys.exit(1)
+	project.table_data.remove(td)
+	project.save_conf()
+
+def tabledata_list():
+	project = ProjectFs()
+	for td in project.table_data:
+		print(td)

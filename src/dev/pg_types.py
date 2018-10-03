@@ -6,6 +6,7 @@ import sys
 import difflib
 
 import color
+import table_print
 
 def rmln(s):
 	if s and s.endswith("\r\n"):
@@ -107,6 +108,7 @@ class Project:
 		self.sequences = {}
 		self.views = {}
 		self.tables = {}
+		self.table_data = {}
 
 	def print_info(self):
 		for schema in sorted(self.schemas):
@@ -124,6 +126,49 @@ class Project:
 		self.diff_elements(exclude_schemas, "sequences", self.sequences, project2.sequences, no_owner, no_acl)
 		self.diff_elements(exclude_schemas, "views", self.views, project2.views, no_owner, no_acl)
 		self.diff_elements(exclude_schemas, "functions", self.functions, project2.functions, no_owner, no_acl)
+		self.diff_data(project2)
+
+	def diff_data(self, project2):
+		for table in sorted(self.table_data.keys()):
+			if not table in project2.table_data:
+				continue
+			d1 = self.table_data[table]
+			d2 = project2.table_data[table]
+			if sorted(d1[0]) != sorted(d2[0]):
+				# Tables table have different columns!
+				continue
+			if d1[0] != d2[0]:
+				m = map(lambda x: d1[0].index(x), d2[0])
+				new_d = []
+				for row in d2:
+					new_r = []
+					new_d.append(new_r)
+					for i in m:
+						new_r.append(row[i])
+				d2 = new_d
+
+			print("Tables %s have different data:" % (table, ))
+			table_pr = table_print.TablePrint(d1[0])
+			for i in xrange(1, len(d1)):
+				row1 = d1[i]
+				for j in xrange(1, len(d2)):
+					row2 = d2[j]
+					if row1 == row2:
+						d2.remove(row2)
+						break
+				table_pr.add(row1, "+ |")
+			for j in xrange(1, len(d2)):
+				row2 = d2[j]
+				table_pr.add(row2, "- |")
+			table_pr.sort()
+			for line in table_pr.format().splitlines():
+				if line.startswith("+"):
+					print(color.green("\t%s" % (line,)))
+				elif line.startswith("-"):
+					print(color.red("\t%s" % (line,)))
+				else:
+					print("\t%s" % (line,))
+
 
 	def diff_elements(self, exclude_schemas, elements_name, elements1, elements2, no_owner, no_acl):
 		difference = []
@@ -180,6 +225,9 @@ class Project:
 		for name in elements1:
 			if name in elements2:
 				elements1[name].update_element(file, elements2[name])
+
+	def set_data(self, data):
+		self.table_data = data
 
 class Schema(Element):
 	def __init__(self, command, name):
@@ -310,7 +358,6 @@ class Table(Element):
 				elif d.startswith("+"):
 					print("\t"+color.green(d))
 			print("")
-
 
 	def update_element(self, file, table2):
 		if self.command == table2.command:

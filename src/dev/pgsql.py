@@ -6,6 +6,7 @@ import logging
 import re
 import io
 import subprocess
+import csv
 
 import config
 
@@ -26,13 +27,13 @@ class PG:
 			self.dbname = None
 		self.loaded_projects_name = []
 
-	def psql(self, cmd=None, single_transaction=True, change_db=False, file=None, cwd=None, tuples_only=False):
-		return self.run(c='psql', cmd=cmd, single_transaction=single_transaction, change_db=change_db, file=file, cwd=cwd, tuples_only=tuples_only)
+	def psql(self, cmd=None, single_transaction=True, change_db=False, file=None, cwd=None, tuples_only=False, exit_on_fail=True):
+		return self.run(c='psql', cmd=cmd, single_transaction=single_transaction, change_db=change_db, file=file, cwd=cwd, tuples_only=tuples_only, exit_on_fail=exit_on_fail)
 
 	def pg_dump(self, change_db=False, no_owner=False, no_acl=False):
 		return self.run(c='pg_dump', single_transaction=False, change_db=change_db, no_owner=no_owner, no_acl=no_acl)
 
-	def run(self, c, cmd=None, single_transaction=True, change_db=False, file=None, cwd=None, no_owner=False, no_acl=False, tuples_only=False):
+	def run(self, c, cmd=None, single_transaction=True, change_db=False, file=None, cwd=None, no_owner=False, no_acl=False, tuples_only=False, exit_on_fail=True):
 		args = [c]
 		if c == "psql":
 			args.append("--no-psqlrc")
@@ -72,7 +73,7 @@ class PG:
 			cmd = cmd.encode(encoding="UTF8")
 		output, unused_err = process.communicate(cmd)
 		retcode = process.poll()
-		if retcode != 0:
+		if exit_on_fail and retcode != 0:
 			output = "\n".join(output.split("\n")[-40:])
 			raise PgError(retcode, cmd, output=output)
 		return (retcode, output)
@@ -158,3 +159,42 @@ class PG:
 	def load_file(self, filename):
 		if filename:
 			self.psql(single_transaction=True, file=filename, change_db=True)
+
+	def dump_data(self, project):
+		r = {}
+		c = []
+		for tb in project.table_data:
+			c.append("COPY %s TO STDOUT WITH(FORMAT CSV, HEADER, FORCE_QUOTE *, NULL 'NULL@15#7&679');" % (tb,))
+		(retcode, output) = self.psql(cmd="\n".join(c), change_db=True, exit_on_fail=False)
+		data = io.StringIO(unicode(output, "utf8"))
+
+		line = data.readline()
+		while True:
+			if not line:
+				break
+			x = re.match(r"COPY (?P<table>\S*) .*TO STDOUT.*NULL@15#7&679", line)
+			if x:
+				data_table = []
+				table_name = x.group("table")
+				line = data.readline()
+				if line.startswith("ERROR: "):
+					logging.warning(line)
+					continue
+				if line != "\n":
+					data_table.append(line)
+				while True:
+					line = data.readline()
+					if not line:
+						break
+					if re.match(r"COPY (?P<table>\S*) .*TO STDOUT.*NULL@15#7&679", line):
+						break
+					data_table.append(line)
+				dt = list(csv.reader(data_table))
+				for row in dt:
+					for i in xrange(len(row)):
+						if row[i] == "NULL@15#7&679":
+							row[i] = None
+				r[table_name] = dt
+			else:
+				line = data.readline()
+		return r
