@@ -598,7 +598,19 @@ def test_load(clean=True, pre_load=None, post_load=None):
 	project = ProjectFs()
 	load_and_dump(project, clean=clean, pre_load=pre_load, post_load=post_load)
 
-def create_update(git_tag, new_version, force, gitversion=None, clean=True, pre_load=None, post_load=None):
+def create_update(git_tag, new_version, force, gitversion=None, clean=True, pre_load=None, post_load=None,
+		pre_load_old=None, pre_load_new=None, post_load_old=None, post_load_new=None):
+
+	if not pre_load_old:
+		pre_load_old = pre_load
+	if not pre_load_new:
+		pre_load_new = pre_load
+
+	if not post_load_old:
+		post_load_old = post_load
+	if not post_load_new:
+		post_load_new = post_load
+
 	project_old = ProjectGit(git_tag)
 	project_new = ProjectFs()
 	if gitversion:
@@ -606,8 +618,8 @@ def create_update(git_tag, new_version, force, gitversion=None, clean=True, pre_
 	else:
 		old_version = re.sub(r"^[^\d]*", "", git_tag)
 
-	dump_old, x = load_and_dump(project_old, clean=clean, pre_load=pre_load, post_load=post_load, dbs="old")
-	dump_new, x = load_and_dump(project_new, clean=clean, pre_load=pre_load, post_load=post_load, dbs="new")
+	dump_old, x = load_and_dump(project_old, clean=clean, pre_load=pre_load_old, post_load=post_load_old, dbs="old")
+	dump_new, x = load_and_dump(project_new, clean=clean, pre_load=pre_load_new, post_load=post_load_new, dbs="new")
 
 	if not os.path.isdir(os.path.join(project_old.directory, "sql_dist")):
 		os.mkdir(os.path.join(project_old.directory, "sql_dist"))
@@ -643,7 +655,19 @@ def create_update(git_tag, new_version, force, gitversion=None, clean=True, pre_
 	print("and test it by 'pgdist test-update %s %s'" % (git_tag, new_version))
 
 
-def test_update(git_tag, new_version, updates, clean=True, gitversion=None, pre_load=None, post_load=None):
+def test_update(git_tag, new_version, updates, clean=True, gitversion=None, pre_load=None, post_load=None,
+		pre_load_old=None, pre_load_new=None, post_load_old=None, post_load_new=None):
+
+	if not pre_load_old:
+		pre_load_old = pre_load
+	if not pre_load_new:
+		pre_load_new = pre_load
+
+	if not post_load_old:
+		post_load_old = post_load
+	if not post_load_new:
+		post_load_new = post_load
+
 	if gitversion:
 		old_version = gitversion
 	else:
@@ -655,8 +679,8 @@ def test_update(git_tag, new_version, updates, clean=True, gitversion=None, pre_
 	if not updates:
 		upds.append(Update(project_old.name, old_version, new_version))
 
-	dump_updated, table_data_updated = load_and_dump(project_old, clean=clean, pre_load=pre_load, post_load=post_load, updates=upds, dbs="updated")
-	dump_cur, table_data_cur = load_and_dump(project_new, clean=clean, pre_load=pre_load, post_load=post_load)
+	dump_updated, table_data_updated = load_and_dump(project_old, clean=clean, pre_load=pre_load_old, post_load=post_load_old, updates=upds, dbs="updated")
+	dump_cur, table_data_cur = load_and_dump(project_new, clean=clean, pre_load=pre_load_new, post_load=post_load_new)
 
 	pr_cur = pg_parser.parse(io.StringIO(dump_cur))
 	pr_updated = pg_parser.parse(io.StringIO(dump_updated))

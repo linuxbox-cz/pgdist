@@ -103,6 +103,10 @@ def main():
 	parser.add_argument("--post-load", dest="post_load", help="SQL file to load after load project")
 	parser.add_argument("--pre-remoted-load", dest="pre_remoted_load", help="SQL file to load before load remote dump, command: diff-db")
 	parser.add_argument("--post-remoted-load", dest="post_remoted_load", help="SQL file to load after project, command: diff-db, path unversion install")
+	parser.add_argument("--pre-load-old", dest="pre_load_old", help="SQL file to load before load old version of the project")
+	parser.add_argument("--post-load-old", dest="post_load_old", help="SQL file to load after load old version of the project")
+	parser.add_argument("--pre-load-new", dest="pre_load_new", help="SQL file to load before load new version of the project")
+	parser.add_argument("--post-load-new", dest="post_load_new", help="SQL file to load after load new version of the project")
 
 	# install projects
 	parser.add_argument("--showall", help="show all versions", action="store_true")
@@ -200,11 +204,13 @@ def main():
 
 	elif args.cmd == "create-update" and len(args.args) in (2,):
 		(git_tag, new_version) = args_parse(args.args, 2)
-		project.create_update(git_tag, new_version, args.force, args.gitversion, clean=not args.no_clean, pre_load=args.pre_load, post_load=args.post_load)
+		project.create_update(git_tag, new_version, args.force, args.gitversion, clean=not args.no_clean, pre_load=args.pre_load, post_load=args.post_load,
+			pre_load_old=args.pre_load_old, pre_load_new=args.pre_load_new, post_load_old=args.post_load_old, post_load_new=args.post_load_new)
 
 	elif args.cmd == "test-update" and len(args.args) in (2,):
 		(git_tag, new_version) = args_parse(args.args, 1)
-		project.test_update(git_tag, new_version, args.gitversion, not args.no_clean, pre_load=args.pre_load, post_load=args.post_load)
+		project.test_update(git_tag, new_version, args.gitversion, not args.no_clean, pre_load=args.pre_load, post_load=args.post_load,
+			pre_load_old=args.pre_load_old, pre_load_new=args.pre_load_new, post_load_old=args.post_load_old, post_load_new=args.post_load_new)
 
 	elif args.cmd == "diff-db" and len(args.args) in (1,):
 		(pgconn,) = args_parse(args.args, 1)
