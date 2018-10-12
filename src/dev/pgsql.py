@@ -7,6 +7,7 @@ import re
 import io
 import subprocess
 import csv
+import os
 
 import config
 
@@ -198,3 +199,29 @@ class PG:
 			else:
 				line = data.readline()
 		return r
+
+	def pg_extractor(self, pg_extractor_basedir, no_owner=False, no_acl=False):
+		args = ["pg_extractor", "--getall", "--gettriggers", "--basedir", pg_extractor_basedir]
+		env = None
+		if self.address.get_user(self.dbname):
+			args.append("--username")
+			args.append(self.address.get_user(self.dbname))
+		if self.address.get_password(self.dbname):
+			env = os.environ.copy()
+			env["PGPASSWORD"] = self.address.get_password(self.dbname)
+		if self.address.get_host(self.dbname):
+			args.append("--host")
+			args.append(self.address.get_host(self.dbname))
+		if self.address.get_port(self.dbname):
+			args.append("--port")
+			args.append(self.address.get_port(self.dbname))
+		if self.address.get_dbname(self.dbname):
+			args.append("--dbname")
+			args.append(self.address.get_dbname(self.dbname))
+		if no_owner:
+			args.append("--no_owner")
+		if no_acl:
+			args.append("--no_acl")
+		logging.debug(str(args))
+		process = subprocess.Popen(args, cwd=pg_extractor_basedir, env=env)
+		retcode = process.wait()
