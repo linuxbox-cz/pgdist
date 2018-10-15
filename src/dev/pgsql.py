@@ -200,8 +200,8 @@ class PG:
 				line = data.readline()
 		return r
 
-	def pg_extractor(self, pg_extractor_basedir, no_owner=False, no_acl=False):
-		args = ["pg_extractor", "--getall", "--gettriggers", "--basedir", pg_extractor_basedir]
+	def pg_extractor(self, pg_extractor, no_owner=False, no_acl=False):
+		args = ["pg_extractor", "--getall", "--gettriggers", "--basedir", pg_extractor.get_dumpdir()]
 		env = None
 		if self.address.get_user(self.dbname):
 			args.append("--username")
@@ -223,5 +223,6 @@ class PG:
 		if no_acl:
 			args.append("--no_acl")
 		logging.debug(str(args))
-		process = subprocess.Popen(args, cwd=pg_extractor_basedir, env=env)
+		process = subprocess.Popen(args, cwd=pg_extractor.get_dumpdir(), env=env)
 		retcode = process.wait()
+		pg_extractor.add_db(self.address.get_dbname(self.dbname))

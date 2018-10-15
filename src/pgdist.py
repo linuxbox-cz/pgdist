@@ -99,7 +99,8 @@ def main():
 	parser.add_argument("--no-acl", dest="no_acl", help="do not dump and compare access privileges (grant/revoke commands)", action="store_true")
 	parser.add_argument("--diff-raw", dest="diff_raw", help="compare raw SQL dumps", action="store_true")
 	parser.add_argument("--no-clean", dest="no_clean", help="no clean test database after load/update test", action="store_true", default=False)
-	parser.add_argument("--pg_extractor", dest="pg_extractor_basedir", help="Dump by pg_extractor do directory PG_EXTRACTOR_BASEDIR")
+	parser.add_argument("--pg_extractor", dest="pg_extractor", help="Dump by pg_extractor, compare by diff -r", action="store_true")
+	parser.add_argument("--pg_extractor_basedir", dest="pg_extractor_basedir", help="Dump by pg_extractor do directory PG_EXTRACTOR_BASEDIR")
 	parser.add_argument("--pre-load", dest="pre_load", help="SQL file to load before load project")
 	parser.add_argument("--post-load", dest="post_load", help="SQL file to load after load project")
 	parser.add_argument("--pre-remoted-load", dest="pre_remoted_load", help="SQL file to load before load remote dump, command: diff-db")
@@ -151,6 +152,7 @@ def main():
 		import config
 		import pg_parser
 		import project
+		import pg_extractor as pg_extractor_m
 
 		if args.less:
 			less = True
@@ -175,6 +177,10 @@ def main():
 		import conninfo
 		import project
 
+	if args.pg_extractor:
+		pg_extractor = pg_extractor_m.PG_extractor(args.pg_extractor_basedir)
+	else:
+		pg_extractor = None
 
 	# develop projects
 	if args.cmd == "init" and len(args.args) in (1, 2,):
@@ -197,7 +203,7 @@ def main():
 		project.rm(args.args, args.all)
 
 	elif args.cmd == "test-load" and len(args.args) in (0,):
-		project.test_load(not args.no_clean, args.pre_load, args.post_load, pg_extractor_basedir=args.pg_extractor_basedir)
+		project.test_load(not args.no_clean, args.pre_load, args.post_load, pg_extractor=pg_extractor)
 
 	elif args.cmd == "create-version" and len(args.args) in (1, 2,):
 		(version, git_tag) = args_parse(args.args, 2)
@@ -212,25 +218,25 @@ def main():
 		(git_tag, new_version) = args_parse(args.args, 1)
 		project.test_update(git_tag, new_version, args.gitversion, not args.no_clean, pre_load=args.pre_load, post_load=args.post_load,
 			pre_load_old=args.pre_load_old, pre_load_new=args.pre_load_new, post_load_old=args.post_load_old, post_load_new=args.post_load_new,
-			pg_extractor=args.pg_extractor_basedir_basedir)
+			pg_extractor=pg_extractor)
 
 	elif args.cmd == "diff-db" and len(args.args) in (1,):
 		(pgconn,) = args_parse(args.args, 1)
 		project.diff_pg(address.Address(pgconn), args.diff_raw, not args.no_clean, args.no_owner, args.no_acl,
 			pre_load=args.pre_load, post_load=args.post_load, pre_remoted_load=args.pre_remoted_load, post_remoted_load=args.post_remoted_load,
-			swap=args.swap, pg_extractor_basedir=args.pg_extractor_basedir)
+			swap=args.swap, pg_extractor=pg_extractor)
 
 	elif args.cmd == "diff-db-file" and len(args.args) in (2,):
 		(pgconn, file) = args_parse(args.args, 2)
 		project.diff_pg_file(address.Address(pgconn), file, args.diff_raw, not args.no_clean, args.no_owner, args.no_acl,
 			pre_load=args.pre_load, post_load=args.post_load, pre_remoted_load=args.pre_remoted_load, post_remoted_load=args.post_remoted_load,
-			swap=args.swap, pg_extractor_basedir=args.pg_extractor_basedir)
+			swap=args.swap, pg_extractor=pg_extractor)
 
 	elif args.cmd == "diff-file-db" and len(args.args) in (2,):
 		(file, pgconn) = args_parse(args.args, 2)
 		project.diff_pg_file(address.Address(pgconn), file, args.diff_raw, not args.no_clean, args.no_owner, args.no_acl,
 			pre_load=args.pre_load, post_load=args.post_load, pre_remoted_load=args.pre_remoted_load, post_remoted_load=args.post_remoted_load,
-			swap=not args.swap, pg_extractor_basedir=args.pg_extractor_basedir)
+			swap=not args.swap, pg_extractor=pg_extractor)
 
 	elif args.cmd == "role-list" and len(args.args) in (0,):
 		project.role_list()
