@@ -147,27 +147,32 @@ class Project:
 						new_r.append(row[i])
 				d2 = new_d
 
-			print("Tables %s have different data:" % (table, ))
 			table_pr = table_print.TablePrint(d1[0])
 			for i in xrange(1, len(d1)):
 				row1 = d1[i]
+				find = False
 				for j in xrange(1, len(d2)):
 					row2 = d2[j]
 					if row1 == row2:
+						find = True
 						d2.remove(row2)
 						break
-				table_pr.add(row1, "+ |")
+				if not find:
+					table_pr.add(row1, "+ |")
 			for j in xrange(1, len(d2)):
 				row2 = d2[j]
 				table_pr.add(row2, "- |")
 			table_pr.sort()
-			for line in table_pr.format().splitlines():
-				if line.startswith("+"):
-					print(color.green("\t%s" % (line,)))
-				elif line.startswith("-"):
-					print(color.red("\t%s" % (line,)))
-				else:
-					print("\t%s" % (line,))
+			if table_pr.data:
+				print("Tables %s have different data:" % (table, ))
+				for line in table_pr.format().splitlines():
+					if line.startswith("+"):
+						print(color.green("\t%s" % (line,)))
+					elif line.startswith("-"):
+						print(color.red("\t%s" % (line,)))
+					else:
+						print("\t%s" % (line,))
+				print("\n")
 
 
 	def diff_elements(self, exclude_schemas, elements_name, elements1, elements2, no_owner, no_acl):
