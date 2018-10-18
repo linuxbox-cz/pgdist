@@ -31,7 +31,7 @@ class PG_extractor:
 
 	def print_dump_info(self):
 		if self.basedir:
-			print("pg_extractor dumped project to: %s" % (pg_extractor.basedir))
+			print("pg_extractor dumped project to: %s" % (self.basedir))
 
 	def print_diff(self, swap=False):
 		self.print_dump_info()
