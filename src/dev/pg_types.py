@@ -158,10 +158,10 @@ class Project:
 						d2.remove(row2)
 						break
 				if not find:
-					table_pr.add(row1, "+ |")
+					table_pr.add(row1, "- |")
 			for j in xrange(1, len(d2)):
 				row2 = d2[j]
-				table_pr.add(row2, "- |")
+				table_pr.add(row2, "+ |")
 			table_pr.sort()
 			if table_pr.data:
 				print("Tables %s have different data:" % (table, ))
@@ -232,7 +232,10 @@ class Project:
 				elements1[name].update_element(file, elements2[name])
 
 	def set_data(self, data):
-		self.table_data = data
+		if data is None:
+			self.table_data = {}
+		else:
+			self.table_data = data
 
 class Schema(Element):
 	def __init__(self, command, name):

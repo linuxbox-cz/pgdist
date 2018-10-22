@@ -756,11 +756,11 @@ def print_diff(dump1, dump2, data1, data2, diff_raw, no_owner, no_acl, fromfile,
 			else:
 				sys.stdout.write(d)
 	else:
-		pr1 = pg_parser.parse(io.StringIO(dump2))
+		pr1 = pg_parser.parse(io.StringIO(dump1))
 		pr1.set_data(data1)
-		pr2 = pg_parser.parse(io.StringIO(dump1))
+		pr2 = pg_parser.parse(io.StringIO(dump2))
 		pr2.set_data(data2)
-		pr2.diff(pr1, no_owner=no_owner, no_acl=no_acl)
+		pr1.diff(pr2, no_owner=no_owner, no_acl=no_acl)
 
 def diff_pg(addr, diff_raw, clean, no_owner, no_acl, pre_load=None, post_load=None, pre_remoted_load=None, post_remoted_load=None, swap=False, pg_extractor=None):
 	config.check_set_test_db()
