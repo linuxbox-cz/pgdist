@@ -794,7 +794,7 @@ def diff_pg_file(addr, fname, diff_raw, clean, no_owner, no_acl, pre_load=None, 
 		pg_extractor.print_diff(swap)
 		pg_extractor.clean()
 	else:
-		print_diff(dump_r, dump_file, diff_raw, None, None, no_owner, no_acl, fromfile=addr.addr, tofile=fname, swap=swap)
+		print_diff(dump_r, dump_file, None, None, diff_raw, no_owner, no_acl, fromfile=addr.addr, tofile=fname, swap=swap)
 
 def role_list():
 	project = ProjectFs()
