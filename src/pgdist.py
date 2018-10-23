@@ -162,7 +162,7 @@ def main():
 			less = sys.stdout.isatty()
 
 		if less:
-			pager = subprocess.Popen(["less", "-FKSMIR"], stdin=subprocess.PIPE, stdout=sys.stdout)
+			pager = subprocess.Popen(["less", "-FKSMIR"], bufsize=1, stdin=subprocess.PIPE, stdout=sys.stdout)
 			sys.stdout = pager.stdin
 			atexit.register(close_less, pager)
 

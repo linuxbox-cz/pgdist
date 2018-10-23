@@ -47,7 +47,7 @@ class PG_extractor:
 			args.append(self.db2)
 			args.append(self.db1)
 		logging.debug(str(args))
-		process = subprocess.Popen(args, cwd=self.get_dumpdir(), stdout=sys.stdout)
+		process = subprocess.Popen(args, bufsize=1, cwd=self.get_dumpdir(), stdout=sys.stdout)
 		retcode = process.wait()
 
 	def clean(self):

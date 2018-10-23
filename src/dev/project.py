@@ -258,7 +258,7 @@ class ProjectGit(ProjectBase):
 			# TODO err msg
 			sys.exit(1)
 		logging.debug("Git archive: %s" % (" ".join(args),))
-		process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE, cwd=self.directory or ".")
+		process = subprocess.Popen(args, bufsize=8192, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE, cwd=self.directory or ".")
 		output, err = process.communicate()
 		retcode = process.poll()
 		if retcode != 0:
