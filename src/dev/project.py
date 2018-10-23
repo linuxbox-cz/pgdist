@@ -746,6 +746,7 @@ def print_diff(dump1, dump2, data1, data2, diff_raw, no_owner, no_acl, fromfile,
 	if swap:
 		dump1, dump2 = dump2, dump1
 		fromfile, tofile = tofile, fromfile
+		data1, data2 = data2, data1
 	if diff_raw:
 		diff_c = difflib.unified_diff(dump1.splitlines(1), dump2.splitlines(1), fromfile=fromfile, tofile=tofile)
 		for d in diff_c:

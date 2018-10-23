@@ -33,7 +33,7 @@ PGdist - distribute PotgreSQL functions, tables, etc...
  
     diff-db pgconn [git_tag] - diff project and database
     diff-db-file pgconn file - diff file and database
-    diff-file-db pgconn file - diff database and file
+    diff-file-db file pgconn - diff database and file
 
     role-list - print roles in project
     role-add name [nologin|login] [password] - add role to project
