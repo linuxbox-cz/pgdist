@@ -43,7 +43,7 @@ PGdist - distribute PotgreSQL functions, tables, etc...
     require-add project git git_tree_ish - add require to another project
     require-rm project - remove require to another project
 
-    dbparam-set [params] - parameters with create a database
+    dbparam-set [param [...]] - parameters with create a database (e.g.: OWNER lbadmin ...)
     dbparam-get - print parameters to create a database
 
     data-add table [column1 [...]] - add table to compare data
@@ -261,8 +261,11 @@ def main():
 		(project_name, ) = args_parse(args.args, 1)
 		project.require_rm(project_name)
 
-	elif args.cmd == "dbparam-set" and len(args.args) in (0, 1):
-		(dbparam, ) = args_parse(args.args, 1)
+	elif args.cmd == "dbparam-set":
+		if len(args.args) == 0:
+			dbparam = None
+		else:
+			dbparam = " ".join(args.args)
 		project.dbparam_set(dbparam)
 
 	elif args.cmd == "dbparam-get" and len(args.args) in (0,):

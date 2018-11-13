@@ -259,7 +259,7 @@ def clean(project_name, dbname, conninfo):
 	conn = connect(conninfo, dbname)
 	cursor = conn.cursor()
 	pgdist_install(dbname, conn)
-	logging.info("clean %s from %s" % (project.name, dbname))
+	logging.info("clean %s from %s" % (project_name, dbname))
 	cursor.execute("DELETE FROM pgdist.installed WHERE project = %s RETURNING *", (project_name,))
 	for row in cursor.fetchall():
 		cursor.execute("INSERT INTO pgdist.history (project, version, part, comment) VALUES (%s, %s, %s, %s);",
