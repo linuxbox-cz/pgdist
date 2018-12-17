@@ -478,6 +478,10 @@ def create_version(version, git_tag, force):
 					build_file.write("--\n")
 					for user in project.roles:
 						build_file.write("-- role: %s\n" % (user,))
+				if project.requires:
+					build_file.write("--\n")
+					for require in project.requires:
+						build_file.write("-- require: %s\n" % (require.project_name,))
 			build_file.write("--\n")
 			build_file.write("-- part: %s\n" % (i+1))
 			if part.single_transaction:
@@ -650,6 +654,10 @@ def create_update(git_tag, new_version, force, gitversion=None, clean=True, pre_
 			build_file.write("--\n")
 			for user in project_new.roles:
 				build_file.write("-- role: %s\n" % (user,))
+		if project_new.requires:
+			build_file.write("--\n")
+			for require in project_new.requires:
+				build_file.write("-- require: %s\n" % (require.project_name,))
 		build_file.write("--\n")
 		build_file.write("-- part: 1\n")
 		build_file.write("-- single_transaction\n")
@@ -763,9 +771,12 @@ def print_diff(dump1, dump2, data1, data2, diff_raw, no_owner, no_acl, fromfile,
 		pr2.set_data(data2)
 		pr1.diff(pr2, no_owner=no_owner, no_acl=no_acl)
 
-def diff_pg(addr, diff_raw, clean, no_owner, no_acl, pre_load=None, post_load=None, pre_remoted_load=None, post_remoted_load=None, swap=False, pg_extractor=None):
+def diff_pg(addr, git_tag, diff_raw, clean, no_owner, no_acl, pre_load=None, post_load=None, pre_remoted_load=None, post_remoted_load=None, swap=False, pg_extractor=None):
 	config.check_set_test_db()
-	project = ProjectFs()
+	if git_tag:
+		project = ProjectGit(git_tag)
+	else:
+		project = ProjectFs()
 
 	roles_remote = get_roles(addr)
 	sql_remote = dump_remote(addr, no_owner, no_acl)

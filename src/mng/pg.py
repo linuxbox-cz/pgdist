@@ -12,6 +12,8 @@ import subprocess
 import random
 import string
 
+import project as pgproject
+
 psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
 
 PGDIST_VERSION = 1
@@ -207,6 +209,12 @@ def install(dbname, project, ver, conninfo, directory, verbose, create_db):
 	cursor = conn.cursor()
 	pgdist_install(dbname, conn)
 	for part in ver.parts:
+		for require in part.requires:
+			cursor.execute("SELECT 1 FROM pgdist.installed WHERE project=%s", (require,))
+			if not cursor.fetchall():
+				logging.info("Install require %s" % (require,))
+				pgproject.install(require, dbname, None, conninfo, directory, verbose, create_db)
+	for part in ver.parts:
 		for role in part.roles:
 			create_role(conn, role)
 	for part in ver.parts:
@@ -238,6 +246,12 @@ def update(dbname, project, update, conninfo, directory, verbose):
 			cursor.execute("INSERT INTO pgdist.installed (project, version, part, parts) VALUES (%s, %s, %s, %s);",
 				(project.name, str(update.version), 1, 1))
 	else:
+		for part in update.parts:
+			for require in part.requires:
+				cursor.execute("SELECT 1 FROM pgdist.installed WHERE project=%s", (require,))
+				if not cursor.fetchall():
+					logging.info("Install require %s" % (require,))
+					pgproject.install(require, dbname, None, conninfo, directory, verbose, False)
 		for part in update.parts:
 			for role in part.roles:
 				create_role(conn, role)
@@ -278,3 +292,23 @@ def set_version(project_name, dbname, version, conninfo):
 	if not cursor.fetchone():
 		cursor.execute("INSERT INTO pgdist.installed (project, version, part, parts) VALUES (%s, %s, 1, 1);",
 			(project_name, version))
+	conn.close()
+
+def check_installed(dbname, project_name, conninfo):
+	conn = connect(conninfo, dbname)
+	if pg.check_pgdist_installed(db, conn):
+		pg.check_pgdist_version(db, conn)
+		cursor = conn.cursor()
+		cursor.execute("SELECT 1 FROM pgdist.installed WHERE project=%s", (project_name,))
+		for row in cursor:
+			conn.close()
+			return True
+	conn.close()
+	return False
+
+def check_installed2(cursor, project_name):
+	cursor.execute("SELECT 1 FROM pgdist.installed WHERE project=%s", (project_name,))
+	for row in cursor:
+		conn.close()
+		return True
+	return False

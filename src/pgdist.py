@@ -220,9 +220,9 @@ def main():
 			pre_load_old=args.pre_load_old, pre_load_new=args.pre_load_new, post_load_old=args.post_load_old, post_load_new=args.post_load_new,
 			pg_extractor=pg_extractor)
 
-	elif args.cmd == "diff-db" and len(args.args) in (1,):
-		(pgconn,) = args_parse(args.args, 1)
-		project.diff_pg(address.Address(pgconn), args.diff_raw, not args.no_clean, args.no_owner, args.no_acl,
+	elif args.cmd == "diff-db" and len(args.args) in (1, 2):
+		(pgconn, git_tag) = args_parse(args.args, 2)
+		project.diff_pg(address.Address(pgconn), git_tag, args.diff_raw, not args.no_clean, args.no_owner, args.no_acl,
 			pre_load=args.pre_load, post_load=args.post_load, pre_remoted_load=args.pre_remoted_load, post_remoted_load=args.post_remoted_load,
 			swap=args.swap, pg_extractor=pg_extractor)
 

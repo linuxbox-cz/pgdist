@@ -31,6 +31,7 @@ class ProjectVersionPart:
 		self.fname = fname
 		self.part = part
 		self.roles = []
+		self.requires = []
 		self.single_transaction = True
 		self.dbparam = ""
 		with(open(os.path.join(directory, fname))) as f:
@@ -47,6 +48,10 @@ class ProjectVersionPart:
 				x = re.match(r"--\s*role:\s+(?P<role>\S+)(\s+(?P<param>.*))?", line)
 				if x:
 					self.roles.append(Role(x.group("role"), x.group("param").split("--")[0].split(" ")))
+				# require
+				x = re.match(r"--\s*require:\s+(?P<project_name>\S+)", line)
+				if x:
+					self.requires.append(x.group("project_name"))
 				# dbparam
 				x = re.match(r"--\s*dbparam:\s+(?P<param>.*)", line)
 				if x:
@@ -74,6 +79,7 @@ class ProjectUpdatePart:
 		self.fname = fname
 		self.part = part
 		self.roles = []
+		self.requires = []
 		self.single_transaction = True
 		with(open(os.path.join(directory, fname))) as f:
 			for line in f:
@@ -89,6 +95,10 @@ class ProjectUpdatePart:
 				x = re.match(r"--\s*role:\s+(?P<role>\S+)(\s+(?P<param>.*))?", line)
 				if x:
 					self.roles.append(Role(x.group("role"), x.group("param").split("--")[0].split(" ")))				# end header
+				# require
+				x = re.match(r"--\s*require:\s+(?P<project_name>\S+)", line)
+				if x:
+					self.requires.append(x.group("project_name"))
 				x = re.match(r"--\s*end\s+header", line)
 				if x:
 					break
