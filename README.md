@@ -44,94 +44,67 @@ test_db is pgconn to testing postgres for `test-load` and `test-update`.
 
 Before install pgdist checks if roles in project exists in postgres. It check and change nologin/login option. If option password set, pgdist create in `/etc/lbox/postgresql/roles/` dir file `username` with content `PGPASSWORD=GENERATED_PASSWORD`.
 
-### `pgdist init project [directory]`
 
-Initialize pgdist project. Create `sql` and `sql_dist` directory. 
+### Help
+```
+PGdist - distribute PotgreSQL functions, tables, etc...
+PGdist Devel - develop PostgreSQL project
 
-### `pgdist create-schema schema`
+    init PROJECT [DIRECTORY] - initialize pgdist project
+    create-schema SCHEMA - create new schema directories
+    status - show new files and removed files compared to pg_project.sql
+    add FILE1 [FILE2 ...] - add files to pg_project.sql
+    rm FILE1 [FILE2 ...] - removed files from pg_project.sql
 
-Create directory tree for schema. First level is schema name, second level is type of data type. Second level contains `*.sql ` files with SQL and DDL commands. Names of second level and files are arbitrary.
+    test-load - load project to testing postgres
+    create-version VERSION [GIT_TAG] - create version files
+    create-update GIT_TAG NEW_VERSION - create update files with differencies
+                                          - GIT_TAG - old version tag
+                                          - NEW_VERSION - version created by create-version
+    test-update GIT_TAG NEW_VERSION - load old and new version and compare it
+                                          - GIT_TAG - old version tag
+                                          - NEW_VERSION - version created by create-version
 
-### `pgdist status`
+    diff-db PGCONN [GIT_TAG] - diff project and database
+    diff-db-file PGCONN FILE - diff file and database
+    diff-file-db FILE PGCONN - diff database and file
 
-show new files and removed files compared to pg_project.sql
+    role-list - print roles in project
+    role-add NAME [login|nologin] [password] - add role to project
+    role-change NAME [login|nologin] [password] - change role
+    role-rm NAME - remove role from project, not remove from databases
 
-### `pgdist add file1 [file2 ...]`
+    require-add PROJECT GIT GIT_TREE_ISH - add require to another project
+    require-rm PROJECT - remove require to another project
 
-add files to pg_project.sql
+    dbparam-set [PARAM [...]] - parameters with create a database (e.g.: OWNER lbadmin ...)
+    dbparam-get - print parameters to create a database
 
-### `pgdist rm file1 [file2 ...]`
+    data-add TABLE [COLUMN1 [...]] - add table to compare data
+    data-rm TABLE - remove table to compare data
+    data-list - list table of data compare
 
-removed files from pg_project.sql
+PGdist Server - manage projects in PostgreSQL database
 
-### `pgdist test-load`
+    list [PROJECT [DBNAME]] - show list of installed projects in databases
+    install PROJECT DBNAME [VERSION] - install project to database
+    check-update [PROJECT [DBNAME [VERSION]]] - check update project
+    update [PROJECT [DBNAME [VERSION]]] - update project
+    clean PROJECT [DBNAME] - remove all info about project
+    set-version PROJECT DBNAME VERSION - force change version without run scripts
+    pgdist-update [DBNAME] - update pgdist version in database
 
-load project to testing postgres
+PGCONN - ssh connection + connection URI, see:
+    https://www.postgresql.org/docs/current/static/libpq-connect.html#LIBPQ-CONNSTRING
+    without string 'postgresql://'
+    examples:
+        localhost/mydb - connect to mydb
+        root@server//user@/mydb - connect to server via ssh and next connect to postgres as user into mydb
 
-### `pgdist create-version version [git_tag]`
+Configuration:
+    connection to testing database in file "~/.pgdist" (or ".pgdist" in project path) with content:
+        [pgdist]
+        test_db: user@host/dbname
 
-create version files
-
-### `pgdist create-update git_tag new-version`
-
-create version files with differencies
-- old-version - git tag
-- new-version - version created by create-version
-
-version file constainds different between old and new version. It have to be check and rewrite.
-
-### `pgdist test-update git_tag new-version`
-
-load old and new version and compare it and print diff
-- old-version - git tag
-- new-version - version created by create-version
-
-### `pgdist diff-db pgconn [git_tag]`
-
-diff existing database and project
-
-### `pgdist role-list`
-
-print roles in project
-
-### `pgdist role-add name [nologin|login] [password]`
-
-add role to project
-
-### `pgdist role-change name [nologin|login] [password]`
-
-change param on role
-
-### `pgdist role-rm name`
-
-remove role from project, not remove from databases
-
-
-
-## Instalation part
-
-Instalation part is for usage to install projects to database.
-
-### `pgdist list [project [dbname]]`
-
-show list of installed projects in database and sql files in project's directory
-
-### `pgdist install project dbname [version]`
-
-install project to database
-
-### `pgdist update [project [dbname [version]]]`
-
-update project
-
-### `pgdist clean project [dbname]`
-
-remove all info about project
-
-### `pgdist set-version project version dbname`
-
-force change version without run scripts
-
-### `pgdist pgdist-update [dbname]`
-
-update pgdist version in database
+        test_db - PGCONN to testing postgres, user has to create databases and users
+```

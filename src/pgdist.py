@@ -15,52 +15,53 @@ sys.setdefaultencoding('utf-8')
 
 description = """
 PGdist - distribute PotgreSQL functions, tables, etc...
+PGdist Devel - develop PostgreSQL project
 
-    init project [directory] - initialize pgdist project
-    create-schema schema - create new schema directory tree
+    init PROJECT [DIRECTORY] - initialize pgdist project
+    create-schema SCHEMA - create new schema directories
     status - show new files and removed files compared to pg_project.sql
-    add file1 [file2 ...] - add files to pg_project.sql
-    rm file1 [file2 ...] - removed files from pg_project.sql
+    add FILE1 [FILE2 ...] - add files to pg_project.sql
+    rm FILE1 [FILE2 ...] - removed files from pg_project.sql
 
     test-load - load project to testing postgres
-    create-version version [git_tag] - create version files
-    create-update git_tag new-version - create version files with differencies
-                                          - old-version - git tag
-                                          - new-version - version created by create-version
-    test-update git_tag new-version - load old and new version and compare it
-                                          - old-version - git tag
-                                          - new-version - version created by create-version
- 
-    diff-db pgconn [git_tag] - diff project and database
-    diff-db-file pgconn file - diff file and database
-    diff-file-db file pgconn - diff database and file
+    create-version VERSION [GIT_TAG] - create version files
+    create-update GIT_TAG NEW_VERSION - create update files with differencies
+                                          - GIT_TAG - old version tag
+                                          - NEW_VERSION - version created by create-version
+    test-update GIT_TAG NEW_VERSION - load old and new version and compare it
+                                          - GIT_TAG - old version tag
+                                          - NEW_VERSION - version created by create-version
+
+    diff-db PGCONN [GIT_TAG] - diff project and database
+    diff-db-file PGCONN FILE - diff file and database
+    diff-file-db FILE PGCONN - diff database and file
 
     role-list - print roles in project
-    role-add name [nologin|login] [password] - add role to project
-    role-change name [nologin|login] [password] - change param on role
-    role-rm name - remove role from project, not remove from databases
+    role-add NAME [login|nologin] [password] - add role to project
+    role-change NAME [login|nologin] [password] - change role
+    role-rm NAME - remove role from project, not remove from databases
 
-    require-add project git git_tree_ish - add require to another project
-    require-rm project - remove require to another project
+    require-add PROJECT GIT GIT_TREE_ISH - add require to another project
+    require-rm PROJECT - remove require to another project
 
-    dbparam-set [param [...]] - parameters with create a database (e.g.: OWNER lbadmin ...)
+    dbparam-set [PARAM [...]] - parameters with create a database (e.g.: OWNER lbadmin ...)
     dbparam-get - print parameters to create a database
 
-    data-add table [column1 [...]] - add table to compare data
-    data-rm table - remove table to compare data
-    data-list
+    data-add TABLE [COLUMN1 [...]] - add table to compare data
+    data-rm TABLE - remove table to compare data
+    data-list - list table of data compare
 
 PGdist Server - manage projects in PostgreSQL database
 
-    list [project [dbname]] - show list of installed projects in database
-    install project dbname [version] - install project to database
-    check-update [project [dbname [version]]] - check update project
-    update [project [dbname [version]]] - update project
-    clean project [dbname] - remove all info about project
-    set-version project dbname version - force change version without run scripts
-    pgdist-update [dbname] - update pgdist version in database
+    list [PROJECT [DBNAME]] - show list of installed projects in databases
+    install PROJECT DBNAME [VERSION] - install project to database
+    check-update [PROJECT [DBNAME [VERSION]]] - check update project
+    update [PROJECT [DBNAME [VERSION]]] - update project
+    clean PROJECT [DBNAME] - remove all info about project
+    set-version PROJECT DBNAME VERSION - force change version without run scripts
+    pgdist-update [DBNAME] - update pgdist version in database
 
-pgconn - ssh connection + connection URI, see:
+PGCONN - ssh connection + connection URI, see:
     https://www.postgresql.org/docs/current/static/libpq-connect.html#LIBPQ-CONNSTRING
     without string 'postgresql://'
     examples:
@@ -72,7 +73,7 @@ Configuration:
         [pgdist]
         test_db: user@host/dbname
 
-        test_db - URI to testing postgres, user has to create databases and users
+        test_db - PGCONN to testing postgres, user has to create databases and users
 """
 
 def main():
