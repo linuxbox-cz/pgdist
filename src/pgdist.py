@@ -121,7 +121,6 @@ def main():
 	parser.add_argument("--directory", help="directory contains script install and update", default="/usr/share/pgdist/install")
 	parser.add_argument("--syslog-facility", dest="syslog_facility", help="syslog facility")
 	parser.add_argument("--syslog-ident", dest="syslog_ident", help="syslog ident")
-	parser.add_argument("--skip", help="skip updates while update to some version", action="store_true")
 
 	args = parser.parse_args()
 
@@ -295,11 +294,11 @@ def main():
 
 	elif args.cmd == "check-update" and len(args.args) in (0, 1, 2, 3,):
 		(project_name, dbname, version) = args_parse(args.args, 3)
-		project.check_update(project_name, dbname, version, conninfo.ConnInfo(args), args.directory, args.verbose, args.skip)
+		project.check_update(project_name, dbname, version, conninfo.ConnInfo(args), args.directory, args.verbose)
 
 	elif args.cmd == "update" and len(args.args) in (0, 1, 2, 3,):
 		(project_name, dbname, version) = args_parse(args.args, 3)
-		project.update(project_name, dbname, version, conninfo.ConnInfo(args), args.directory, args.verbose, args.skip)
+		project.update(project_name, dbname, version, conninfo.ConnInfo(args), args.directory, args.verbose)
 
 	elif args.cmd == "clean" and len(args.args) in (1, 2,):
 		(project_name, dbname) = args_parse(args.args, 2)

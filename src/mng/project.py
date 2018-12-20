@@ -108,7 +108,6 @@ class ProjectUpdate:
 		self.version_new = LooseVersion(version_new)
 		self.version_old = LooseVersion(version_old)
 		self.parts = []
-		self.skip = False
 
 	def __str__(self):
 		return "%s -> %s" % (self.version_old, self.version_new)
@@ -119,19 +118,6 @@ class ProjectUpdate:
 	def add_part(self, fname, directory, part):
 		self.parts.insert(part, ProjectUpdatePart(fname, directory, part))
 		self.parts.sort(key=lambda x: x.part)
-
-class ProjectUpdateSkip:
-	def __init__(self, version_old, version_new):
-		self.version_new = LooseVersion(version_new)
-		self.version_old = LooseVersion(str(version_old))
-		self.parts = []
-		self.skip = True
-
-	def __str__(self):
-		return "%s -> %s (skip)" % (self.version_old, self.version_new)
-
-	def cmp_text(self, version_old, version_new):
-		return self.version_old == version_old and self.version_new == version_new
 
 class  ProjectInstalated:
 	def __init__(self, dbname, version, from_version, part, parts):
@@ -203,13 +189,10 @@ class Project:
 				pg.install(dbname, self, ver, conninfo, directory, verbose, create_db)
 				return
 		
-	def find_updates(self, version1, version2, skip):
+	def find_updates(self, version1, version2):
 		best_updatest = []
 		while True:
 			update = self.find_updates2(version1, version2)
-			if not update and skip:
-				update = self.find_skip(version1, version2)
-
 			if update:
 				best_updatest.append(update)
 				version1 = update.version_new
@@ -232,23 +215,6 @@ class Project:
 			return ver
 		logging.debug("\tnot found")
 		return None
-
-	def find_skip(self, version1, version2):
-		logging.debug("project: %s find_skip from: %s, to: %s" % (self.name, version1, version2))
-		if version2:
-			v = [x for x in self.updates if x.version_old > version1 and x.version_new <= version2]
-		else:
-			v = [x for x in self.updates if x.version_old > version1]
-		if v:
-			min_v = min(v, key=lambda x: x.version_old)
-		else:
-			min_v = version2
-		if not min_v or version1 == min_v:
-			logging.debug("project: %s no skip from: %s" % (self.name, version1))
-			return None
-		logging.debug("project: %s create skip from: %s, to: %s" % (self.name, version1, min_v))
-		return ProjectUpdateSkip(version1, min_v)
-
 
 	def update(self, dbname, update, conninfo, directory, verbose):
 		pg.update(dbname, self, update, conninfo, directory, verbose)
@@ -424,10 +390,10 @@ def install(project_name, dbname, version, conninfo, directory, verbose, create_
 		logging.error("Project %s is installed." % (project_name,))
 		sys.exit(1)
 
-def check_update(project_name, dbname, version, conninfo, directory, verbose, skip):
-	update(project_name, dbname, version, conninfo, directory, verbose, skip, check=True)
+def check_update(project_name, dbname, version, conninfo, directory, verbose):
+	update(project_name, dbname, version, conninfo, directory, verbose, check=True)
 
-def update(project_name, dbname, version, conninfo, directory, verbose, skip, check=False):
+def update(project_name, dbname, version, conninfo, directory, verbose, check=False):
 	if project_name == "-":
 		project_name = None
 	if dbname == "-":
@@ -443,7 +409,7 @@ def update(project_name, dbname, version, conninfo, directory, verbose, skip, ch
 	exists_updates = False
 	for project in projects:
 		for ins in project.installed:
-			updates = project.find_updates(ins.version, version, skip)
+			updates = project.find_updates(ins.version, version)
 			ins.updates = updates
 			if updates:
 				exists_updates = True
