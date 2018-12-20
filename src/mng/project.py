@@ -18,12 +18,12 @@ class Role:
 
 	def __str__(self):
 		p = [self.name]
-		if self.password:
-			p.append("password")
 		if self.nologin:
 			p.append("nologin")
 		if self.login:
 			p.append("login")
+		if self.password:
+			p.append("password")
 		return " ".join(p)
 
 class ProjectVersionPart:
