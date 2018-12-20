@@ -41,3 +41,8 @@ class Address:
 
 	def get_param(self, dbname=None):
 		return self.parse(dbname)["param"]
+
+	def cache_file(self, cache_type):
+		if cache_type:
+			return "/tmp/pgdist-cache-%s-%s" % (self.addr.replace("/", "-"), cache_type)
+		return "/tmp/pgdist-cache-%s" % (self.addr.replace("/", "-"),)

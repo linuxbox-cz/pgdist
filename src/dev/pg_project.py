@@ -708,28 +708,28 @@ def test_update(git_tag, new_version, updates, clean=True, gitversion=None, pre_
 		pr_updated = pg_parser.parse(io.StringIO(dump_updated))
 		pr_updated.diff(pr_cur)
 
-def dump_remote(addr, no_owner, no_acl):
+def dump_remote(addr, no_owner, no_acl, cache):
 	try:
 		pg = pg_conn.PG(addr)
-		return pg.dump(no_owner, no_acl)
+		return pg.dump(no_owner, no_acl, cache=cache)
 	except pg_conn.PgError as e:
 		logging.error("Dump fail:")
 		print(e.output)
 		sys.exit(1)
 
-def dump_remote_data(project, addr):
+def dump_remote_data(project, addr, cache):
 	try:
 		pg = pg_conn.PG(addr)
-		return pg.dump_data(project)
+		return pg.dump_data(project, cache=cache)
 	except pg_conn.PgError as e:
 		logging.error("Dump fail:")
 		print(e.output)
 		sys.exit(1)
 
-def get_roles(addr):
+def get_roles(addr, cache):
 	try:
 		pg = pg_conn.PG(addr)
-		return pg.get_roles()
+		return pg.get_roles(cache)
 	except pg_conn.PgError as e:
 		logging.error("Get roles fail:")
 		print(e.output)
@@ -771,16 +771,16 @@ def print_diff(dump1, dump2, data1, data2, diff_raw, no_owner, no_acl, fromfile,
 		pr2.set_data(data2)
 		pr1.diff(pr2, no_owner=no_owner, no_acl=no_acl)
 
-def diff_pg(addr, git_tag, diff_raw, clean, no_owner, no_acl, pre_load=None, post_load=None, pre_remoted_load=None, post_remoted_load=None, swap=False, pg_extractor=None):
+def diff_pg(addr, git_tag, diff_raw, clean, no_owner, no_acl, pre_load=None, post_load=None, pre_remoted_load=None, post_remoted_load=None, swap=False, pg_extractor=None, cache=False):
 	config.check_set_test_db()
 	if git_tag:
 		project = ProjectGit(git_tag)
 	else:
 		project = ProjectFs()
 
-	roles_remote = get_roles(addr)
-	sql_remote = dump_remote(addr, no_owner, no_acl)
-	table_data_remote = dump_remote_data(project, addr)
+	roles_remote = get_roles(addr, cache)
+	sql_remote = dump_remote(addr, no_owner, no_acl, cache)
+	table_data_remote = dump_remote_data(project, addr, cache)
 	create_roles(roles_remote)
 	dump_r = load_dump_and_dump(sql_remote, project.name, clean, no_owner, no_acl, pre_load=pre_remoted_load, post_load=post_remoted_load, dbs="remote", pg_extractor=pg_extractor)
 
@@ -795,8 +795,8 @@ def diff_pg(addr, git_tag, diff_raw, clean, no_owner, no_acl, pre_load=None, pos
 def diff_pg_file(addr, fname, diff_raw, clean, no_owner, no_acl, pre_load=None, post_load=None, pre_remoted_load=None, post_remoted_load=None, swap=False, pg_extractor=None):
 	config.check_set_test_db()
 
-	roles_remote = get_roles(addr)
-	sql_remote = dump_remote(addr, no_owner, no_acl)
+	roles_remote = get_roles(addr, cache)
+	sql_remote = dump_remote(addr, no_owner, no_acl, cache)
 	create_roles(roles_remote)
 	dump_r = load_dump_and_dump(sql_remote, "project", clean, no_owner, no_acl, pre_load=pre_remoted_load, post_load=post_remoted_load, dbs="remote", pg_extractor=pg_extractor)
 

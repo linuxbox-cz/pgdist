@@ -8,6 +8,8 @@ import io
 import subprocess
 import csv
 import os
+import json
+import time
 
 import config
 
@@ -117,10 +119,15 @@ class PG:
 			cmd = """DO $do$ BEGIN %s END $do$;""" % ("\n".join(creates),)
 			self.psql(cmd=cmd)
 
-	def get_roles(self):
+	def get_roles(self, cache):
+		if cache and self.test_cache_file("roles"):
+			return json.load(open(self.address.cache_file("roles")))
 		cmd = """SELECT string_agg(rolname, ',') FROM pg_roles;"""
 		(retcode, output) = self.psql(cmd=cmd, tuples_only=True)
-		return output.strip().split(",")
+		r = output.strip().split(",")
+		if cache:
+			json.dump(r, open(self.address.cache_file("roles"), "w"))
+		return r
 
 	def load_project(self, project):
 		self.create_roles(project)
@@ -153,15 +160,23 @@ class PG:
 	def load_dump(self, dump):
 		self.psql(cmd=dump, single_transaction=False, change_db=True)
 
-	def dump(self, no_owner=False, no_acl=False):
+	def dump(self, no_owner=False, no_acl=False, cache=False):
+		if cache and self.test_cache_file("struct"):
+			return open(self.address.cache_file("struct")).read()
 		(retcode, output) = self.pg_dump(change_db=True, no_owner=no_owner, no_acl=no_acl)
-		return unicode(output, "UTF8")
+		r = unicode(output, "UTF8")
+		if cache:
+			open(self.address.cache_file("struct"), "w").write(r)
+		return r
+
 
 	def load_file(self, filename):
 		if filename:
 			self.psql(single_transaction=True, file=filename, change_db=True)
 
-	def dump_data(self, project):
+	def dump_data(self, project, cache=False):
+		if cache and self.test_cache_file("data"):
+			return json.load(open(self.address.cache_file("data")))
 		r = {}
 		c = []
 		for tb in project.table_data:
@@ -198,6 +213,8 @@ class PG:
 				r[table_name] = dt
 			else:
 				line = data.readline()
+		if cache:
+			json.dump(r, open(self.address.cache_file("data"), "w"))
 		return r
 
 	def pg_extractor(self, pg_extractor, no_owner=False, no_acl=False):
@@ -226,3 +243,9 @@ class PG:
 		process = subprocess.Popen(args, bufsize=8192, cwd=pg_extractor.get_dumpdir(), env=env)
 		retcode = process.wait()
 		pg_extractor.add_db(self.address.get_dbname(self.dbname))
+
+	def test_cache_file(self, cache_type):
+		fname = self.address.cache_file(cache_type)
+		if os.path.isfile(fname):
+			return time.time() - os.path.getmtime(fname) < 4 * 60 * 60
+		return False

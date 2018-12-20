@@ -19,10 +19,12 @@ class Row:
 			elif v == "":
 				row2.append([""])
 			else:
-				try:
-					r = unicode(v, "utf-8").splitlines()
-				except UnicodeDecodeError:
-					r = ["UnicodeDecodeError"]
+				if type(v) != unicode:
+					try:
+						v = unicode(v, "utf-8")
+					except UnicodeDecodeError:
+						v = "UnicodeDecodeError"
+				r = v.splitlines()
 				row2.append(r)
 				self.rows = max(self.rows, len(r))
 				for rv in r:
