@@ -151,7 +151,7 @@ def main():
 		import address
 		import config
 		import pg_parser
-		import project
+		import pg_project
 		import pg_extractor as pg_extractor_m
 
 		if args.less:
@@ -175,7 +175,7 @@ def main():
 	if args.cmd in ("list", "install", "check-update", "update", "clean", "set-version", "pgdist-update"):
 		sys.path.insert(1, os.path.join(sys.path[0], "mng"))
 		import conninfo
-		import project
+		import pg_project
 
 	if args.pg_extractor:
 		pg_extractor = pg_extractor_m.PG_extractor(args.pg_extractor_basedir)
@@ -187,130 +187,130 @@ def main():
 		(project_name, directory) = args_parse(args.args, 2)
 		if not directory:
 			directory = os.getcwd()
-		project.project_init(project_name, directory)
+		pg_project.project_init(project_name, directory)
 
 	elif args.cmd == "create-schema" and len(args.args) in (1,):
 		(schema_name,) = args_parse(args.args, 1)
-		project.create_schema(schema_name)
+		pg_project.create_schema(schema_name)
 
 	elif args.cmd == "status" and len(args.args) in (0,):
-		project.status()
+		pg_project.status()
 
 	elif args.cmd == "add":
-		project.add(args.args, args.all)
+		pg_project.add(args.args, args.all)
 
 	elif args.cmd ==  "rm":
-		project.rm(args.args, args.all)
+		pg_project.rm(args.args, args.all)
 
 	elif args.cmd == "test-load" and len(args.args) in (0,):
-		project.test_load(not args.no_clean, args.pre_load, args.post_load, pg_extractor=pg_extractor)
+		pg_project.test_load(not args.no_clean, args.pre_load, args.post_load, pg_extractor=pg_extractor)
 
 	elif args.cmd == "create-version" and len(args.args) in (1, 2,):
 		(version, git_tag) = args_parse(args.args, 2)
-		project.create_version(version, git_tag, args.force)
+		pg_project.create_version(version, git_tag, args.force)
 
 	elif args.cmd == "create-update" and len(args.args) in (2,):
 		(git_tag, new_version) = args_parse(args.args, 2)
-		project.create_update(git_tag, new_version, args.force, args.gitversion, clean=not args.no_clean, pre_load=args.pre_load, post_load=args.post_load,
+		pg_project.create_update(git_tag, new_version, args.force, args.gitversion, clean=not args.no_clean, pre_load=args.pre_load, post_load=args.post_load,
 			pre_load_old=args.pre_load_old, pre_load_new=args.pre_load_new, post_load_old=args.post_load_old, post_load_new=args.post_load_new)
 
 	elif args.cmd == "test-update" and len(args.args) in (2,):
 		(git_tag, new_version) = args_parse(args.args, 1)
-		project.test_update(git_tag, new_version, args.gitversion, not args.no_clean, pre_load=args.pre_load, post_load=args.post_load,
+		pg_project.test_update(git_tag, new_version, args.gitversion, not args.no_clean, pre_load=args.pre_load, post_load=args.post_load,
 			pre_load_old=args.pre_load_old, pre_load_new=args.pre_load_new, post_load_old=args.post_load_old, post_load_new=args.post_load_new,
 			pg_extractor=pg_extractor)
 
 	elif args.cmd == "diff-db" and len(args.args) in (1, 2):
 		(pgconn, git_tag) = args_parse(args.args, 2)
-		project.diff_pg(address.Address(pgconn), git_tag, args.diff_raw, not args.no_clean, args.no_owner, args.no_acl,
+		pg_project.diff_pg(address.Address(pgconn), git_tag, args.diff_raw, not args.no_clean, args.no_owner, args.no_acl,
 			pre_load=args.pre_load, post_load=args.post_load, pre_remoted_load=args.pre_remoted_load, post_remoted_load=args.post_remoted_load,
 			swap=args.swap, pg_extractor=pg_extractor)
 
 	elif args.cmd == "diff-db-file" and len(args.args) in (2,):
 		(pgconn, file) = args_parse(args.args, 2)
-		project.diff_pg_file(address.Address(pgconn), file, args.diff_raw, not args.no_clean, args.no_owner, args.no_acl,
+		pg_project.diff_pg_file(address.Address(pgconn), file, args.diff_raw, not args.no_clean, args.no_owner, args.no_acl,
 			pre_load=args.pre_load, post_load=args.post_load, pre_remoted_load=args.pre_remoted_load, post_remoted_load=args.post_remoted_load,
 			swap=args.swap, pg_extractor=pg_extractor)
 
 	elif args.cmd == "diff-file-db" and len(args.args) in (2,):
 		(file, pgconn) = args_parse(args.args, 2)
-		project.diff_pg_file(address.Address(pgconn), file, args.diff_raw, not args.no_clean, args.no_owner, args.no_acl,
+		pg_project.diff_pg_file(address.Address(pgconn), file, args.diff_raw, not args.no_clean, args.no_owner, args.no_acl,
 			pre_load=args.pre_load, post_load=args.post_load, pre_remoted_load=args.pre_remoted_load, post_remoted_load=args.post_remoted_load,
 			swap=not args.swap, pg_extractor=pg_extractor)
 
 	elif args.cmd == "role-list" and len(args.args) in (0,):
-		project.role_list()
+		pg_project.role_list()
 
 	elif args.cmd == "role-add" and len(args.args) in (1, 2, 3,):
 		(name, arg1, arg2) = args_parse(args.args, 3)
-		project.role_add(name, arg1, arg2)
+		pg_project.role_add(name, arg1, arg2)
 
 	elif args.cmd == "role-change" and len(args.args) in (1, 2, 3,):
 		(name, arg1, arg2) = args_parse(args.args, 3)
-		project.role_change(name, arg1, arg2)
+		pg_project.role_change(name, arg1, arg2)
 
 	elif args.cmd == "role-rm" and len(args.args) in (1,):
 		(name,) = args_parse(args.args, 1)
-		project.role_rm(name)
+		pg_project.role_rm(name)
 
 	elif args.cmd == "require-add" and len(args.args) in (3,):
 		(project_name, git, git_tree_ish) = args_parse(args.args, 3)
-		project.require_add(project_name, git, git_tree_ish)
+		pg_project.require_add(project_name, git, git_tree_ish)
 
 	elif args.cmd == "require-rm" and len(args.args) in (1,):
 		(project_name, ) = args_parse(args.args, 1)
-		project.require_rm(project_name)
+		pg_project.require_rm(project_name)
 
 	elif args.cmd == "dbparam-set":
 		if len(args.args) == 0:
 			dbparam = None
 		else:
 			dbparam = " ".join(args.args)
-		project.dbparam_set(dbparam)
+		pg_project.dbparam_set(dbparam)
 
 	elif args.cmd == "dbparam-get" and len(args.args) in (0,):
-		project.dbparam_get()
+		pg_project.dbparam_get()
 
 	elif args.cmd == "data-add" and len(args.args) >= 1:
 		table = args.args[0]
 		columns = args.args[1:]
-		project.tabledata_add(table, columns)
+		pg_project.tabledata_add(table, columns)
 
 	elif args.cmd == "data-rm" and len(args.args) in (1,):
 		(table, ) = args_parse(args.args, 1)
-		project.tabledata_rm(table)
+		pg_project.tabledata_rm(table)
 
 	elif args.cmd == "data-list" and len(args.args) in (0,):
-		project.tabledata_list()
+		pg_project.tabledata_list()
 
 	# install projects
 	elif args.cmd == "list" and len(args.args) in (0, 1, 2,):
 		(project_name, dbname) = args_parse(args.args, 2)
-		project.prlist(project_name, dbname, conninfo.ConnInfo(args), args.directory, args.showall)
+		pg_project.prlist(project_name, dbname, conninfo.ConnInfo(args), args.directory, args.showall)
 
 	elif args.cmd == "install" and len(args.args) in (2, 3,):
 		(project_name, dbname, version) = args_parse(args.args, 3)
-		project.install(project_name, dbname, version, conninfo.ConnInfo(args), args.directory, args.verbose, args.create)
+		pg_project.install(project_name, dbname, version, conninfo.ConnInfo(args), args.directory, args.verbose, args.create)
 
 	elif args.cmd == "check-update" and len(args.args) in (0, 1, 2, 3,):
 		(project_name, dbname, version) = args_parse(args.args, 3)
-		project.check_update(project_name, dbname, version, conninfo.ConnInfo(args), args.directory, args.verbose)
+		pg_project.check_update(project_name, dbname, version, conninfo.ConnInfo(args), args.directory, args.verbose)
 
 	elif args.cmd == "update" and len(args.args) in (0, 1, 2, 3,):
 		(project_name, dbname, version) = args_parse(args.args, 3)
-		project.update(project_name, dbname, version, conninfo.ConnInfo(args), args.directory, args.verbose)
+		pg_project.update(project_name, dbname, version, conninfo.ConnInfo(args), args.directory, args.verbose)
 
 	elif args.cmd == "clean" and len(args.args) in (1, 2,):
 		(project_name, dbname) = args_parse(args.args, 2)
-		project.clean(project_name, dbname, conninfo.ConnInfo(args))
+		pg_project.clean(project_name, dbname, conninfo.ConnInfo(args))
 
 	elif args.cmd == "set-version" and len(args.args) in (3,):
 		(project_name, dbname, version) = args_parse(args.args, 3)
-		project.set_version(project_name, dbname, version, conninfo.ConnInfo(args))
+		pg_project.set_version(project_name, dbname, version, conninfo.ConnInfo(args))
 
 	elif args.cmd == "pgdist-update" and len(args.args) in (0,1):
 		(dbname,) = args_parse(args.args, 1)
-		project.pgdist_update(dbname, conninfo.ConnInfo(args))
+		pg_project.pgdist_update(dbname, conninfo.ConnInfo(args))
 
 	else:
 		parser.print_help()

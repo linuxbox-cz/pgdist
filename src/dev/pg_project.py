@@ -14,7 +14,7 @@ import cStringIO
 import subprocess
 
 import color
-import pgsql
+import pg_conn
 import config
 import pg_parser
 
@@ -529,7 +529,7 @@ def get_test_dbname(project_name, dbs=None):
 
 def load_and_dump(project, clean=True, no_owner=False, no_acl=False, pre_load=None, post_load=None, updates=None, dbs=None, pg_extractor=None):
 	try:
-		pg = pgsql.PG(config.test_db, dbname=get_test_dbname(project.name, dbs))
+		pg = pg_conn.PG(config.test_db, dbname=get_test_dbname(project.name, dbs))
 		pg.init()
 		pg.load_file(pre_load)
 		load_requires(project, pg)
@@ -542,7 +542,7 @@ def load_and_dump(project, clean=True, no_owner=False, no_acl=False, pre_load=No
 		table_data = pg.dump_data(project)
 		if pg_extractor:
 			pg.pg_extractor(pg_extractor, no_owner, no_acl)
-	except pgsql.PgError as e:
+	except pg_conn.PgError as e:
 		logging.error("Load project fail:")
 		print(e.output)
 		if clean:
@@ -558,7 +558,7 @@ def load_and_dump(project, clean=True, no_owner=False, no_acl=False, pre_load=No
 
 def load_dump_and_dump(dump_remote, project_name="undef", clean=True, no_owner=False, no_acl=False, pre_load=None, post_load=None, dbs=None, pg_extractor=None):
 	try:
-		pg = pgsql.PG(config.test_db, dbname=get_test_dbname(project_name, dbs))
+		pg = pg_conn.PG(config.test_db, dbname=get_test_dbname(project_name, dbs))
 		pg.init()
 		pg.load_file(pre_load)
 		pg.load_dump(dump_remote)
@@ -566,7 +566,7 @@ def load_dump_and_dump(dump_remote, project_name="undef", clean=True, no_owner=F
 		dump = pg.dump(no_owner, no_acl)
 		if pg_extractor:
 			pg.pg_extractor(pg_extractor, no_owner, no_acl)
-	except pgsql.PgError as e:
+	except pg_conn.PgError as e:
 		logging.error("Load dump fail:")
 		print(e.output)
 		if clean:
@@ -582,7 +582,7 @@ def load_dump_and_dump(dump_remote, project_name="undef", clean=True, no_owner=F
 
 def load_file_and_dump(fname, project_name="undef", clean=True, no_owner=False, no_acl=False, pre_load=None, post_load=None, dbs=None, pg_extractor=None):
 	try:
-		pg = pgsql.PG(config.test_db, dbname=get_test_dbname(project_name, dbs))
+		pg = pg_conn.PG(config.test_db, dbname=get_test_dbname(project_name, dbs))
 		pg.init()
 		pg.load_file(pre_load)
 		pg.load_file(fname)
@@ -590,7 +590,7 @@ def load_file_and_dump(fname, project_name="undef", clean=True, no_owner=False, 
 		dump = pg.dump(no_owner, no_acl)
 		if pg_extractor:
 			pg.pg_extractor(pg_extractor, no_owner, no_acl)
-	except pgsql.PgError as e:
+	except pg_conn.PgError as e:
 		logging.error("Load dump fail:")
 		print(e.output)
 		if clean:
@@ -710,36 +710,36 @@ def test_update(git_tag, new_version, updates, clean=True, gitversion=None, pre_
 
 def dump_remote(addr, no_owner, no_acl):
 	try:
-		pg = pgsql.PG(addr)
+		pg = pg_conn.PG(addr)
 		return pg.dump(no_owner, no_acl)
-	except pgsql.PgError as e:
+	except pg_conn.PgError as e:
 		logging.error("Dump fail:")
 		print(e.output)
 		sys.exit(1)
 
 def dump_remote_data(project, addr):
 	try:
-		pg = pgsql.PG(addr)
+		pg = pg_conn.PG(addr)
 		return pg.dump_data(project)
-	except pgsql.PgError as e:
+	except pg_conn.PgError as e:
 		logging.error("Dump fail:")
 		print(e.output)
 		sys.exit(1)
 
 def get_roles(addr):
 	try:
-		pg = pgsql.PG(addr)
+		pg = pg_conn.PG(addr)
 		return pg.get_roles()
-	except pgsql.PgError as e:
+	except pg_conn.PgError as e:
 		logging.error("Get roles fail:")
 		print(e.output)
 		sys.exit(1)
 
 def create_roles(roles):
 	try:
-		pg = pgsql.PG(config.test_db)
+		pg = pg_conn.PG(config.test_db)
 		return pg.create_roles(roles=roles)
-	except pgsql.PgError as e:
+	except pg_conn.PgError as e:
 		logging.error("Get roles fail:")
 		print(e.output)
 		sys.exit(1)

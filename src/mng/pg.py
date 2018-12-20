@@ -12,7 +12,7 @@ import subprocess
 import random
 import string
 
-import project as pgproject
+import pg_project
 
 psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
 
@@ -213,7 +213,7 @@ def install(dbname, project, ver, conninfo, directory, verbose, create_db):
 			cursor.execute("SELECT 1 FROM pgdist.installed WHERE project=%s", (require,))
 			if not cursor.fetchall():
 				logging.info("Install require %s" % (require,))
-				pgproject.install(require, dbname, None, conninfo, directory, verbose, create_db)
+				pg_project.install(require, dbname, None, conninfo, directory, verbose, create_db)
 	for part in ver.parts:
 		for role in part.roles:
 			create_role(conn, role)
@@ -242,7 +242,7 @@ def update(dbname, project, update, conninfo, directory, verbose):
 			cursor.execute("SELECT 1 FROM pgdist.installed WHERE project=%s", (require,))
 			if not cursor.fetchall():
 				logging.info("Install require %s" % (require,))
-				pgproject.install(require, dbname, None, conninfo, directory, verbose, False)
+				pg_project.install(require, dbname, None, conninfo, directory, verbose, False)
 	for part in update.parts:
 		for role in part.roles:
 			create_role(conn, role)
