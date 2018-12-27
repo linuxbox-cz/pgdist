@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
+from __future__ import print_function
 
 import sys
 import logging
@@ -70,7 +71,7 @@ class PG:
 			args = ["ssh"]
 			args.append(self.address.ssh)
 			args.append(" ".join(ssh_args))
-		logging.debug(args)
+		logging.verbose("run: %s" % (" ".join(args),))
 		process = subprocess.Popen(args, bufsize=8192, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=subprocess.PIPE, cwd=cwd or ".")
 		if cmd:
 			cmd = cmd.encode(encoding="UTF8")
@@ -239,7 +240,7 @@ class PG:
 			args.append("--no_owner")
 		if no_acl:
 			args.append("--no_acl")
-		logging.debug(str(args))
+		logging.verbose("run pg_extractor: %s" % (" ".join(args),))
 		process = subprocess.Popen(args, bufsize=8192, cwd=pg_extractor.get_dumpdir(), env=env)
 		retcode = process.wait()
 		pg_extractor.add_db(self.address.get_dbname(self.dbname))

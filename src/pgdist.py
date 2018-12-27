@@ -82,7 +82,7 @@ def main():
 	less = False
 
 	# common argument
-	parser.add_argument("-v", "--verbose", help="increase output verbosity", action="store_true")
+	parser.add_argument("-v", "--verbose", help="increase output verbosity", action="count", default=0)
 	parser.add_argument("-?", "--help", dest="help", action="store_true", help="show this help message and exit")
 	parser.add_argument("cmd", nargs="?")
 	parser.add_argument("args", nargs="*")
@@ -129,10 +129,21 @@ def main():
 		parser.print_help()
 		sys.exit(1)
 
-	if args.verbose:
+	VERBOSE = logging.DEBUG + 5
+	logging.addLevelName(VERBOSE, "VERBOSE")
+	def verbose(message, *args, **kws):
+		if logging.getLogger().root.isEnabledFor(VERBOSE):
+			logging.getLogger().root._log(VERBOSE, message, args, **kws) 
+	logging.verbose = verbose
+	if args.verbose > 2:
 		logging.basicConfig(format="%(asctime)-15s %(filename)s:%(lineno)d %(message)s")
 		logging.getLogger().setLevel(logging.DEBUG)
-		logging.debug("verbosity turned on")
+		logging.debug("verbosity debug turned on")
+	elif args.verbose > 0:
+		logging.getLogger().setLevel(VERBOSE)
+		logging.verbose("verbosity turned on")
+	else:
+		logging.getLogger().setLevel(logging.INFO)
 
 	if args.syslog_facility or args.syslog_ident:
 		handler = logging.handlers.SysLogHandler(facility=args.syslog_facility, address='/dev/log')
@@ -291,15 +302,15 @@ def main():
 
 	elif args.cmd == "install" and len(args.args) in (2, 3,):
 		(project_name, dbname, version) = args_parse(args.args, 3)
-		pg_project.install(project_name, dbname, version, conninfo.ConnInfo(args), args.directory, args.verbose, args.create, False)
+		pg_project.install(project_name, dbname, version, conninfo.ConnInfo(args), args.directory, args.create, False)
 
 	elif args.cmd == "check-update" and len(args.args) in (0, 1, 2, 3,):
 		(project_name, dbname, version) = args_parse(args.args, 3)
-		pg_project.check_update(project_name, dbname, version, conninfo.ConnInfo(args), args.directory, args.verbose)
+		pg_project.check_update(project_name, dbname, version, conninfo.ConnInfo(args), args.directory)
 
 	elif args.cmd == "update" and len(args.args) in (0, 1, 2, 3,):
 		(project_name, dbname, version) = args_parse(args.args, 3)
-		pg_project.update(project_name, dbname, version, conninfo.ConnInfo(args), args.directory, args.verbose)
+		pg_project.update(project_name, dbname, version, conninfo.ConnInfo(args), args.directory)
 
 	elif args.cmd == "clean" and len(args.args) in (1, 2,):
 		(project_name, dbname) = args_parse(args.args, 2)

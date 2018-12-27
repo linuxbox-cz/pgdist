@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
+from __future__ import print_function
 
 import re
 import os
@@ -257,7 +258,7 @@ class ProjectGit(ProjectBase):
 		else:
 			# TODO err msg
 			sys.exit(1)
-		logging.debug("Git archive: %s" % (" ".join(args),))
+		logging.verbose("Git archive: %s" % (" ".join(args),))
 		process = subprocess.Popen(args, bufsize=8192, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE, cwd=self.directory or ".")
 		output, err = process.communicate()
 		retcode = process.poll()
@@ -355,7 +356,7 @@ def get_normal_fname(file):
 	return os.path.join(sname, tname, fname)
 
 def project_init(name, directory):
-	logging.debug("Init project: %s in %s" % (name, directory))
+	logging.info("Init project: %s in %s" % (name, directory))
 	if not os.path.isdir(os.path.join(directory, "sql")):
 		os.makedirs(os.path.join(directory, "sql"))
 	if not os.path.isdir(os.path.join(directory, "sql_dist")):
@@ -369,7 +370,7 @@ def project_init(name, directory):
 def create_schema(schema_name):
 	directory = find_directory()
 	for d in ("extensions", "functions", "schema", "tables", "triggers", "types", "views", "grants"):
-		logging.debug("mkdir %s" % (d, ))
+		logging.verbose("mkdir %s" % (d, ))
 		os.makedirs(os.path.join(directory, "sql", schema_name, d))
 	print("Schema %s created." % (schema_name,))
 
@@ -464,7 +465,7 @@ def create_version(version, git_tag, force):
 		if os.path.isfile(build_fname) and not force:
 			logging.error("Error file exists: %s" % (build_fname,))
 			sys.exit(1)
-		logging.debug("Create file: %s" % (build_fname,))
+		logging.verbose("Create file: %s" % (build_fname,))
 		with open(build_fname, "w") as build_file:
 			build_file.write("--\n")
 			build_file.write("-- pgdist project\n")
@@ -492,7 +493,7 @@ def create_version(version, git_tag, force):
 			build_file.write("--\n")
 			build_file.write("\n")
 			for pfname in part.files:
-				logging.debug("add file: %s" % (pfname))
+				logging.verbose("add file: %s" % (pfname))
 				build_file.write("\n")
 				build_file.write("--\n")
 				build_file.write("-- sqldist file: %s\n" % (pfname))
@@ -533,11 +534,14 @@ def load_and_dump(project, clean=True, no_owner=False, no_acl=False, pre_load=No
 		pg.init()
 		pg.load_file(pre_load)
 		load_requires(project, pg)
+		print("load project %s to test pg" % (project.name,), file=sys.stderr)
 		pg.load_project(project)
 		if updates:
 			for update in updates:
+				print("load update %s to test pg" % (update,), file=sys.stderr)
 				pg.load_update(update)
 		pg.load_file(post_load)
+		print("dump structure and data from test pg", file=sys.stderr)
 		dump = pg.dump(no_owner, no_acl)
 		table_data = pg.dump_data(project)
 		if pg_extractor:
@@ -561,8 +565,10 @@ def load_dump_and_dump(dump_remote, project_name="undef", clean=True, no_owner=F
 		pg = pg_conn.PG(config.test_db, dbname=get_test_dbname(project_name, dbs))
 		pg.init()
 		pg.load_file(pre_load)
+		print("load dump to test pg", file=sys.stderr)
 		pg.load_dump(dump_remote)
 		pg.load_file(post_load)
+		print("dump structure and data from test pg", file=sys.stderr)
 		dump = pg.dump(no_owner, no_acl)
 		if pg_extractor:
 			pg.pg_extractor(pg_extractor, no_owner, no_acl)
@@ -585,8 +591,10 @@ def load_file_and_dump(fname, project_name="undef", clean=True, no_owner=False, 
 		pg = pg_conn.PG(config.test_db, dbname=get_test_dbname(project_name, dbs))
 		pg.init()
 		pg.load_file(pre_load)
+		print("load file %s to test pg" % (fname,), file=sys.stderr)
 		pg.load_file(fname)
 		pg.load_file(post_load)
+		print("dump structure and data from test pg", file=sys.stderr)
 		dump = pg.dump(no_owner, no_acl)
 		if pg_extractor:
 			pg.pg_extractor(pg_extractor, no_owner, no_acl)
@@ -642,7 +650,7 @@ def create_update(git_tag, new_version, force, gitversion=None, clean=True, pre_
 	if os.path.isfile(build_fname) and not force:
 		logging.error("Error file exists: %s" % (build_fname,))
 		sys.exit(1)
-	logging.debug("Create file: %s" % (build_fname,))
+	logging.verbose("Create file: %s" % (build_fname,))
 	with open(build_fname, "w") as build_file:
 		build_file.write("--\n")
 		build_file.write("-- pgdist update\n")
@@ -711,6 +719,7 @@ def test_update(git_tag, new_version, updates, clean=True, gitversion=None, pre_
 def dump_remote(addr, no_owner, no_acl, cache):
 	try:
 		pg = pg_conn.PG(addr)
+		print("dump remote", file=sys.stderr)
 		return pg.dump(no_owner, no_acl, cache=cache)
 	except pg_conn.PgError as e:
 		logging.error("Dump fail:")

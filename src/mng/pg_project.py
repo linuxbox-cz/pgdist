@@ -183,10 +183,10 @@ class Project:
 	def get_instalated(self, dbname):
 		return [x for x in self.installed if x.dbname == dbname]
 
-	def install(self, dbname, version, conninfo, directory, verbose, create_db, is_require):
+	def install(self, dbname, version, conninfo, directory, create_db, is_require):
 		for ver in self.versions:
 			if ver.version == version:
-				pg.install(dbname, self, ver, conninfo, directory, verbose, create_db, is_require)
+				pg.install(dbname, self, ver, conninfo, directory, create_db, is_require)
 				return
 		
 	def find_updates(self, version1, version2):
@@ -204,20 +204,20 @@ class Project:
 				return best_updatest
 
 	def find_updates2(self, version1, version2):
-		logging.debug("project: %s find_updates from: %s, to: %s" % (self.name, version1, version2))
+		logging.verbose("project: %s find_updates from: %s, to: %s" % (self.name, version1, version2))
 		if version2:
 			v = [x for x in self.updates if x.version_old == version1 and x.version_new <= version2]
 		else:
 			v = [x for x in self.updates if x.version_old == version1]
 		if v:
 			ver = max(v, key=lambda x: x.version_new)
-			logging.debug("\tfound %s" % (ver,))
+			logging.verbose("\tfound %s" % (ver,))
 			return ver
-		logging.debug("\tnot found")
+		logging.verbose("\tnot found")
 		return None
 
-	def update(self, dbname, update, conninfo, directory, verbose):
-		pg.update(dbname, self, update, conninfo, directory, verbose)
+	def update(self, dbname, update, conninfo, directory):
+		pg.update(dbname, self, update, conninfo, directory)
 
 def get_project_name(directory, fname):
 	with(open(os.path.join(directory, fname))) as f:
@@ -366,7 +366,7 @@ def prlist(project_name, dbname, conninfo, directory, show_all):
 
 	print("")
 
-def install(project_name, dbname, version, conninfo, directory, verbose, create_db, is_require):
+def install(project_name, dbname, version, conninfo, directory, create_db, is_require):
 	projects = get_projects(project_name, dbname, conninfo, directory, check_db_exists=create_db)
 
 	if not projects:
@@ -383,19 +383,19 @@ def install(project_name, dbname, version, conninfo, directory, verbose, create_
 
 
 	if not ins:
-		project.install(dbname, need_ver, conninfo, directory, verbose, create_db, is_require)
+		project.install(dbname, need_ver, conninfo, directory, create_db, is_require)
 		if not is_require:
 			print("Complete!")
 	elif need_ver > ins[0].version:
-		update(project_name, dbname, version, conninfo, directory, verbose, False)
+		update(project_name, dbname, version, conninfo, directory, False)
 	else:
 		logging.error("Project %s is installed." % (project_name,))
 		sys.exit(1)
 
-def check_update(project_name, dbname, version, conninfo, directory, verbose):
-	update(project_name, dbname, version, conninfo, directory, verbose, check=True)
+def check_update(project_name, dbname, version, conninfo, directory):
+	update(project_name, dbname, version, conninfo, directory, check=True)
 
-def update(project_name, dbname, version, conninfo, directory, verbose, check=False):
+def update(project_name, dbname, version, conninfo, directory, check=False):
 	if project_name == "-":
 		project_name = None
 	if dbname == "-":
@@ -438,7 +438,7 @@ def update(project_name, dbname, version, conninfo, directory, verbose, check=Fa
 	for project in projects:
 		for ins in project.installed:
 			for update in ins.updates:
-				project.update(ins.dbname, update, conninfo, directory, verbose)
+				project.update(ins.dbname, update, conninfo, directory)
 	print("Complete!")
 
 def check_succesfull_installed(projects):

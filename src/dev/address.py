@@ -19,6 +19,15 @@ class Address:
 		else:
 			return "postgresql://" + self.pg
 
+	def to_str(self, dbname=None):
+		if dbname:
+			pg = self.pg.split("/",1)[0] + "/" + dbname
+		else:
+			pg = self.pg
+		if self.ssh:
+			return self.ssh+"//"+pg
+		return pg
+
 	def parse(self, dbname=None):
 		uri = self.get_pg(dbname)
 		x = re.match(r"postgresql://((?P<user>[^:@/?&]+)?(:(?P<password>[^:@/?&]+))?@)?(?P<host>[^:@/?&]+)?(:(?P<port>[^:@/?&]+)?)?(/(?P<dbname>[^:@/?&]+))?(\?(?P<param>.*))?", uri)
