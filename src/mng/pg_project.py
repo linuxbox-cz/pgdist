@@ -183,10 +183,10 @@ class Project:
 	def get_instalated(self, dbname):
 		return [x for x in self.installed if x.dbname == dbname]
 
-	def install(self, dbname, version, conninfo, directory, verbose, create_db):
+	def install(self, dbname, version, conninfo, directory, verbose, create_db, is_require):
 		for ver in self.versions:
 			if ver.version == version:
-				pg.install(dbname, self, ver, conninfo, directory, verbose, create_db)
+				pg.install(dbname, self, ver, conninfo, directory, verbose, create_db, is_require)
 				return
 		
 	def find_updates(self, version1, version2):
@@ -366,7 +366,7 @@ def prlist(project_name, dbname, conninfo, directory, show_all):
 
 	print("")
 
-def install(project_name, dbname, version, conninfo, directory, verbose, create_db):
+def install(project_name, dbname, version, conninfo, directory, verbose, create_db, is_require):
 	projects = get_projects(project_name, dbname, conninfo, directory, check_db_exists=create_db)
 
 	if not projects:
@@ -383,7 +383,9 @@ def install(project_name, dbname, version, conninfo, directory, verbose, create_
 
 
 	if not ins:
-		project.install(dbname, need_ver, conninfo, directory, verbose, create_db)
+		project.install(dbname, need_ver, conninfo, directory, verbose, create_db, is_require)
+		if not is_require:
+			print("Complete!")
 	elif need_ver > ins[0].version:
 		update(project_name, dbname, version, conninfo, directory, verbose, False)
 	else:

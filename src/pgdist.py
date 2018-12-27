@@ -291,7 +291,7 @@ def main():
 
 	elif args.cmd == "install" and len(args.args) in (2, 3,):
 		(project_name, dbname, version) = args_parse(args.args, 3)
-		pg_project.install(project_name, dbname, version, conninfo.ConnInfo(args), args.directory, args.verbose, args.create)
+		pg_project.install(project_name, dbname, version, conninfo.ConnInfo(args), args.directory, args.verbose, args.create, False)
 
 	elif args.cmd == "check-update" and len(args.args) in (0, 1, 2, 3,):
 		(project_name, dbname, version) = args_parse(args.args, 3)

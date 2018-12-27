@@ -193,7 +193,7 @@ def create_role(conn, role):
 			print("CREATE ROLE %s %s" % (role.name, login))
 			cursor.execute("CREATE ROLE %s %s;" % (role.name, login))
 
-def install(dbname, project, ver, conninfo, directory, verbose, create_db):
+def install(dbname, project, ver, conninfo, directory, verbose, create_db, is_require):
 	if ver.parts and create_db:
 		if not dbname in list_database(conninfo):
 			conn = connect(conninfo)
@@ -212,16 +212,19 @@ def install(dbname, project, ver, conninfo, directory, verbose, create_db):
 		for require in part.requires:
 			cursor.execute("SELECT 1 FROM pgdist.installed WHERE project=%s", (require,))
 			if not cursor.fetchall():
-				logging.info("Install require %s" % (require,))
-				pg_project.install(require, dbname, None, conninfo, directory, verbose, create_db)
+				pg_project.install(require, dbname, None, conninfo, directory, verbose, create_db, True)
 	for part in ver.parts:
 		for role in part.roles:
 			create_role(conn, role)
 	for part in ver.parts:
-		if len(ver.parts) == 1:
-			print("Install %s %s to %s" % (project.name, str(ver.version), dbname))
-		else:
-			print("Install %s %s part %d/%d to %s" % (project.name, str(ver.version), part.part, len(ver.parts), dbname))
+		str_part = ""
+		str_require = ""
+		if len(ver.parts) > 1:
+			str_part = " part %d/%d" % (part.part, len(ver.parts))
+		if is_require:
+			str_require = " require"
+		print("Install%s %s %s%s to %s" % (str_require, project.name, str(ver.version), str_part, dbname))
+
 		run("psql", conninfo, dbname=dbname, file=os.path.join(directory, part.fname), single_transaction=part.single_transaction, debug=verbose)
 		cursor.execute("INSERT INTO pgdist.history (project, version, part, comment) VALUES (%s, %s, %s, %s);",
 			(project.name, str(ver.version), part.part, "installed new version %s, part %d/%d" % (str(ver.version), part.part, len(ver.parts))))
@@ -230,7 +233,6 @@ def install(dbname, project, ver, conninfo, directory, verbose, create_db):
 		if not cursor.fetchone():
 			cursor.execute("INSERT INTO pgdist.installed (project, version, part, parts) VALUES (%s, %s, %s, %s);",
 				(project.name, str(ver.version), part.part, len(ver.parts)))
-	print("Complete!")
 
 
 def update(dbname, project, update, conninfo, directory, verbose):
@@ -241,8 +243,7 @@ def update(dbname, project, update, conninfo, directory, verbose):
 		for require in part.requires:
 			cursor.execute("SELECT 1 FROM pgdist.installed WHERE project=%s", (require,))
 			if not cursor.fetchall():
-				logging.info("Install require %s" % (require,))
-				pg_project.install(require, dbname, None, conninfo, directory, verbose, False)
+				pg_project.install(require, dbname, None, conninfo, directory, verbose, False, True)
 	for part in update.parts:
 		for role in part.roles:
 			create_role(conn, role)
