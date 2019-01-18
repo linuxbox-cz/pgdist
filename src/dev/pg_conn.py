@@ -144,6 +144,7 @@ class PG:
 			for file in part.files:
 				for l in project.get_file(file):
 					cmd.write(unicode(l, "UTF8"))
+				cmd.write(";\n")
 			self.psql(cmd=cmd.getvalue(), single_transaction=part.single_transaction, change_db=True)
 			cmd.close()
 
