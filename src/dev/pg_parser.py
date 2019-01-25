@@ -694,6 +694,10 @@ def parse(dump_stream):
 
 			logging.warning("Parser warning, unknown command: %s" % (command,))
 
+		except KeyError:
+			logging.error("Parser warning, KeyError on command: %s" % (command, ))
+			continue
+
 		except:
 			logging.error("Error on command: %s" % (command, ))
 			raise
