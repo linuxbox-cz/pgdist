@@ -31,7 +31,7 @@ Parts can be defined in pg_project.sql. Part starts line `-- part`. Part can be 
 
 ### Config file
 
-Local configuration file `~/.pgdist`:
+Local configuration file is `~/.pgdist`:
 
 ```
 [pgdist]
@@ -42,16 +42,16 @@ test_db is pgconn to testing postgres for `test-load` and `test-update`.
 
 ### Roles
 
-Before install pgdist checks if roles in project exists in postgres. It check and change nologin/login option. If option password set, pgdist create in `/etc/lbox/postgresql/roles/` dir file `username` with content `PGPASSWORD=GENERATED_PASSWORD`.
+Before install pgdist checks if roles in project exists in postgres. It checks and changes nologin/login option. If option password is set, pgdist will create in `/etc/lbox/postgresql/roles/` dir file `username` with content `PGPASSWORD=GENERATED_PASSWORD`.
 
 
 ### Help
 ```
-PGdist - distribute PotgreSQL functions, tables, etc...
+PGdist - distributes PotgreSQL functions, tables, etc...
 PGdist Devel - develop PostgreSQL project
 
     init PROJECT [DIRECTORY] - initialize pgdist project
-    create-schema SCHEMA - create new schema directories
+    create-schema SCHEMA - create new directories schema
     status - show new files and removed files compared to pg_project.sql
     add FILE1 [FILE2 ...] - add files to pg_project.sql
     rm FILE1 [FILE2 ...] - removed files from pg_project.sql
@@ -60,10 +60,10 @@ PGdist Devel - develop PostgreSQL project
     create-version VERSION [GIT_TAG] - create version files
     create-update GIT_TAG NEW_VERSION - create update files with differencies
                                           - GIT_TAG - old version tag
-                                          - NEW_VERSION - version created by create-version
+                                          - NEW_VERSION - new version
     test-update GIT_TAG NEW_VERSION - load old and new version and compare it
                                           - GIT_TAG - old version tag
-                                          - NEW_VERSION - version created by create-version
+                                          - NEW_VERSION - new version
 
     diff-db PGCONN [GIT_TAG] - diff project and database
     diff-db-file PGCONN FILE - diff file and database
@@ -108,3 +108,11 @@ Configuration:
 
         test_db - PGCONN to testing postgres, user has to create databases and users
 ```
+
+## Authors
+
+* Marian Krucina LinuxBox.cz
+
+## License
+
+This project is licensed under the GNU GENERAL PUBLIC LICENSE (Version 2) - see the COPYING file for details

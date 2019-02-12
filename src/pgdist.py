@@ -14,11 +14,11 @@ reload(sys)
 sys.setdefaultencoding('utf-8')
 
 description = """
-PGdist - distribute PotgreSQL functions, tables, etc...
+PGdist - distributes PotgreSQL functions, tables, etc...
 PGdist Devel - develop PostgreSQL project
 
     init PROJECT [DIRECTORY] - initialize pgdist project
-    create-schema SCHEMA - create new schema directories
+    create-schema SCHEMA - create new directories schema
     status - show new files and removed files compared to pg_project.sql
     add FILE1 [FILE2 ...] - add files to pg_project.sql
     rm FILE1 [FILE2 ...] - removed files from pg_project.sql
@@ -27,10 +27,10 @@ PGdist Devel - develop PostgreSQL project
     create-version VERSION [GIT_TAG] - create version files
     create-update GIT_TAG NEW_VERSION - create update files with differencies
                                           - GIT_TAG - old version tag
-                                          - NEW_VERSION - version created by create-version
+                                          - NEW_VERSION - new version
     test-update GIT_TAG NEW_VERSION - load old and new version and compare it
                                           - GIT_TAG - old version tag
-                                          - NEW_VERSION - version created by create-version
+                                          - NEW_VERSION - new version
 
     diff-db PGCONN [GIT_TAG] - diff project and database
     diff-db-file PGCONN FILE - diff file and database
