@@ -455,6 +455,14 @@ def clean(project_name, dbname, conninfo):
 def set_version(project_name, dbname, version, conninfo):
 	pg.set_version(project_name, dbname, version, conninfo)
 
+def get_version(project_name, dbname, conninfo):
+	version = pg.get_version(project_name, dbname, conninfo)
+	if version:
+		print(version)
+	else:
+		logging.error("Not found %s in db %s" % (project_name, dbname))
+		sys.exit(1)
+
 def pgdist_update(dbname, conninfo):
 	pg.pgdist_update(dbname, conninfo)
 

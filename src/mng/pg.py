@@ -281,6 +281,19 @@ def set_version(project_name, dbname, version, conninfo):
 			(project_name, version))
 	conn.close()
 
+def get_version(project_name, dbname, conninfo):
+	conn = connect(conninfo, dbname)
+	cursor = conn.cursor()
+	pgdist_install(dbname, conn)
+	logging.debug("get version %s in %s" % (project_name, dbname))
+	cursor.execute("SELECT version FROM pgdist.installed WHERE project=%s;",
+		(project_name, ))
+	for row in cursor:
+		return row["version"]
+		conn.close()
+	conn.close()
+	return None
+
 def check_installed(dbname, project_name, conninfo):
 	conn = connect(conninfo, dbname)
 	if pg.check_pgdist_installed(db, conn):

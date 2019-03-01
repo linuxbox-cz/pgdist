@@ -59,6 +59,7 @@ PGdist Server - manage projects in PostgreSQL database
     update [PROJECT [DBNAME [VERSION]]] - update project
     clean PROJECT [DBNAME] - remove all info about project
     set-version PROJECT DBNAME VERSION - force change version without run scripts
+    get-version PROJECT DBNAME - print installed version of project
     pgdist-update [DBNAME] - update pgdist version in database
 
 PGCONN - ssh connection + connection URI, see:
@@ -184,7 +185,7 @@ def main():
 		else:
 			color.set(args.color)
 
-	if args.cmd in ("list", "install", "check-update", "update", "clean", "set-version", "pgdist-update"):
+	if args.cmd in ("list", "install", "check-update", "update", "clean", "set-version", "get-version","pgdist-update"):
 		sys.path.insert(1, os.path.join(sys.path[0], "mng"))
 		import conninfo
 		import pg_project
@@ -319,6 +320,10 @@ def main():
 	elif args.cmd == "set-version" and len(args.args) in (3,):
 		(project_name, dbname, version) = args_parse(args.args, 3)
 		pg_project.set_version(project_name, dbname, version, conninfo.ConnInfo(args))
+
+	elif args.cmd == "get-version" and len(args.args) in (2,):
+		(project_name, dbname) = args_parse(args.args, 2)
+		pg_project.get_version(project_name, dbname, conninfo.ConnInfo(args))
 
 	elif args.cmd == "pgdist-update" and len(args.args) in (0,1):
 		(dbname,) = args_parse(args.args, 1)
