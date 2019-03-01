@@ -520,6 +520,7 @@ def load_requires(project, pg, loop_detect=[]):
 		if require.project_name not in pg.loaded_projects_name:
 			p = ProjectGit(git_remote=require.git, git_tree_ish=require.tree_ish)
 			load_requires(p, pg, loop_detect)
+			print("load require project %s to test pg" % (p.name,), file=sys.stderr)
 			pg.load_project(p)
 
 def get_test_dbname(project_name, dbs=None):

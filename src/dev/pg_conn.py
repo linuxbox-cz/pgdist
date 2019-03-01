@@ -133,10 +133,11 @@ class PG:
 	def load_project(self, project):
 		self.create_roles(project)
 		if project.git:
-			return self.load_project_git(project)
+			r = self.load_project_git(project)
 		else:
-			return self.load_project_fs(project)
+			r = self.load_project_fs(project)
 		self.loaded_projects_name.append(project.name)
+		return r
 
 	def load_project_git(self, project):
 		for part in project.parts:
