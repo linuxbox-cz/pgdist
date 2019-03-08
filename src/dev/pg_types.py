@@ -461,10 +461,11 @@ class Function(Element):
 	def update_element(self, file, element2):
 		if self.command == element2.command:
 			return
-		file.write("--TODO ALTER OR DROP?\n")
-		file.write(re.sub(r"^", "--", re.sub(r"\s*AS\s*[$]\S*[$].*", "", self.command, flags=re.MULTILINE|re.DOTALL), flags=re.MULTILINE))
+		if self.args != element2.args:
+			file.write("DROP FUNCTION %s%s;" % (self.fname, self.args))
 		file.write("\n\n")
-		file.write(element2.command)
+		command = re.sub("^CREATE FUNCTION", "CREATE OR REPLACE FUNCTION", element2.command)
+		file.write(command)
 		file.write("\n")
 
 	def drop_info(self):
