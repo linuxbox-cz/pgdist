@@ -760,7 +760,7 @@ def read_file(fname):
 		data.write(unicode(f.read(), "UTF8"))
 	return data.getvalue()
 
-def print_diff(dump1, dump2, data1, data2, diff_raw, no_owner, no_acl, fromfile, tofile, swap=False):
+def print_diff(dump1, dump2, data1, data2, diff_raw, no_owner, no_acl, fromfile, tofile, swap=False, ignore_space=False):
 	if swap:
 		dump1, dump2 = dump2, dump1
 		fromfile, tofile = tofile, fromfile
@@ -779,7 +779,7 @@ def print_diff(dump1, dump2, data1, data2, diff_raw, no_owner, no_acl, fromfile,
 		pr1.set_data(data1)
 		pr2 = pg_parser.parse(io.StringIO(dump2))
 		pr2.set_data(data2)
-		pr1.diff(pr2, no_owner=no_owner, no_acl=no_acl)
+		pr1.diff(pr2, no_owner=no_owner, no_acl=no_acl, ignore_space=ignore_space)
 
 def diff_pg(addr, git_tag, diff_raw, clean, no_owner, no_acl, pre_load=None, post_load=None, pre_remoted_load=None, post_remoted_load=None, swap=False, pg_extractor=None, cache=False, ignore_space=False):
 	config.check_set_test_db()
@@ -800,7 +800,7 @@ def diff_pg(addr, git_tag, diff_raw, clean, no_owner, no_acl, pre_load=None, pos
 		pg_extractor.print_diff(swap, ignore_space)
 		pg_extractor.clean()
 	else:
-		print_diff(dump_r, dump_cur, table_data_remote, table_data_cur, diff_raw, no_owner, no_acl, fromfile=addr.addr, tofile="local project", swap=swap)
+		print_diff(dump_r, dump_cur, table_data_remote, table_data_cur, diff_raw, no_owner, no_acl, fromfile=addr.addr, tofile="local project", swap=swap, ignore_space=ignore_space)
 
 def diff_pg_file(addr, fname, diff_raw, clean, no_owner, no_acl, pre_load=None, post_load=None, pre_remoted_load=None, post_remoted_load=None, swap=False, pg_extractor=None, cache=False, ignore_space=False):
 	config.check_set_test_db()
@@ -816,7 +816,7 @@ def diff_pg_file(addr, fname, diff_raw, clean, no_owner, no_acl, pre_load=None, 
 		pg_extractor.print_diff(swap, ignore_space)
 		pg_extractor.clean()
 	else:
-		print_diff(dump_r, dump_file, None, None, diff_raw, no_owner, no_acl, fromfile=addr.addr, tofile=fname, swap=swap)
+		print_diff(dump_r, dump_file, None, None, diff_raw, no_owner, no_acl, fromfile=addr.addr, tofile=fname, swap=swap, ignore_space=ignore_space)
 
 def role_list():
 	project = ProjectFs()

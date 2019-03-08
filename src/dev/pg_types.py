@@ -36,8 +36,8 @@ class Element:
 	def print_info(self):
 		print("Element:", self.command)
 
-	def diff(self, element2, no_owner, no_acl):
-		self._diff(element2)
+	def diff(self, element2, no_owner, no_acl, ignore_space=False):
+		self._diff(element2, ignore_space)
 		if not no_owner and self.owner != element2.owner:
 			print("%s %s change owner from: %s to: %s" % (self.element_name, self.name, self.owner, element2.owner))
 
@@ -74,17 +74,28 @@ class Element:
 				print(color.green("\t+"+rmln(element2.comment)))
 			print("")
 
-	def _diff(self, element2):
-		if self.command != element2.command:
+	def _diff(self, element2, ignore_space):
+		command1 = self.command
+		command2 = element2.command
+		space = ""
+		if ignore_space:
+			command1 = re.sub(r"^(\t| )+", "", command1, flags=re.MULTILINE|re.DOTALL)
+			command2 = re.sub(r"^(\t| )+", "", command2, flags=re.MULTILINE|re.DOTALL)
+			command1 = re.sub(r"(\t| )+$", "", command1, flags=re.MULTILINE|re.DOTALL)
+			command2 = re.sub(r"(\t| )+$", "", command2, flags=re.MULTILINE|re.DOTALL)
+			command1 = re.sub(r"(\t| )+", " ", command1, flags=re.MULTILINE|re.DOTALL)
+			command2 = re.sub(r"(\t| )+", " ", command2, flags=re.MULTILINE|re.DOTALL)
+			space = "\t"
+		if command1 != command2:
 			print("%s %s is different" % (self.element_name, self.name))
-			diff_c = difflib.unified_diff(self.command.splitlines(1), element2.command.splitlines(1), fromfile=self.name, tofile=element2.name)
+			diff_c = difflib.unified_diff(command1.splitlines(1), command2.splitlines(1), fromfile=self.name, tofile=element2.name)
 			for d in diff_c:
 				if d.startswith("-"):
-					sys.stdout.write(color.red(d))
+					sys.stdout.write(color.red(space + d))
 				elif d.startswith("+"):
-					sys.stdout.write(color.green(d))
+					sys.stdout.write(color.green(space + d))
 				else:
-					sys.stdout.write(d)
+					sys.stdout.write(space + d)
 			print("")
 
 	def drop_info(self):
@@ -118,14 +129,14 @@ class Project:
 		for type in sorted(self.types):
 			self.types[type].print_info()
 
-	def diff(self, project2, no_owner=False, no_acl=False):
+	def diff(self, project2, no_owner=False, no_acl=False, ignore_space=False):
 		exclude_schemas = self.diff_elements([], "schemas", self.schemas, project2.schemas, no_owner, no_acl)
 		self.diff_elements(exclude_schemas, "extentions", self.extentions, project2.extentions, no_owner, no_acl)
 		self.diff_elements(exclude_schemas, "types", self.types, project2.types, no_owner, no_acl)
 		self.diff_elements(exclude_schemas, "tables", self.tables, project2.tables, no_owner, no_acl)
 		self.diff_elements(exclude_schemas, "sequences", self.sequences, project2.sequences, no_owner, no_acl)
 		self.diff_elements(exclude_schemas, "views", self.views, project2.views, no_owner, no_acl)
-		self.diff_elements(exclude_schemas, "functions", self.functions, project2.functions, no_owner, no_acl)
+		self.diff_elements(exclude_schemas, "functions", self.functions, project2.functions, no_owner, no_acl, ignore_space)
 		self.diff_data(project2)
 
 	def diff_data(self, project2):
@@ -175,7 +186,7 @@ class Project:
 				print("\n")
 
 
-	def diff_elements(self, exclude_schemas, elements_name, elements1, elements2, no_owner, no_acl):
+	def diff_elements(self, exclude_schemas, elements_name, elements1, elements2, no_owner, no_acl, ignore_space=False):
 		difference = []
 
 		new_elements = []
@@ -202,7 +213,7 @@ class Project:
 
 		for name in sorted(elements1):
 			if elements1[name].schema not in exclude_schemas and name in elements2:
-				elements1[name].diff(elements2[name], no_owner, no_acl)
+				elements1[name].diff(elements2[name], no_owner, no_acl, ignore_space)
 		return difference
 
 	def gen_update(self, file, project2):
@@ -267,7 +278,7 @@ class Table(Element):
 		self.columns_comment = []
 		self.columns_conf = []
 
-	def _diff(self, table2):
+	def _diff(self, table2, ignore_space):
 		columns1 = sorted(self.columns)
 		columns2 = sorted(table2.columns)
 		if columns1 != columns2:
