@@ -99,7 +99,7 @@ class Element:
 			print("")
 
 	def drop_info(self):
-		return re.sub(r"^", "--", self.command, flags=re.MULTILINE)
+		return "--TODO DROP?\n" + re.sub(r"^", "--", self.command, flags=re.MULTILINE)
 
 	def update_element(self, file, element2):
 		if self.command == element2.command:
@@ -228,8 +228,6 @@ class Project:
 	def update_elements(self, file, elements_name, elements1, elements2):
 		for name in elements1:
 			if name not in elements2:
-				file.write("--TODO DROP?\n")
-				#file.write(re.sub(r"^", "--", elements1[name].command, flags=re.MULTILINE))
 				file.write(elements1[name].drop_info())
 				file.write("\n\n")
 
@@ -461,15 +459,13 @@ class Function(Element):
 	def update_element(self, file, element2):
 		if self.command == element2.command:
 			return
-		if self.args != element2.args:
-			file.write("DROP FUNCTION %s%s;" % (self.fname, self.args))
-		file.write("\n\n")
+		file.write("\n")
 		command = re.sub("^CREATE FUNCTION", "CREATE OR REPLACE FUNCTION", element2.command)
 		file.write(command)
 		file.write("\n")
 
 	def drop_info(self):
-		return re.sub(r"^", "--", re.sub(r"\s*AS\s*[$]\S*[$].*", "", self.command, flags=re.MULTILINE|re.DOTALL), flags=re.MULTILINE)
+		return "DROP FUNCTION %s%s;" % (self.fname, self.args)
 
 class Sequence(Element):
 	def __init__(self, command, name):
