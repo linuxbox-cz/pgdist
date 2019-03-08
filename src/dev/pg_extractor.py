@@ -33,13 +33,15 @@ class PG_extractor:
 		if self.basedir:
 			print("pg_extractor dumped project to: %s" % (self.basedir))
 
-	def print_diff(self, swap=False):
+	def print_diff(self, swap=False, ignore_space=False):
 		self.print_dump_info()
 		args = ["diff", "-r"]
 		if color.color_out:
 			args.append("--color=always")
 		else:
 			args.append("--color=never")
+		if ignore_space:
+			args.append("-w")
 		if not swap:
 			args.append(self.db1)
 			args.append(self.db2)

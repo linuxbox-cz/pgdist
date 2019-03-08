@@ -100,6 +100,7 @@ def main():
 	parser.add_argument("--no-owner", dest="no_owner", help="do not dump and compare ownership of objects", action="store_true")
 	parser.add_argument("--no-acl", dest="no_acl", help="do not dump and compare access privileges (grant/revoke commands)", action="store_true")
 	parser.add_argument("--diff-raw", dest="diff_raw", help="compare raw SQL dumps", action="store_true")
+	parser.add_argument("-w", "--ignore-all-space", dest="ignore_space", help="ignore all white space", action="store_true", default=False)
 	parser.add_argument("--no-clean", dest="no_clean", help="no clean test database after load/update test", action="store_true", default=False)
 	parser.add_argument("--cache", dest="cache", help="cache dump remote database for 4 hours", action="store_true", default=False)
 	parser.add_argument("--pg_extractor", dest="pg_extractor", help="Dump by pg_extractor, compare by diff -r", action="store_true")
@@ -237,19 +238,19 @@ def main():
 		(pgconn, git_tag) = args_parse(args.args, 2)
 		pg_project.diff_pg(address.Address(pgconn), git_tag, args.diff_raw, not args.no_clean, args.no_owner, args.no_acl,
 			pre_load=args.pre_load, post_load=args.post_load, pre_remoted_load=args.pre_remoted_load, post_remoted_load=args.post_remoted_load,
-			swap=args.swap, pg_extractor=pg_extractor, cache=args.cache)
+			swap=args.swap, pg_extractor=pg_extractor, cache=args.cache, ignore_space=args.ignore_space)
 
 	elif args.cmd == "diff-db-file" and len(args.args) in (2,):
 		(pgconn, file) = args_parse(args.args, 2)
 		pg_project.diff_pg_file(address.Address(pgconn), file, args.diff_raw, not args.no_clean, args.no_owner, args.no_acl,
 			pre_load=args.pre_load, post_load=args.post_load, pre_remoted_load=args.pre_remoted_load, post_remoted_load=args.post_remoted_load,
-			swap=args.swap, pg_extractor=pg_extractor, cache=args.cache)
+			swap=args.swap, pg_extractor=pg_extractor, cache=args.cache, ignore_space=args.ignore_space)
 
 	elif args.cmd == "diff-file-db" and len(args.args) in (2,):
 		(file, pgconn) = args_parse(args.args, 2)
 		pg_project.diff_pg_file(address.Address(pgconn), file, args.diff_raw, not args.no_clean, args.no_owner, args.no_acl,
 			pre_load=args.pre_load, post_load=args.post_load, pre_remoted_load=args.pre_remoted_load, post_remoted_load=args.post_remoted_load,
-			swap=not args.swap, pg_extractor=pg_extractor, cache=args.cache)
+			swap=not args.swap, pg_extractor=pg_extractor, cache=args.cache, ignore_space=args.ignore_space)
 
 	elif args.cmd == "role-list" and len(args.args) in (0,):
 		pg_project.role_list()

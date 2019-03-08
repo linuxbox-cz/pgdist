@@ -781,7 +781,7 @@ def print_diff(dump1, dump2, data1, data2, diff_raw, no_owner, no_acl, fromfile,
 		pr2.set_data(data2)
 		pr1.diff(pr2, no_owner=no_owner, no_acl=no_acl)
 
-def diff_pg(addr, git_tag, diff_raw, clean, no_owner, no_acl, pre_load=None, post_load=None, pre_remoted_load=None, post_remoted_load=None, swap=False, pg_extractor=None, cache=False):
+def diff_pg(addr, git_tag, diff_raw, clean, no_owner, no_acl, pre_load=None, post_load=None, pre_remoted_load=None, post_remoted_load=None, swap=False, pg_extractor=None, cache=False, ignore_space=False):
 	config.check_set_test_db()
 	if git_tag:
 		project = ProjectGit(git_tag)
@@ -797,12 +797,12 @@ def diff_pg(addr, git_tag, diff_raw, clean, no_owner, no_acl, pre_load=None, pos
 	dump_cur, table_data_cur = load_and_dump(project, clean, no_owner, no_acl, pre_load=pre_load, post_load=post_load, pg_extractor=pg_extractor)
 
 	if pg_extractor:
-		pg_extractor.print_diff(swap)
+		pg_extractor.print_diff(swap, ignore_space)
 		pg_extractor.clean()
 	else:
 		print_diff(dump_r, dump_cur, table_data_remote, table_data_cur, diff_raw, no_owner, no_acl, fromfile=addr.addr, tofile="local project", swap=swap)
 
-def diff_pg_file(addr, fname, diff_raw, clean, no_owner, no_acl, pre_load=None, post_load=None, pre_remoted_load=None, post_remoted_load=None, swap=False, pg_extractor=None, cache=False):
+def diff_pg_file(addr, fname, diff_raw, clean, no_owner, no_acl, pre_load=None, post_load=None, pre_remoted_load=None, post_remoted_load=None, swap=False, pg_extractor=None, cache=False, ignore_space=False):
 	config.check_set_test_db()
 
 	roles_remote = get_roles(addr, cache)
@@ -813,7 +813,7 @@ def diff_pg_file(addr, fname, diff_raw, clean, no_owner, no_acl, pre_load=None, 
 	dump_file = load_file_and_dump(fname, "project", clean, no_owner, no_acl, pre_load=pre_load, post_load=post_load, dbs="file", pg_extractor=pg_extractor)
 
 	if pg_extractor:
-		pg_extractor.print_diff(swap)
+		pg_extractor.print_diff(swap, ignore_space)
 		pg_extractor.clean()
 	else:
 		print_diff(dump_r, dump_file, None, None, diff_raw, no_owner, no_acl, fromfile=addr.addr, tofile=fname, swap=swap)
