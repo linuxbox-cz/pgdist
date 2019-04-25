@@ -418,12 +418,13 @@ def update(project_name, dbname, version, conninfo, directory, check=False):
 
 	if exists_updates:
 		print("")
+		print("Project updates:")
 		print("============================================================================")
 
 		print(" %-20s%-20s%s" % ("project", "dbname", "update"))
 		for project in projects:
 			for ins in project.installed:
-				if updates:
+				if ins.updates:
 					for update in ins.updates:
 						print(" %-20s%-20s%s" % (project.name, ins.dbname, update))
 
