@@ -421,10 +421,13 @@ def add(files, all):
 			sys.exit(1)
 		files = files_ok
 	for file in files:
-		print("adding to project: %s" % (file,))
+		print("Added to project:")
+		print("\t%s" % (file,))
 		project.add_file(file)
 	if files:
+		print("")
 		print("If you need, change order of files in project file sql/pg_project.sql")
+		print("")
 	project.save_conf()
 
 def rm(files, all):
@@ -445,7 +448,8 @@ def rm(files, all):
 			files_ok.append(file)
 		files = files_ok
 	for file in files:
-		print("removing from project: %s" % (file,))
+		print("Removed from project:")
+		print("\t%s")
 		project.rm_file(file)
 	project.save_conf()
 
@@ -618,6 +622,9 @@ def test_load(clean=True, pre_load=None, post_load=None, pg_extractor=None):
 	load_and_dump(project, clean=clean, pre_load=pre_load, post_load=post_load, pg_extractor=pg_extractor)
 	if pg_extractor:
 		pg_extractor.print_dump_info()
+	print("")
+	print("Project %s was loaded successfully." % (project.name))
+	print("")
 
 def create_update(git_tag, new_version, force, gitversion=None, clean=True, pre_load=None, post_load=None,
 		pre_load_old=None, pre_load_new=None, post_load_old=None, post_load_new=None):
