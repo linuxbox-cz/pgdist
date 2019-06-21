@@ -292,6 +292,8 @@ class UpdatePart:
 
 class Update:
 	def __init__(self, project_name, old_version, new_version, directory=None):
+		self.old_version = old_version
+		self.new_version = new_version
 		if directory:
 			self.directory = directory
 		else:
@@ -309,6 +311,9 @@ class Update:
 				logging.debug("Update find part: %s" % (fname,))
 				part = int(x.group("part"))
 				self.parts.insert(part, UpdatePart(fname))
+
+	def __str__(self):
+		return "%s > %s" % (self.old_version, self.new_version)
 
 class Version:
 	def __init__(self, directory=None):
@@ -543,7 +548,7 @@ def load_and_dump(project, clean=True, no_owner=False, no_acl=False, pre_load=No
 		pg.load_project(project)
 		if updates:
 			for update in updates:
-				print("load update %s to test pg" % (update,), file=sys.stderr)
+				print("load update %s %s to test pg" % (project.name, update), file=sys.stderr)
 				pg.load_update(update)
 		pg.load_file(post_load)
 		print("dump structure and data from test pg", file=sys.stderr)
@@ -645,6 +650,7 @@ def create_update(git_tag, new_version, force, gitversion=None, clean=True, pre_
 		old_version = gitversion
 	else:
 		old_version = re.sub(r"^[^\d]*", "", git_tag)
+	new_version = re.sub(r"^[^\d]*", "", new_version)
 
 	dump_old, x = load_and_dump(project_old, clean=clean, pre_load=pre_load_old, post_load=post_load_old, dbs="old")
 	dump_new, x = load_and_dump(project_new, clean=clean, pre_load=pre_load_new, post_load=post_load_new, dbs="new")
@@ -704,6 +710,7 @@ def test_update(git_tag, new_version, updates, clean=True, gitversion=None, pre_
 		old_version = gitversion
 	else:
 		old_version = re.sub(r"^[^\d]*", "", git_tag)
+	new_version = re.sub(r"^[^\d]*", "", new_version)
 
 	project_old = ProjectGit(git_tag)
 	project_new = ProjectFs()
