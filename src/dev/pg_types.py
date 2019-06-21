@@ -118,6 +118,7 @@ class Project:
 		self.functions = {}
 		self.sequences = {}
 		self.views = {}
+		self.operators = {}
 		self.tables = {}
 		self.table_data = {}
 
@@ -136,6 +137,7 @@ class Project:
 		self.diff_elements(exclude_schemas, "tables", self.tables, project2.tables, no_owner, no_acl)
 		self.diff_elements(exclude_schemas, "sequences", self.sequences, project2.sequences, no_owner, no_acl)
 		self.diff_elements(exclude_schemas, "views", self.views, project2.views, no_owner, no_acl)
+		self.diff_elements(exclude_schemas, "operators", self.operators, project2.operators, no_owner, no_acl)
 		self.diff_elements(exclude_schemas, "functions", self.functions, project2.functions, no_owner, no_acl, ignore_space)
 		self.diff_data(project2)
 
@@ -223,6 +225,7 @@ class Project:
 		self.update_elements(file, "tables", self.tables, project2.tables)
 		self.update_elements(file, "sequences", self.sequences, project2.sequences)
 		self.update_elements(file, "views", self.views, project2.views)
+		self.update_elements(file, "operators", self.operators, project2.operators)
 		self.update_elements(file, "functions", self.functions, project2.functions)
 
 	def update_elements(self, file, elements_name, elements1, elements2):
@@ -475,4 +478,7 @@ class View(Element):
 	def __init__(self, command, name):
 		Element.__init__(self, "View", command, name)
 
+class Operator(Element):
+	def __init__(self, command, name, leftarg, rightarg):
+		Element.__init__(self, "Operator", command, name+"("+leftarg+","+rightarg+")")
 

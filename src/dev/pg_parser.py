@@ -168,6 +168,9 @@ def remove_default(args):
 					break
 				i += 1
 			continue
+		if args[i] == "(":
+			i = skip_exp(args, i+1)
+			continue
 		if args[i] == ",":
 			parsed.append(args[s:i].split(' DEFAULT')[0])
 			i += 1
@@ -180,6 +183,26 @@ def remove_default(args):
 		parsed.append(args[s:i].split(' DEFAULT')[0])
 
 	return parsed
+
+def skip_exp(args, i):
+	while i<len(args):
+		if args[i] == "'":
+			i += 1
+			while True:
+				if i+1<len(args) and args[i] == "'" and args[i+1] == "'":
+					i += 2
+					continue
+				if args[i] == "'":
+					i += 1
+					break
+				i += 1
+			continue
+		if args[i] == "(":
+			i = skip_exp(args, i+1)
+			continue
+		if args[i] == ")":
+			return i + 1
+		i += 1
 
 def parse_test(dump_stream):
 	project = Project()
@@ -600,15 +623,29 @@ def parse(dump_stream):
 
 			# OPERATOR
 
-#			x = re.match(r"CREATE OPERATOR (?P<name>\S+)( \(.*\))? \(", command)
-#			if x:
-#				# TODO
-#				continue
+			x = re.match(r"CREATE OPERATOR (?P<name>\S+)( \(.*\))? \(", command)
+			if x:
+				a = re.search(r"LEFTARG\s*=\s*(?P<name>[^\s,]+)", command, re.DOTALL)
+				if a:
+					leftarg = a.group('name')
+				else:
+					leftarg = ""
+				a = re.search(r"RIGHTARG\s*=\s*(?P<name>[^\s,]+)", command, re.DOTALL)
+				if a:
+					rightarg = a.group('name')
+				else:
+					rightarg = ""
 
-#			x = re.match(r"ALTER OPERATOR \S+ \(.*\) OWNER TO \S+;$", command)
-#			if x:
-#				# TODO
-#				continue
+				name = "%s,%s,%s" % (schema(set_schema, x.group('name')), leftarg, rightarg)
+
+				project.operators[name] = Operator(command, schema(set_schema, x.group('name')), leftarg, rightarg)
+				continue
+
+			x = re.match(r"ALTER OPERATOR (?P<name>\S+) \((?P<leftarg>\S+), (?P<rightarg>\S+)\) OWNER TO (?P<new_owner>\S+);$", command)
+			if x:
+				name = "%s,%s,%s" % (schema(set_schema, x.group('name')), x.group('leftarg'), x.group('rightarg'))
+				project.operators[name].owner = x.group('new_owner')
+				continue
 
 			# CAST
 
