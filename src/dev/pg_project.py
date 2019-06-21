@@ -272,7 +272,8 @@ class ProjectGit(ProjectBase):
 		return self.tar.extractfile("sql/"+fname)
 
 class UpdatePart:
-	def __init__(self, fname):
+	def __init__(self, part, fname):
+		self.part = part
 		self.fname = fname
 		self.single_transaction = True
 		with(open(fname)) as f:
@@ -303,14 +304,15 @@ class Update:
 		fname = os.path.join(self.directory, "sql_dist", pattern)
 		if os.path.isfile(fname):
 			logging.debug("Update find part: %s" % (fname,))
-			self.parts.insert(1, UpdatePart(fname))
+			self.parts.append(UpdatePart(0, fname))
 		pattern = "%s--%s--%s--p*.sql" % (to_fname(project_name), to_fname(old_version), to_fname(new_version))
 		for fname in glob.glob(os.path.join(self.directory, "sql_dist", pattern)):
 			x = re.match(r".*--p(?P<part>\d+)\.sql", fname)
 			if x:
 				logging.debug("Update find part: %s" % (fname,))
 				part = int(x.group("part"))
-				self.parts.insert(part, UpdatePart(fname))
+				self.parts.append(UpdatePart(part, fname))
+		self.parts.sort(key=lambda x: x.part)
 
 	def __str__(self):
 		return "%s > %s" % (self.old_version, self.new_version)
@@ -693,7 +695,7 @@ def create_update(git_tag, new_version, force, gitversion=None, clean=True, pre_
 	print("and test it by 'pgdist test-update %s %s'" % (git_tag, new_version))
 
 
-def test_update(git_tag, new_version, updates, clean=True, gitversion=None, pre_load=None, post_load=None,
+def test_update(git_tag, new_version, clean=True, gitversion=None, pre_load=None, post_load=None,
 		pre_load_old=None, pre_load_new=None, post_load_old=None, post_load_new=None, pg_extractor=None):
 
 	if not pre_load_old:
@@ -715,8 +717,7 @@ def test_update(git_tag, new_version, updates, clean=True, gitversion=None, pre_
 	project_old = ProjectGit(git_tag)
 	project_new = ProjectFs()
 	upds = []
-	if not updates:
-		upds.append(Update(project_old.name, old_version, new_version))
+	upds.append(Update(project_old.name, old_version, new_version))
 
 	dump_updated, table_data_updated = load_and_dump(project_old, clean=clean, pre_load=pre_load_old, post_load=post_load_old, updates=upds, dbs="updated",
 		pg_extractor=pg_extractor)

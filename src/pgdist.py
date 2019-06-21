@@ -230,7 +230,7 @@ def main():
 
 	elif args.cmd == "test-update" and len(args.args) in (2,):
 		(git_tag, new_version) = args_parse(args.args, 1)
-		pg_project.test_update(git_tag, new_version, args.gitversion, not args.no_clean, pre_load=args.pre_load, post_load=args.post_load,
+		pg_project.test_update(git_tag, new_version, gitversion=args.gitversion, clean=not args.no_clean, pre_load=args.pre_load, post_load=args.post_load,
 			pre_load_old=args.pre_load_old, pre_load_new=args.pre_load_new, post_load_old=args.post_load_old, post_load_new=args.post_load_new,
 			pg_extractor=pg_extractor)
 
