@@ -113,7 +113,7 @@ class PG:
 			creates = []
 			for role in roles:
 				creates.append("""
-					IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = '%s') THEN
+					IF NOT EXISTS (SELECT * FROM pg_catalog.pg_roles WHERE rolname = '%s') THEN
 						CREATE ROLE %s NOLOGIN;
 					END IF;""" % (role, role))
 

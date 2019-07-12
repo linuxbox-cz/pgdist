@@ -1,0 +1,1 @@
+CREATE SCHEMA pgdist_schema_test;
