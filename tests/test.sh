@@ -164,17 +164,17 @@ log_pgdist "status"
 pgdist status
 
 log_pgdist "diff-db ${PGCONN} --no-owner --no-acl"
-python "${PATH_PGDIST_SRC}/pgdist.py" diff-db ${PGCONN} --no-owner --no-acl -U postgres
+pgdist diff-db ${PGCONN} --no-owner --no-acl -U postgres
 
 log_pgdist "diff-db-file ${PGCONN} '${PATH_SCHEMAS}/schema_1.sql' --no-owner --no-acl"
-python "${PATH_PGDIST_SRC}/pgdist.py" diff-db-file ${PGCONN} "${PATH_SCHEMAS}/schema_1.sql" --no-owner --no-acl -U postgres
+pgdist diff-db-file ${PGCONN} "${PATH_SCHEMAS}/schema_1.sql" --no-owner --no-acl -U postgres
 
 log_pgdist "diff-file-db '${PATH_SCHEMAS}/schema_1.sql' ${PGCONN} --no-owner --no-acl"
-python "${PATH_PGDIST_SRC}/pgdist.py" diff-file-db "${PATH_SQL}/pg_project.sql" ${PGCONN} --no-owner --no-acl -U postgres
+pgdist diff-file-db "${PATH_SQL}/pg_project.sql" ${PGCONN} --no-owner --no-acl -U postgres
 
 log_pgdist "test-load"
 cd $PATH_PROJECT
-python "${PATH_PGDIST_SRC}/pgdist.py" test-load -U postgres
+pgdist test-load -U postgres
 
 log_pgdist "create-version 1.0"
 cd $PATH_SQL
@@ -259,17 +259,17 @@ log_pgdist "data-list"
 pgdist data-list
 
 log_pgdist "test-load"
-python "${PATH_PGDIST_SRC}/pgdist.py" test-load -U postgres
+pgdist test-load -U postgres
 
 log_pgdist "create-update v1.0 1.1"
-python "${PATH_PGDIST_SRC}/pgdist.py" create-update v1.0 1.1
+pgdist create-update v1.0 1.1
 
 log "cp -a ${PATH_SQL_DIST}/. ${PATH_PGDIST_INSTALL}"
 cp -a "${PATH_SQL_DIST}/." $PATH_PGDIST_INSTALL
 
 log_pgdist "test-update v1.0 1.1"
 cd $PATH_SQL
-python "${PATH_PGDIST_SRC}/pgdist.py" test-update v1.0 1.1 -U postgres
+pgdist test-update v1.0 1.1 -U postgres
 
 log_git "add ."
 cd $PATH_PROJECT
@@ -300,7 +300,7 @@ log_pgdist "list -U postgres"
 pgdist list -U postgres
 
 log_pgdist "diff-db ${PGCONN} v1.0"
-python "${PATH_PGDIST_SRC}/pgdist.py" diff-db ${PGCONN} v1.0 -U postgres
+pgdist diff-db ${PGCONN} v1.0 -U postgres
 
 log_pgdist "check-update pgdist_test_project pgdist_test_database"
 pgdist check-update pgdist_test_project pgdist_test_database -U postgres
