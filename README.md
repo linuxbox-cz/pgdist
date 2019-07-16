@@ -110,6 +110,11 @@ Configuration:
 ```
 
 ### Tests
+Requires:
+* PostgreSQL
+* Git
+* PGdist
+
 ```
 Optional parameters:
     -u --user     git user name

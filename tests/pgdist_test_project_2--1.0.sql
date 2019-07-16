@@ -11,17 +11,17 @@
 
 
 --
--- sqldist file: pgdist_schema_test_2/schema/schema_1.sql
+-- sqldist file: pgdist_test_schema_2/schema/schema_1.sql
 --
 
-CREATE SCHEMA pgdist_schema_test_2;
+CREATE SCHEMA pgdist_test_schema_2;
 ;-- end sqldist file
 
 --
--- sqldist file: pgdist_schema_test_2/tables/table_1.sql
+-- sqldist file: pgdist_test_schema_2/tables/table_1.sql
 --
 
-CREATE TABLE pgdist_schema_test_2.test_table_1(
+CREATE TABLE pgdist_test_schema_2.test_table_1(
     id SERIAL NOT NULL,
     data TEXT,
     test_table_1_id INTEGER NOT NULL,
@@ -30,10 +30,10 @@ CREATE TABLE pgdist_schema_test_2.test_table_1(
 ;-- end sqldist file
 
 --
--- sqldist file: pgdist_schema_test_2/tables/table_2.sql
+-- sqldist file: pgdist_test_schema_2/tables/table_2.sql
 --
 
-CREATE TABLE pgdist_schema_test_2.test_table_2(
+CREATE TABLE pgdist_test_schema_2.test_table_2(
     id SERIAL NOT NULL,
     message TEXT
 );

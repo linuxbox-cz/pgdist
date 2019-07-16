@@ -1,1 +1,1 @@
-CREATE SCHEMA pgdist_schema_test;
+CREATE SCHEMA pgdist_test_schema;

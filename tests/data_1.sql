@@ -1,4 +1,4 @@
-INSERT INTO pgdist_schema_test.test_table_1(message, ts) VALUES
+INSERT INTO pgdist_test_schema.test_table_1(message, ts) VALUES
 ('msg_1', NOW()),
 ('msg_2', NOW()),
 ('msg_3', NOW()),
