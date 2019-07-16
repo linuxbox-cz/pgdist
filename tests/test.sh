@@ -305,11 +305,11 @@ python "${PATH_PGDIST_SRC}/pgdist.py" diff-db ${PGCONN} v1.0 -U postgres
 log_pgdist "check-update pgdist_test_project pgdist_test_database"
 pgdist check-update pgdist_test_project pgdist_test_database -U postgres
 
-#log_pgdist "update pgdist_test_project pgdist_test_database 1.1"
-#pgdist update pgdist_test_project pgdist_test_database 1.1 -U postgres
+log_pgdist "update pgdist_test_project pgdist_test_database 1.1"
+pgdist update pgdist_test_project pgdist_test_database 1.1 -U postgres
 
-#log "psql -U postgres -d pgdist_test_database -c 'SELECT * FROM pgdist_test_schema_2.test_table_1;'"
-#psql -U postgres -d pgdist_test_database -c "SELECT * FROM pgdist_test_schema_2.test_table_1;"
+log "psql -U postgres -d pgdist_test_database -c 'SELECT * FROM pgdist_test_schema_2.test_table_1;'"
+psql -U postgres -d pgdist_test_database -c "SELECT * FROM pgdist_test_schema_2.test_table_1;"
 
 log_pgdist "list -U postgres"
 pgdist list -U postgres
