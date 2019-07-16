@@ -23,7 +23,9 @@ WHITE="\033[1;37m"
 NC="\033[0m"
 
 #set paths to project 1
-PATH_PGDIST=$(pwd)
+PATH_TEST=$(pwd)
+PATH_PGDIST=$(dirname $PATH_TEST)
+PATH_PGDIST_SRC="${PATH_PGDIST}/src"
 PATH_PGDIST_INSTALL="/usr/share/pgdist/install"
 PATH_PROJECT="/tmp/pgdist_test_1"
 PATH_SQL="${PATH_PROJECT}/sql"
@@ -33,9 +35,6 @@ PATH_TABLES="${PATH_SQL_SCHEMA}/tables"
 PATH_SCHEMAS="${PATH_SQL_SCHEMA}/schema"
 PATH_FUNCTIONS="${PATH_SQL_SCHEMA}/functions"
 PATH_DATA="${PATH_SQL_SCHEMA}/data"
-
-#PGCONN
-PGCONN="postgres:596603142@localhost"
 
 #set coloured log
 log() {
@@ -47,38 +46,68 @@ log_pgdist() {
 log_git() {
     echo -e "${GREEN}Test | ${BROWN}git $1${NC}"
 }
+log_wrn() {
+    echo -e "${PURPLE}Test | warning: $1${NC}"
+}
 log_err() {
     echo -e "${RED}Test | error: $1${NC}"
 }
 
-#clean up
 clean_up() {
+    log "cleaning up begin"
+    cd $PATH_TEST
     rm -rfv --preserve-root --one-file-system -- $PATH_PROJECT
-    rm -f --preserve-root --one-file-system "${PATH_PGDIST_INSTALL}/pgdist_project_test--1.0--1.1.sql"
-    rm -f --preserve-root --one-file-system "${PATH_PGDIST_INSTALL}/pgdist_project_test--1.0.sql"
-    rm -f --preserve-root --one-file-system "${PATH_PGDIST_INSTALL}/pgdist_test_project_2--1.0.sql"
+    rm -fv --preserve-root --one-file-system "${PATH_PGDIST_INSTALL}/pgdist_project_test--1.0--1.1.sql"
+    rm -fv --preserve-root --one-file-system "${PATH_PGDIST_INSTALL}/pgdist_project_test--1.0.sql"
+    rm -fv --preserve-root --one-file-system "${PATH_PGDIST_INSTALL}/pgdist_test_project_2--1.0.sql"
     psql -U postgres -c "DROP DATABASE IF EXISTS pgdist_test_database;"
+    log "cleaning up finished"
 }
 
-if [ "$1" ]; then
-    GIT_USER_NAME=$1;
-else
-    log_err "you must set git user name"
-    exit 1;
+#argument parsing
+while [ "$1" != "" ]; do
+    case $1 in
+        -u | --user )
+            shift
+            GIT_USER_NAME=$1;;
+        -e | --email )
+            shift
+            GIT_USER_EMAIL=$1;;
+        -p | --pgconn )
+            shift
+            PGCONN=$1;;
+        --no-clean )
+            NO_CLEAN=true;;
+        -h | --help )
+            echo "Optional parameters:"
+            echo "    -u --user     git user name"
+            echo "    -e --email    git user email"
+            echo "    -p --pgconn   pg connection"
+            echo "    --no-clean    wont clean files and database after test"
+            echo "    -h --help     prints this help"
+            exit 0;;
+        *)
+    esac
+    shift
+done
+
+if [ ! "$PGCONN" ]; then
+    PGCONN="postgres:596603142@localhost"
 fi
-
-if [ "$2" ]; then
-    GIT_USER_EMAIL=$1;
-else
-    log_err "you must set git user email"
-    exit 1;
+if [ ! "$NO_CLEAN" ]; then
+    NO_CLEAN=false
 fi
-
-
-log "clean up"
-clean_up
+if [ ! "$GIT_USER_NAME" -o ! "$GIT_USER_EMAIL" ]; then
+    GIT_USER_NAME="test user"
+    GIT_USER_EMAIL="test@email.cz"
+    GIT_RUN=false
+    log_wrn "require-add test wont run!"
+else
+    GIT_RUN=true
+fi
 
 log "begin\n"
+clean_up
 
 log_pgdist "init pgdist_project_test ${PATH_PROJECT}"
 pgdist init pgdist_project_test "${PATH_PROJECT}/"
@@ -88,7 +117,7 @@ cd $PATH_SQL
 pgdist create-schema pgdist_schema_test
 
 log "cp schema_1.sql ${PATH_SCHEMAS}/"
-cd $PATH_PGDIST
+cd $PATH_TEST
 cp schema_1.sql "${PATH_SCHEMAS}/"
 
 log "cp table_1.sql ${PATH_TABLES}/"
@@ -135,17 +164,17 @@ log_pgdist "status"
 pgdist status
 
 log_pgdist "diff-db ${PGCONN} --no-owner --no-acl"
-python /mnt/dev1/work/tpopov/pgdist/src/pgdist.py diff-db ${PGCONN} --no-owner --no-acl ###---DELETE PATH---###
+python "${PATH_PGDIST_SRC}/pgdist.py" diff-db ${PGCONN} --no-owner --no-acl
 
 log_pgdist "diff-db-file ${PGCONN} '${PATH_SCHEMAS}/schema_1.sql' --no-owner --no-acl"
-python /mnt/dev1/work/tpopov/pgdist/src/pgdist.py diff-db-file ${PGCONN} "${PATH_SCHEMAS}/schema_1.sql" --no-owner --no-acl
+python "${PATH_PGDIST_SRC}/pgdist.py" diff-db-file ${PGCONN} "${PATH_SCHEMAS}/schema_1.sql" --no-owner --no-acl
 
 log_pgdist "diff-file-db '${PATH_SCHEMAS}/schema_1.sql' ${PGCONN} --no-owner --no-acl"
-python /mnt/dev1/work/tpopov/pgdist/src/pgdist.py diff-file-db "${PATH_SQL}/pg_project.sql" ${PGCONN} --no-owner --no-acl
+python "${PATH_PGDIST_SRC}/pgdist.py" diff-file-db "${PATH_SQL}/pg_project.sql" ${PGCONN} --no-owner --no-acl
 
 log_pgdist "test-load"
 cd $PATH_PROJECT
-python /mnt/dev1/work/tpopov/pgdist/src/pgdist.py test-load
+python "${PATH_PGDIST_SRC}/pgdist.py" test-load
 
 log_pgdist "create-version 1.0"
 cd $PATH_SQL
@@ -154,6 +183,7 @@ pgdist create-version 1.0
 log_git "init"
 cd $PATH_PROJECT
 git init
+
 
 log_git "config user.name '${GIT_USER_NAME}'"
 cd $PATH_PROJECT
@@ -175,7 +205,7 @@ log "mkdir ${PATH_DATA}"
 mkdir $PATH_DATA
 
 log "cp function_1.sql ${PATH_FUNCTIONS}/"
-cd $PATH_PGDIST
+cd $PATH_TEST
 cp function_1.sql "${PATH_FUNCTIONS}/"
 
 log "cp data_1.sql ${PATH_DATA}/"
@@ -218,8 +248,10 @@ pgdist dbparam-set OWNER pgdist_test_role_1
 log_pgdist "dbparam-get"
 pgdist dbparam-get
 
-#log_pgdist "require-add pgdist_test_project_2 git@git.linuxbox.cz:tpopov/pgdist_tester.git master"
-#pgdist require-add pgdist_test_project_2 git@git.linuxbox.cz:tpopov/pgdist_tester.git master
+if [ "$GIT_RUN" ]; then
+    log_pgdist "require-add pgdist_test_project_2 git@git.linuxbox.cz:tpopov/pgdist_tester.git master"
+    pgdist require-add pgdist_test_project_2 git@git.linuxbox.cz:tpopov/pgdist_tester.git master
+fi
 
 log_pgdist "data-add pgdist_schema_test.test_table_1"
 pgdist data-add pgdist_schema_test.test_table_1
@@ -228,17 +260,17 @@ log_pgdist "data-list"
 pgdist data-list
 
 log_pgdist "test-load"
-python /mnt/dev1/work/tpopov/pgdist/src/pgdist.py test-load
+python "${PATH_PGDIST_SRC}/pgdist.py" test-load
 
 log_pgdist "create-update v1.0 1.1"
-python /mnt/dev1/work/tpopov/pgdist/src/pgdist.py create-update v1.0 1.1
+python "${PATH_PGDIST_SRC}/pgdist.py" create-update v1.0 1.1
 
 log "cp -a ${PATH_SQL_DIST}/. ${PATH_PGDIST_INSTALL}"
 cp -a "${PATH_SQL_DIST}/." $PATH_PGDIST_INSTALL
 
 log_pgdist "test-update v1.0 1.1"
 cd $PATH_SQL
-python /mnt/dev1/work/tpopov/pgdist/src/pgdist.py test-update v1.0 1.1
+python "${PATH_PGDIST_SRC}/pgdist.py" test-update v1.0 1.1
 
 log_git "add ."
 cd $PATH_PROJECT
@@ -269,7 +301,7 @@ log_pgdist "list -U postgres"
 pgdist list -U postgres
 
 log_pgdist "diff-db ${PGCONN} v1.0"
-python /mnt/dev1/work/tpopov/pgdist/src/pgdist.py diff-db ${PGCONN} v1.0 ###---DELETE PATH---###
+python "${PATH_PGDIST_SRC}/pgdist.py" diff-db ${PGCONN} v1.0
 
 log_pgdist "check-update pgdist_project_test pgdist_test_database"
 pgdist check-update pgdist_project_test pgdist_test_database
@@ -304,8 +336,10 @@ pgdist role-rm pgdist_test_role_2
 log_pgdist "role-list"
 pgdist role-list
 
-#log_pgdist "require-rm pgdist_project_test_2"
-#pgdist require-rm pgdist_test_project_2
+if [ "$GIT_RUN" ]; then
+    log_pgdist "require-rm pgdist_project_test_2"
+    pgdist require-rm pgdist_test_project_2
+fi
 
 log_pgdist "data-rm pgdist_schema_test.test_table_1"
 pgdist data-rm pgdist_schema_test.test_table_1
@@ -313,6 +347,8 @@ pgdist data-rm pgdist_schema_test.test_table_1
 log_pgdist "data-list"
 pgdist data-list
 
-#clean_up
-
 log "finished"
+
+if [ "$NO_CLEAN" = false ]; then
+    clean_up
+fi

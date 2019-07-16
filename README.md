@@ -51,10 +51,10 @@ PGdist - distributes PotgreSQL functions, tables, etc...
 PGdist Devel - develop PostgreSQL project
 
     init PROJECT [DIRECTORY] - initialize pgdist project
-    create-schema SCHEMA - create new directories schema
-    status - show new files and removed files compared to pg_project.sql
+    create-schema SCHEMA - create new schema directory
+    status - show new (not added) files and removed files compared to pg_project.sql
     add FILE1 [FILE2 ...] - add files to pg_project.sql
-    rm FILE1 [FILE2 ...] - removed files from pg_project.sql
+    rm FILE1 [FILE2 ...] - remove files from pg_project.sql
 
     test-load - load project to testing postgres
     create-version VERSION [GIT_TAG] - create version files
@@ -107,6 +107,16 @@ Configuration:
         test_db: user@host/dbname
 
         test_db - PGCONN to testing postgres, user has to create databases and users
+```
+
+### Tests
+```
+Optional parameters:
+    -u --user     git user name
+    -e --email    git user email
+    -p --pgconn   pg connection (PGCONN)
+    --no-clean    wont clean files and database after test
+    -h --help     prints this help
 ```
 
 ## Authors
