@@ -34,7 +34,7 @@ PGdist Devel - develop PostgreSQL project
 
     diff-db PGCONN [GIT_TAG] - diff project and database
     diff-db-file PGCONN FILE - diff file and database
-    diff-file-db FILE PGCONN - diff database and file
+    diff-file-db FILE PGCONN- diff database and file
 
     role-list - print roles in project
     role-add NAME [login|nologin] [password] - add role to project

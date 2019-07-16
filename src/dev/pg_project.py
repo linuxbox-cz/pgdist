@@ -456,7 +456,7 @@ def rm(files, all):
 		files = files_ok
 	for file in files:
 		print("Removed from project:")
-		print("\t%s")
+		print("\t%s" % (file,))
 		project.rm_file(file)
 	project.save_conf()
 
