@@ -337,7 +337,7 @@ log_pgdist "check-update pgdist_test_project pgdist_test_database"
 python "${PATH_PGDIST_SRC}/pgdist.py" check-update pgdist_test_project pgdist_test_database -U postgres
 
 log_pgdist "update pgdist_test_project pgdist_test_database 1.1"
-#python "${PATH_PGDIST_SRC}/pgdist.py" update pgdist_test_project pgdist_test_database 1.1 -U postgres
+python "${PATH_PGDIST_SRC}/pgdist.py" update pgdist_test_project pgdist_test_database 1.1 -U postgres
 
 if [ "$GIT_RUN" = true ]; then
     log "psql -U postgres -d pgdist_test_database -c 'SELECT * FROM pgdist_test_schema_2.test_table_1;'"
