@@ -110,11 +110,11 @@ log "begin\n"
 clean_up
 
 log_pgdist "init pgdist_test_project ${PATH_PROJECT}"
-pgdist init pgdist_test_project "${PATH_PROJECT}/"
+python "${PATH_PGDIST_SRC}/pgdist.py" init pgdist_test_project "${PATH_PROJECT}/"
 
 log_pgdist "create-schema pgdist_test_schema"
 cd $PATH_SQL
-pgdist create-schema pgdist_test_schema
+python "${PATH_PGDIST_SRC}/pgdist.py" create-schema pgdist_test_schema
 
 log "cp schema_1.sql ${PATH_SCHEMAS}/"
 cd $PATH_TEST
@@ -131,54 +131,54 @@ cp pgdist_test_project_2--1.0.sql "${PATH_PGDIST_INSTALL}/"
 
 log_pgdist "status"
 cd $PATH_SQL
-pgdist status
+python "${PATH_PGDIST_SRC}/pgdist.py" status
 
 log_pgdist "add ${PATH_TABLES}/table_1.sql"
-pgdist add "${PATH_TABLES}/table_1.sql"
+python "${PATH_PGDIST_SRC}/pgdist.py" add "${PATH_TABLES}/table_1.sql"
 
 log_pgdist "status"
-pgdist status
+python "${PATH_PGDIST_SRC}/pgdist.py" status
 
 log_pgdist "rm ${PATH_TABLES}/table_1.sql"
-pgdist rm "${PATH_TABLES}/table_1.sql"
+python "${PATH_PGDIST_SRC}/pgdist.py" rm "${PATH_TABLES}/table_1.sql"
 
 log_pgdist "status"
-pgdist status
+python "${PATH_PGDIST_SRC}/pgdist.py" status
 
 log_pgdist "add ${PATH_TABLES}/table_1.sql ${PATH_TABLES}/table_2.sql"
-pgdist add "${PATH_TABLES}/table_1.sql" "${PATH_TABLES}/table_2.sql"
+python "${PATH_PGDIST_SRC}/pgdist.py" add "${PATH_TABLES}/table_1.sql" "${PATH_TABLES}/table_2.sql"
 
 log_pgdist "status"
-pgdist status
+python "${PATH_PGDIST_SRC}/pgdist.py" status
 
 log_pgdist "rm ${PATH_TABLES}/table_1.sql ${PATH_TABLES}/table_2.sql"
-pgdist rm "${PATH_TABLES}/table_1.sql" "${PATH_TABLES}/table_2.sql"
+python "${PATH_PGDIST_SRC}/pgdist.py" rm "${PATH_TABLES}/table_1.sql" "${PATH_TABLES}/table_2.sql"
 
 log_pgdist "status"
-pgdist status
+python "${PATH_PGDIST_SRC}/pgdist.py" status
 
 log_pgdist "add ${PATH_SCHEMAS}/schema_1.sql ${PATH_TABLES}/table_1.sql ${PATH_TABLES}/table_2.sql"
-pgdist add "${PATH_SCHEMAS}/schema_1.sql" "${PATH_TABLES}/table_1.sql" "${PATH_TABLES}/table_2.sql"
+python "${PATH_PGDIST_SRC}/pgdist.py" add "${PATH_SCHEMAS}/schema_1.sql" "${PATH_TABLES}/table_1.sql" "${PATH_TABLES}/table_2.sql"
 
 log_pgdist "status"
-pgdist status
+python "${PATH_PGDIST_SRC}/pgdist.py" status
 
 log_pgdist "diff-db ${PGCONN} --no-owner --no-acl"
-pgdist diff-db ${PGCONN} --no-owner --no-acl -U postgres
+python "${PATH_PGDIST_SRC}/pgdist.py" diff-db ${PGCONN} --no-owner --no-acl -U postgres
 
 log_pgdist "diff-db-file ${PGCONN} '${PATH_SCHEMAS}/schema_1.sql' --no-owner --no-acl"
-pgdist diff-db-file ${PGCONN} "${PATH_SCHEMAS}/schema_1.sql" --no-owner --no-acl -U postgres
+python "${PATH_PGDIST_SRC}/pgdist.py" diff-db-file ${PGCONN} "${PATH_SCHEMAS}/schema_1.sql" --no-owner --no-acl -U postgres
 
 log_pgdist "diff-file-db '${PATH_SCHEMAS}/schema_1.sql' ${PGCONN} --no-owner --no-acl"
-pgdist diff-file-db "${PATH_SQL}/pg_project.sql" ${PGCONN} --no-owner --no-acl -U postgres
+python "${PATH_PGDIST_SRC}/pgdist.py" diff-file-db "${PATH_SQL}/pg_project.sql" ${PGCONN} --no-owner --no-acl -U postgres
 
 log_pgdist "test-load"
 cd $PATH_PROJECT
-pgdist test-load -U postgres
+python "${PATH_PGDIST_SRC}/pgdist.py" test-load -U postgres
 
 log_pgdist "create-version 1.0"
 cd $PATH_SQL
-pgdist create-version 1.0
+python "${PATH_PGDIST_SRC}/pgdist.py" create-version 1.0
 
 log_git "init"
 cd $PATH_PROJECT
@@ -212,40 +212,40 @@ cp data_1.sql "${PATH_DATA}/"
 
 log_pgdist "add ${PATH_FUNCTIONS}/function_1.sql"
 cd $PATH_SQL
-pgdist add "${PATH_FUNCTIONS}/function_1.sql"
+python "${PATH_PGDIST_SRC}/pgdist.py" add "${PATH_FUNCTIONS}/function_1.sql"
 
 log_pgdist "add ${PATH_DATA}/data_1.sql"
-pgdist add "${PATH_DATA}/data_1.sql"
+python "${PATH_PGDIST_SRC}/pgdist.py" add "${PATH_DATA}/data_1.sql"
 
 log_pgdist "role-list"
-pgdist role-list
+python "${PATH_PGDIST_SRC}/pgdist.py" role-list
 
 log_pgdist "role-add pgdist_test_role_1 nologin"
-pgdist role-add pgdist_test_role_1 nologin
+python "${PATH_PGDIST_SRC}/pgdist.py" role-add pgdist_test_role_1 nologin
 
 log_pgdist "role-list"
-pgdist role-list
+python "${PATH_PGDIST_SRC}/pgdist.py" role-list
 
 log_pgdist "role-add pgdist_test_role_2 login password123"
-pgdist role-add pgdist_test_role_2 login password123
+python "${PATH_PGDIST_SRC}/pgdist.py" role-add pgdist_test_role_2 login password123
 
 log_pgdist "role-list"
-pgdist role-list
+python "${PATH_PGDIST_SRC}/pgdist.py" role-list
 
 log_pgdist "role-change pgdist_test_role_1 login password123"
-pgdist role-change pgdist_test_role_1 login password123
+python "${PATH_PGDIST_SRC}/pgdist.py" role-change pgdist_test_role_1 login password123
 
 log_pgdist "role-change pgdist_test_role_2 nologin "
-pgdist role-change pgdist_test_role_1 nologin
+python "${PATH_PGDIST_SRC}/pgdist.py" role-change pgdist_test_role_1 nologin
 
 log_pgdist "role-list"
-pgdist role-list
+python "${PATH_PGDIST_SRC}/pgdist.py" role-list
 
 log_pgdist "dbparam-set OWNER pgdist_test_role_1"
-pgdist dbparam-set OWNER pgdist_test_role_1
+python "${PATH_PGDIST_SRC}/pgdist.py" dbparam-set OWNER pgdist_test_role_1
 
 log_pgdist "dbparam-get"
-pgdist dbparam-get
+python "${PATH_PGDIST_SRC}/pgdist.py" dbparam-get
 
 if [ "$GIT_RUN" = true ]; then
     log_pgdist "require-add pgdist_test_project_2 git@git.linuxbox.cz:tpopov/pgdist_tester.git master"
@@ -253,23 +253,23 @@ if [ "$GIT_RUN" = true ]; then
 fi
 
 log_pgdist "data-add pgdist_test_schema.test_table_1"
-pgdist data-add pgdist_test_schema.test_table_1
+python "${PATH_PGDIST_SRC}/pgdist.py" data-add pgdist_test_schema.test_table_1
 
 log_pgdist "data-list"
-pgdist data-list
+python "${PATH_PGDIST_SRC}/pgdist.py" data-list
 
 log_pgdist "test-load"
-pgdist test-load -U postgres
+python "${PATH_PGDIST_SRC}/pgdist.py" test-load -U postgres
 
 log_pgdist "create-update v1.0 1.1"
-pgdist create-update v1.0 1.1
+python "${PATH_PGDIST_SRC}/pgdist.py" create-update v1.0 1.1
 
 log "cp -a ${PATH_SQL_DIST}/. ${PATH_PGDIST_INSTALL}"
 cp -a "${PATH_SQL_DIST}/." $PATH_PGDIST_INSTALL
 
 log_pgdist "test-update v1.0 1.1"
 cd $PATH_SQL
-pgdist test-update v1.0 1.1 -U postgres
+python "${PATH_PGDIST_SRC}/pgdist.py" test-update v1.0 1.1 -U postgres
 
 log_git "add ."
 cd $PATH_PROJECT
@@ -285,55 +285,57 @@ log_git "tag -l"
 git tag -l
 
 log_pgdist "list -U postgres"
-pgdist list -U postgres
+python "${PATH_PGDIST_SRC}/pgdist.py" list -U postgres
 
 log "psql -U postgres -c 'CREATE DATABASE pgdist_test_database;'"
 psql -U postgres -c "CREATE DATABASE pgdist_test_database;"
 
 log_pgdist "install pgdist_test_project pgdist_test_database"
-pgdist install pgdist_test_project pgdist_test_database -U postgres
+python "${PATH_PGDIST_SRC}/pgdist.py" install pgdist_test_project pgdist_test_database -U postgres
 
 log "psql -U postgres -d pgdist_test_database -c 'SELECT * FROM pgdist_test_schema.test_table_1;'"
 psql -U postgres -d pgdist_test_database -c "SELECT * FROM pgdist_test_schema.test_table_1;"
 
 log_pgdist "list -U postgres"
-pgdist list -U postgres
+python "${PATH_PGDIST_SRC}/pgdist.py" list -U postgres
 
 log_pgdist "diff-db ${PGCONN} v1.0"
-pgdist diff-db ${PGCONN} v1.0 -U postgres
+python "${PATH_PGDIST_SRC}/pgdist.py" diff-db ${PGCONN} v1.0 -U postgres
 
 log_pgdist "check-update pgdist_test_project pgdist_test_database"
-pgdist check-update pgdist_test_project pgdist_test_database -U postgres
+python "${PATH_PGDIST_SRC}/pgdist.py" check-update pgdist_test_project pgdist_test_database -U postgres
 
 log_pgdist "update pgdist_test_project pgdist_test_database 1.1"
-pgdist update pgdist_test_project pgdist_test_database 1.1 -U postgres
+python "${PATH_PGDIST_SRC}/pgdist.py" update pgdist_test_project pgdist_test_database 1.1 -U postgres
 
-log "psql -U postgres -d pgdist_test_database -c 'SELECT * FROM pgdist_test_schema_2.test_table_1;'"
-psql -U postgres -d pgdist_test_database -c "SELECT * FROM pgdist_test_schema_2.test_table_1;"
+if [ "$GIT_RUN" = true ]; then
+    log "psql -U postgres -d pgdist_test_database -c 'SELECT * FROM pgdist_test_schema_2.test_table_1;'"
+    psql -U postgres -d pgdist_test_database -c "SELECT * FROM pgdist_test_schema_2.test_table_1;"
+fi
 
 log_pgdist "list -U postgres"
-pgdist list -U postgres
+python "${PATH_PGDIST_SRC}/pgdist.py" list -U postgres
 
 log_pgdist "pgdist-update pgdist_test_database"
-pgdist pgdist-update pgdist_test_database -U postgres
+python "${PATH_PGDIST_SRC}/pgdist.py" pgdist-update pgdist_test_database -U postgres
 
 log_pgdist "set-version pgdist_test_project pgdist_test_database 2.0"
-pgdist set-version pgdist_test_project pgdist_test_database 2.0 -U postgres
+python "${PATH_PGDIST_SRC}/pgdist.py" set-version pgdist_test_project pgdist_test_database 2.0 -U postgres
 
 log_pgdist "list -U postgres"
-pgdist list -U postgres
+python "${PATH_PGDIST_SRC}/pgdist.py" list -U postgres
 
 log_pgdist "clean pgdist_test_project pgdist_test_database"
-pgdist clean pgdist_test_project pgdist_test_database -U postgres
+python "${PATH_PGDIST_SRC}/pgdist.py" clean pgdist_test_project pgdist_test_database -U postgres
 
 log_pgdist "role-rm pgdist_test_role_1"
-pgdist role-rm pgdist_test_role_1
+python "${PATH_PGDIST_SRC}/pgdist.py" role-rm pgdist_test_role_1
 
 log_pgdist "role-rm pgdist_test_role_2"
-pgdist role-rm pgdist_test_role_2
+python "${PATH_PGDIST_SRC}/pgdist.py" role-rm pgdist_test_role_2
 
 log_pgdist "role-list"
-pgdist role-list
+python "${PATH_PGDIST_SRC}/pgdist.py" role-list
 
 if [ "$GIT_RUN" = true ]; then
     log_pgdist "require-rm pgdist_test_project_2"
@@ -341,10 +343,10 @@ if [ "$GIT_RUN" = true ]; then
 fi
 
 log_pgdist "data-rm pgdist_test_schema.test_table_1"
-pgdist data-rm pgdist_test_schema.test_table_1
+python "${PATH_PGDIST_SRC}/pgdist.py" data-rm pgdist_test_schema.test_table_1
 
 log_pgdist "data-list"
-pgdist data-list
+python "${PATH_PGDIST_SRC}/pgdist.py" data-list
 
 log "finished"
 
