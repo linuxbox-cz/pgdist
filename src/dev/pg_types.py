@@ -18,12 +18,13 @@ def rmln(s):
 class Element:
 	def __init__(self, element_name, command=None, name=None):
 		self.element_name = element_name
-		self.command = command
 		self.name = name
 		if "." in self.name:
-			self.schema = name.split(".")[0]
+			self.schema, ws_name = name.split(".")
+			self.command = re.sub(re.escape(ws_name), name, command, 1)
 		else:
 			self.schema = None
+			self.command = command
 		self.owner = None
 		self.comment = None
 		self.grant = []
