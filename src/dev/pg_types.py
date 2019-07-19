@@ -6,6 +6,7 @@ import sys
 import difflib
 
 import color
+import config
 import table_print
 
 def rmln(s):
@@ -21,7 +22,10 @@ class Element:
 		self.name = name
 		if "." in self.name:
 			self.schema, ws_name = name.split(".")
-			self.command = re.sub(re.escape(ws_name), name, command, 1)
+			if config.get_pg_version() < 10:
+				self.command = re.sub(re.escape(ws_name), name, command, 1)
+			else:
+				self.command = command
 		else:
 			self.schema = None
 			self.command = command

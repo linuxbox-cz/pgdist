@@ -35,6 +35,8 @@ PATH_TABLES="${PATH_SQL_SCHEMA}/tables"
 PATH_SCHEMAS="${PATH_SQL_SCHEMA}/schema"
 PATH_FUNCTIONS="${PATH_SQL_SCHEMA}/functions"
 PATH_DATA="${PATH_SQL_SCHEMA}/data"
+CONFIG_FILE=".pgdist"
+PATH_CONFIG="~/${CONFIG_FILE}"
 
 #set coloured log
 log() {
@@ -60,6 +62,9 @@ clean_up() {
     rm -fv --preserve-root --one-file-system "${PATH_PGDIST_INSTALL}/pgdist_test_project--1.0--1.1.sql"
     rm -fv --preserve-root --one-file-system "${PATH_PGDIST_INSTALL}/pgdist_test_project--1.0.sql"
     rm -fv --preserve-root --one-file-system "${PATH_PGDIST_INSTALL}/pgdist_test_project_2--1.0.sql"
+    if [ "$CLEAN_CONFIG" = true ]; then
+        rm -fv --preserve-root --one-file-system $PATH_CONFIG
+    fi
     psql -U postgres -c "DROP DATABASE IF EXISTS pgdist_test_database;"
     log "cleaning up finished"
 }
@@ -116,6 +121,22 @@ log_pgdist "create-schema pgdist_test_schema"
 cd $PATH_SQL
 python "${PATH_PGDIST_SRC}/pgdist.py" create-schema pgdist_test_schema
 
+#INIT
+CLEAN_CONFIG=false
+cd ~
+
+if [ ! -e "$CONFIG_FILE" ]; then
+    log "echo '[pgdist]' >> ${CONFIG_FILE}"
+    echo "[pgdist]" >> $CONFIG_FILE
+
+    log "echo 'test_db: postgres:596603142@localhost' >> ${CONFIG_FILE}"
+    echo "test_db: postgres:596603142@localhost" >> $CONFIG_FILE
+
+    log "echo 'install_path: /usr/share/pgdist/install' >> ${CONFIG_FILE}"
+    echo "install_path: /usr/share/pgdist/install" >> $CONFIG_FILE
+    CLEAN_CONFIG=true
+fi
+
 log "cp schema_1.sql ${PATH_SCHEMAS}/"
 cd $PATH_TEST
 cp schema_1.sql "${PATH_SCHEMAS}/"
@@ -125,6 +146,12 @@ cp table_1.sql "${PATH_TABLES}/"
 
 log "cp table_2.sql ${PATH_TABLES}/"
 cp table_2.sql "${PATH_TABLES}/"
+
+log "mkdir -p /usr/share/pgdist"
+mkdir -p /usr/share/pgdist
+
+log "mkdir -p /usr/share/pgdist/install"
+mkdir -p /usr/share/pgdist/install
 
 log "cp pgdist_test_project_2--1.0.sql ${PATH_PGDIST_INSTALL}"
 cp pgdist_test_project_2--1.0.sql "${PATH_PGDIST_INSTALL}/"
@@ -166,17 +193,17 @@ python "${PATH_PGDIST_SRC}/pgdist.py" status
 
 #DIFF
 log_pgdist "diff-db ${PGCONN} --no-owner --no-acl"
-python "${PATH_PGDIST_SRC}/pgdist.py" diff-db ${PGCONN} --no-owner --no-acl -U postgres
+python "${PATH_PGDIST_SRC}/pgdist.py" diff-db ${PGCONN} --no-owner --no-acl
 
 log_pgdist "diff-db-file ${PGCONN} '${PATH_SCHEMAS}/schema_1.sql' --no-owner --no-acl"
-python "${PATH_PGDIST_SRC}/pgdist.py" diff-db-file ${PGCONN} "${PATH_SCHEMAS}/schema_1.sql" --no-owner --no-acl -U postgres
+python "${PATH_PGDIST_SRC}/pgdist.py" diff-db-file ${PGCONN} "${PATH_SCHEMAS}/schema_1.sql" --no-owner --no-acl
 
 log_pgdist "diff-file-db '${PATH_SCHEMAS}/schema_1.sql' ${PGCONN} --no-owner --no-acl"
-python "${PATH_PGDIST_SRC}/pgdist.py" diff-file-db "${PATH_SQL}/pg_project.sql" ${PGCONN} --no-owner --no-acl -U postgres
+python "${PATH_PGDIST_SRC}/pgdist.py" diff-file-db "${PATH_SQL}/pg_project.sql" ${PGCONN} --no-owner --no-acl
 
 log_pgdist "test-load"
 cd $PATH_PROJECT
-python "${PATH_PGDIST_SRC}/pgdist.py" test-load -U postgres
+python "${PATH_PGDIST_SRC}/pgdist.py" test-load
 
 log_pgdist "create-version 1.0"
 cd $PATH_SQL
@@ -269,7 +296,7 @@ python "${PATH_PGDIST_SRC}/pgdist.py" dbparam-get
 
 if [ "$GIT_RUN" = true ]; then
     log_pgdist "require-add pgdist_test_project_2 git@git.linuxbox.cz:tpopov/pgdist_tester.git master"
-    pgdist require-add pgdist_test_project_2 git@git.linuxbox.cz:tpopov/pgdist_tester.git master
+    python "${PATH_PGDIST_SRC}/pgdist.py" require-add pgdist_test_project_2 git@git.linuxbox.cz:tpopov/pgdist_tester.git master
 fi
 
 #DATA
@@ -297,7 +324,7 @@ cp -a "${PATH_SQL_DIST}/." $PATH_PGDIST_INSTALL
 
 log_pgdist "test-update v1.0 1.1"
 cd $PATH_SQL
-python "${PATH_PGDIST_SRC}/pgdist.py" test-update v1.0 1.1 -U postgres
+python "${PATH_PGDIST_SRC}/pgdist.py" test-update v1.0 1.1
 
 #GIT
 log_git "add ."
@@ -313,51 +340,51 @@ git tag -a v1.1 -m "test pgdist v1.1"
 log_git "tag -l"
 git tag -l
 
-log_pgdist "list -U postgres"
-python "${PATH_PGDIST_SRC}/pgdist.py" list -U postgres
+log_pgdist "list"
+python "${PATH_PGDIST_SRC}/pgdist.py" list
 
 log "psql -U postgres -c 'CREATE DATABASE pgdist_test_database;'"
 psql -U postgres -c "CREATE DATABASE pgdist_test_database;"
 
 #INSTALL PROJECT
 log_pgdist "install pgdist_test_project pgdist_test_database"
-python "${PATH_PGDIST_SRC}/pgdist.py" install pgdist_test_project pgdist_test_database -U postgres
+python "${PATH_PGDIST_SRC}/pgdist.py" install pgdist_test_project pgdist_test_database
 
 log "psql -U postgres -d pgdist_test_database -c 'SELECT * FROM pgdist_test_schema.test_table_1;'"
 psql -U postgres -d pgdist_test_database -c "SELECT * FROM pgdist_test_schema.test_table_1;"
 
-log_pgdist "list -U postgres"
-python "${PATH_PGDIST_SRC}/pgdist.py" list -U postgres
+log_pgdist "list"
+python "${PATH_PGDIST_SRC}/pgdist.py" list
 
 log_pgdist "diff-db ${PGCONN} v1.0"
-python "${PATH_PGDIST_SRC}/pgdist.py" diff-db ${PGCONN} v1.0 -U postgres
+python "${PATH_PGDIST_SRC}/pgdist.py" diff-db ${PGCONN} v1.0
 
 #UPDATE
 log_pgdist "check-update pgdist_test_project pgdist_test_database"
-python "${PATH_PGDIST_SRC}/pgdist.py" check-update pgdist_test_project pgdist_test_database -U postgres
+python "${PATH_PGDIST_SRC}/pgdist.py" check-update pgdist_test_project pgdist_test_database
 
 log_pgdist "update pgdist_test_project pgdist_test_database 1.1"
-python "${PATH_PGDIST_SRC}/pgdist.py" update pgdist_test_project pgdist_test_database 1.1 -U postgres
+python "${PATH_PGDIST_SRC}/pgdist.py" update pgdist_test_project pgdist_test_database 1.1
 
 if [ "$GIT_RUN" = true ]; then
     log "psql -U postgres -d pgdist_test_database -c 'SELECT * FROM pgdist_test_schema_2.test_table_1;'"
     psql -U postgres -d pgdist_test_database -c "SELECT * FROM pgdist_test_schema_2.test_table_1;"
 fi
 
-log_pgdist "list -U postgres"
-python "${PATH_PGDIST_SRC}/pgdist.py" list -U postgres
+log_pgdist "list"
+python "${PATH_PGDIST_SRC}/pgdist.py" list
 
 log_pgdist "pgdist-update pgdist_test_database"
-python "${PATH_PGDIST_SRC}/pgdist.py" pgdist-update pgdist_test_database -U postgres
+python "${PATH_PGDIST_SRC}/pgdist.py" pgdist-update pgdist_test_database
 
 log_pgdist "set-version pgdist_test_project pgdist_test_database 2.0"
-python "${PATH_PGDIST_SRC}/pgdist.py" set-version pgdist_test_project pgdist_test_database 2.0 -U postgres
+python "${PATH_PGDIST_SRC}/pgdist.py" set-version pgdist_test_project pgdist_test_database 2.0
 
-log_pgdist "list -U postgres"
-python "${PATH_PGDIST_SRC}/pgdist.py" list -U postgres
+log_pgdist "list"
+python "${PATH_PGDIST_SRC}/pgdist.py" list
 
 log_pgdist "clean pgdist_test_project pgdist_test_database"
-python "${PATH_PGDIST_SRC}/pgdist.py" clean pgdist_test_project pgdist_test_database -U postgres
+python "${PATH_PGDIST_SRC}/pgdist.py" clean pgdist_test_project pgdist_test_database
 
 if [ "$GIT_RUN" = true ]; then
     log_pgdist "require-rm pgdist_test_project_2"
