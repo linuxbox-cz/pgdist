@@ -89,6 +89,7 @@ def main():
 	parser.add_argument("args", nargs="*")
 
 	# develop projects
+	parser.add_argument("--git", dest="git", help="generate diff against diff files", action="store_true", default=False)
 	parser.add_argument("--less", help="print output in less", action="store_true")
 	parser.add_argument("--noless", help="don't print output in less", action="store_true")
 	parser.add_argument("--all", help="use all files", action="store_true")
@@ -185,6 +186,8 @@ def main():
 			color.set("always")
 		else:
 			color.set(args.color)
+		if args.git:
+			config.set_dump_git()
 
 	if args.cmd in ("list", "install", "check-update", "update", "clean", "set-version", "get-version","pgdist-update"):
 		sys.path.insert(1, os.path.join(sys.path[0], "mng"))

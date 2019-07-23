@@ -21,8 +21,13 @@ class Element:
 		self.element_name = element_name
 		self.name = name
 		if "." in self.name:
-			self.schema, ws_name = name.split(".")
-			if config.get_pg_version() < 10:
+			ws_name = None
+			splitted = name.split(".")
+			if len(splitted) == 2:
+				self.schema, ws_name = splitted
+			else:
+				self.schema = splitted[0]
+			if config.get_pg_version() < 10 and not config.can_dump_git() and ws_name:
 				self.command = re.sub(re.escape(ws_name), name, command, 1)
 			else:
 				self.command = command
@@ -43,7 +48,7 @@ class Element:
 
 	def diff(self, element2, no_owner, no_acl, ignore_space=False):
 		self._diff(element2, ignore_space)
-		if not no_owner and self.owner != element2.owner:
+		if not no_owner and element2.owner != self.owner:
 			print("%s %s change owner from: %s to: %s" % (self.element_name, self.name, self.owner, element2.owner))
 
 		self.grant.sort()
@@ -104,16 +109,28 @@ class Element:
 			print("")
 
 	def drop_info(self):
-		return "--TODO DROP?\n" + re.sub(r"^", "--", self.command, flags=re.MULTILINE)
+		return "-- TODO DROP?\n" + re.sub(r"^", "--", self.command, flags=re.MULTILINE)
 
 	def update_element(self, file, element2):
-		if self.command == element2.command:
-			return
-		file.write("--TODO ALTER OR DROP?\n")
-		file.write(re.sub(r"^", "--", self.command, flags=re.MULTILINE))
-		file.write("\n\n")
-		file.write(element2.command)
-		file.write("\n")
+		change_command = False
+		change_owner = False
+
+		if self.command != element2.command:
+			change_command = True
+		if self.owner != element2.owner:
+			change_owner = True
+
+		if change_command:
+			file.write("\n-- TODO ALTER OR DROP?\n")
+			file.write(re.sub(r"^", "--", self.command, flags=re.MULTILINE))
+			file.write("\n\n")
+			file.write(element2.command)
+			file.write("\n")
+		if change_owner:
+			if self.owner:
+				file.write("-- OWNER -%s\n" % (self.owner))
+			if element2.owner:
+				file.write("-- OWNER +%s\n" % (element2.owner))
 
 class Project:
 	def __init__(self):
@@ -237,12 +254,18 @@ class Project:
 		for name in elements1:
 			if name not in elements2:
 				file.write(elements1[name].drop_info())
-				file.write("\n\n")
+				#file.write("\n\n")
 
 		for name in elements2:
 			if name not in elements1:
+				file.write("\n")
+				file.write("--\n")
+				file.write("-- %s\n" % (elements2[name]))
+				file.write("--\n")
+				file.write("\n")
 				file.write(elements2[name].command)
 				file.write("\n")
+				file.write(";-- end %s\n" % (elements2[name]))
 
 		for name in elements1:
 			if name in elements2:
@@ -385,9 +408,9 @@ class Table(Element):
 			print("")
 
 	def update_element(self, file, table2):
-		if self.command == table2.command:
+		if self.command == table2.command and self.owner == table2.owner:
 			return
-		file.write("--TODO ALTER TABLE %s\n" % (self.name,))
+		file.write("\n-- TODO ALTER TABLE %s\n" % (self.name,))
 		columns1 = sorted(self.columns)
 		columns2 = sorted(table2.columns)
 		if columns1 != columns2:
@@ -396,9 +419,9 @@ class Table(Element):
 				if "removeline542358" in d:
 					pass
 				elif d.startswith("-"):
-					file.write(d+"\n")
+					file.write("-- %s\n" % (d))
 				elif d.startswith("+"):
-					file.write(d+"\n")
+					file.write("-- %s\n" % (d))
 			file.write("\n")
 
 		self.constraints.sort()
@@ -409,9 +432,9 @@ class Table(Element):
 				if "removeline542358" in d:
 					pass
 				elif d.startswith("-"):
-					file.write(d+"\n")
+					file.write("-- %s\n" % (d))
 				elif d.startswith("+"):
-					file.write(d+"\n")
+					file.write("-- %s\n" % (d))
 			file.write("\n")
 
 		self.defaults.sort()
@@ -422,9 +445,9 @@ class Table(Element):
 				if "removeline542358" in d:
 					pass
 				elif d.startswith("-"):
-					file.write(d+"\n")
+					file.write("-- %s\n" % (d))
 				elif d.startswith("+"):
-					file.write(d+"\n")
+					file.write("-- %s\n" % (d))
 			file.write("\n")
 
 		self.indexes.sort()
@@ -435,9 +458,9 @@ class Table(Element):
 				if "removeline542358" in d:
 					pass
 				elif d.startswith("-"):
-					file.write(d+"\n")
+					file.write("-- %s\n" % (d))
 				elif d.startswith("+"):
-					file.write(d+"\n")
+					file.write("-- %s\n" % (d))
 			file.write("\n")
 
 		self.triggers.sort()
@@ -448,11 +471,22 @@ class Table(Element):
 				if "removeline542358" in d:
 					pass
 				elif d.startswith("-"):
-					file.write(d+"\n")
+					file.write("-- %s\n" % (d))
 				elif d.startswith("+"):
-					file.write(d+"\n")
+					file.write("-- %s\n" % (d))
 			file.write("\n")
-		file.write("\n")
+
+		if self.owner != table2.owner:
+			diff_c = difflib.unified_diff([self.owner or ""], [table2.owner or ""], fromfile="removeline542358", tofile="removeline542358")
+			for d in diff_c:
+				if "removeline542358" in d:
+					pass
+				elif d.startswith("-"):
+					file.write("-- OWNER %s\n" % (d))
+				elif d.startswith("+"):
+					file.write("-- OWNER %s\n" % (d))
+			file.write("\n")
+		file.write("-- end %s\n" % (self.name,))
 
 class Range(Element):
 	def __init__(self, command, name):
@@ -465,12 +499,36 @@ class Function(Element):
 		self.args = args
 
 	def update_element(self, file, element2):
+		change_command = False
+		change_owner = False
+
 		if self.command == element2.command:
-			return
-		file.write("\n")
-		command = re.sub("^CREATE FUNCTION", "CREATE OR REPLACE FUNCTION", element2.command)
-		file.write(command)
-		file.write("\n")
+			change_command = True
+		if self.owner != element2.command:
+			change_owner = True
+
+		if change_command or change_owner:
+			file.write("\n")
+			file.write("--\n")
+			file.write("-- %s\n" % (element2.name))
+			file.write("--\n")
+			file.write("\n")
+
+		if change_command:
+			file.write("\n")
+			command = re.sub("^CREATE FUNCTION", "CREATE OR REPLACE FUNCTION", element2.command)
+			file.write(command)
+			file.write("\n")
+
+		if change_owner:
+			file.write("\n")
+			file.write("ALTER FUNCTION %s OWNER TO %s;" % (element2.name, element2.owner))
+			file.write("\n")
+
+		if change_command or change_owner:
+			file.write("\n")
+			file.write(";-- end %s\n" % (element2.name))
+			file.write("\n")
 
 	def drop_info(self):
 		return "DROP FUNCTION %s%s;" % (self.fname, self.args)

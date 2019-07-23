@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 import os
 import sys
+import config
 import logging
 import psycopg2
 import psycopg2.extras
@@ -161,6 +162,17 @@ def pgdist_update(dbname, conninfo):
 			pgdist_install(db, conn)
 		conn.close()
 
+def check_password_exist(role_name):
+	if os.path.isfile(os.path.join(config.get_password_path(), role_name)):
+		return True
+	return False
+
+def update_password(role_name, cursor):
+	password = ''.join(random.SystemRandom().choice(string.ascii_letters + string.digits ) for _ in range(12))
+	print("ALTER ROLE %s PASSWORD" % (role_name,))
+	cursor.execute("ALTER ROLE %s PASSWORD %%s;" % (role_name,), (password,))
+	open(os.path.join(config.get_password_path(), role_name), 'w').write("PGPASSWORD=%s\n" % (password, ))
+
 def create_role(conn, role):
 	logging.debug("check role: %s" % (role,))
 	cursor = conn.cursor()
@@ -170,9 +182,14 @@ def create_role(conn, role):
 		if not row["rolcanlogin"] and role.login:
 			logging.verbose("ALTER ROLE %s LOGIN;" % (role.name,))
 			cursor.execute("ALTER ROLE %s LOGIN;" % (role.name,))
+			if not check_password_exist(role.name):
+				update_password(role.name, cursor)
 		if row["rolcanlogin"] and role.nologin:
 			logging.verbose("ALTER ROLE %s NOLOGIN;" % (role.name,))
 			cursor.execute("ALTER ROLE %s NOLOGIN;" % (role.name,))
+		if row["rolcanlogin"] and role.login:
+			if not check_password_exist(role.name):
+				update_password(role.name, cursor)
 	else:
 		login = ""
 		if role.login:
@@ -180,10 +197,10 @@ def create_role(conn, role):
 		if role.nologin:
 			login = "NOLOGIN"
 		if role.password:
-			password = ''.join(random.SystemRandom().choice(string.ascii_letters + string.digits ) for _ in range(12))
-			print("CREATE ROLE %s %s" % (role.name, login))
-			cursor.execute("CREATE ROLE %s %s PASSWORD %%s;" % (role.name, login), (password, ))
-			open("/etc/lbox/postgresql/roles/"+role.name, 'w').write("PGPASSWORD=%s\n" % (password, ))
+			if not check_password_exist(role.name):
+				print("CREATE ROLE %s %s" % (role.name, login))
+				cursor.execute("CREATE ROLE %s %s;" % (role.name, login))
+				update_password(role.name, cursor)
 		else:
 			print("CREATE ROLE %s %s" % (role.name, login))
 			cursor.execute("CREATE ROLE %s %s;" % (role.name, login))

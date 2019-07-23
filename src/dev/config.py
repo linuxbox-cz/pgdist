@@ -16,6 +16,7 @@ import address
 
 test_db = None
 config = None
+dump_git = False
 
 def load(fname):
 	if fname:
@@ -69,3 +70,11 @@ def get_pg_version():
 	if pg_regex and (pg_regex.group("version") or pg_regex.group("version_2")):
 		return int(pg_regex.group("version") or pg_regex.group("version_2"))
 	return 0
+
+def set_dump_git():
+	global dump_git
+	dump_git = True
+
+def can_dump_git():
+	global dump_git
+	return dump_git
