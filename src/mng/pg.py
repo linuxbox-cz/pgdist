@@ -171,19 +171,19 @@ def update_password(role_name, cursor):
 def create_role(conn, role):
 	logging.debug("check role: %s" % (role,))
 	cursor = conn.cursor()
-	cursor.execute("SELECT rolname, rolcanlogin, CASE WHEN EXISTS(SELECT 1 FROM pg_shadow AS ps WHERE ps.usename=%s AND ps.passwd IS NOT NULL) THEN true ELSE false END AS rolhaspasswd FROM pg_roles WHERE rolname=%s;", (role.name, role.name))
+	cursor.execute("SELECT rolname, rolcanlogin, passwd FROM pg_roles LEFT JOIN pg_shadow ON usename=rolname WHERE rolname=%s;", (role.name, role.name))
 	row = cursor.fetchone()
 	if row:
 		if not row["rolcanlogin"] and role.login:
 			logging.verbose("ALTER ROLE %s LOGIN;" % (role.name,))
 			cursor.execute("ALTER ROLE %s LOGIN;" % (role.name,))
 
-			if role.password and not row["rolhaspasswd"]:
+			if role.password and not row["passwd"]:
 				update_password(role.name, cursor)
 		if row["rolcanlogin"] and role.nologin:
 			logging.verbose("ALTER ROLE %s NOLOGIN;" % (role.name,))
 			cursor.execute("ALTER ROLE %s NOLOGIN;" % (role.name,))
-		if row["rolcanlogin"] and role.login and role.password and not row["rolhaspasswd"]:
+		if row["rolcanlogin"] and role.login and role.password and not row["passwd"]:
 			update_password(role.name, cursor)
 	else:
 		login = ""
