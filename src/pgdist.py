@@ -120,7 +120,7 @@ def main():
 	parser.add_argument("-d", "--dbname", dest="dbname", help="Specifies the name of the database to connect to.")
 	parser.add_argument("-h", "--host", dest="host", help="Specifies the host name of the machine on which the server is running.")
 	parser.add_argument("-p", "--port", dest="port", help="Specifies the TCP port or the local Unix-domain socket file.")
-	parser.add_argument("-U", "--username", dest="user", help="Connect to the database as the user username. Default: postgres", default="postgres")
+	parser.add_argument("-U", "--username", dest="user", help="Connect to the database as the user username. Default: postgres")
 	parser.add_argument("-C", "--create", dest="create", help="Create the database.", action="store_true")
 	parser.add_argument("--directory", help="directory contains script install and update")
 	parser.add_argument("--syslog-facility", dest="syslog_facility", help="syslog facility")
@@ -196,6 +196,9 @@ def main():
 		import pg_project
 
 		config.load(args.config)
+
+		if not args.user:
+			args.user = config.get_db_user()
 
 	if args.pg_extractor:
 		pg_extractor = pg_extractor_m.PG_extractor(args.pg_extractor_basedir)

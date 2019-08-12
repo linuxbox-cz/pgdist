@@ -19,21 +19,6 @@ def load(fname):
 	else:
 		if os.path.isfile("/etc/pgdist/pgdist.ini"):
 			load_file("/etc/pgdist/pgdist.ini")
-		
-		path = os.getcwd()
-		paths = []
-		while 1:
-			paths.append(path)
-			path, x = os.path.split(path)
-			if x == "":
-				break
-		paths.reverse()
-		for path in paths:
-			if os.path.isfile(os.path.join(path, ".pgdist")):
-				load_file(os.path.join(path, ".pgdist"))
-	if not config:
-		logging.error("Load config failed")
-		sys.exit(1)
 
 def load_file(fname):
 	logging.verbose("Load config: %s" % (fname,))
@@ -57,8 +42,15 @@ def get_install_path():
 
 def get_password_path():
 	global config
-	default_path = "/tmp/roles"
+	default_path = "/etc/lbox/postgresql/roles/"
 
 	if config.has_section("pgdist") and config.has_option("pgdist", "password_path"):
 		path = config.get("pgdist", "password_path")
 	return path or default_path
+
+def get_db_user():
+	global config
+
+	if config.has_section("pgdist") and config.has_option("pgdist", "db_user"):
+		user = config.get("pgdist", "db_user")
+	return user or "postgres"

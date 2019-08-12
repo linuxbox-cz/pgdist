@@ -162,11 +162,6 @@ def pgdist_update(dbname, conninfo):
 			pgdist_install(db, conn)
 		conn.close()
 
-def check_password_exist(role_name):
-	if os.path.isfile(os.path.join(config.get_password_path(), role_name)):
-		return True
-	return False
-
 def update_password(role_name, cursor):
 	password = ''.join(random.SystemRandom().choice(string.ascii_letters + string.digits ) for _ in range(12))
 	print("ALTER ROLE %s PASSWORD" % (role_name,))
@@ -176,34 +171,32 @@ def update_password(role_name, cursor):
 def create_role(conn, role):
 	logging.debug("check role: %s" % (role,))
 	cursor = conn.cursor()
-	cursor.execute("SELECT rolname, rolcanlogin FROM pg_roles WHERE rolname=%s;", (role.name,))
+	cursor.execute("SELECT rolname, rolcanlogin, CASE WHEN EXIST(SELECT 1 FROM pg_shadow WHERE rolename=%s AND passwd IS NOT NULL) THEN true ELSE false END AS rolhaspasswd FROM pg_roles WHERE rolname=%s;", (role.name, role.name))
 	row = cursor.fetchone()
 	if row:
 		if not row["rolcanlogin"] and role.login:
 			logging.verbose("ALTER ROLE %s LOGIN;" % (role.name,))
 			cursor.execute("ALTER ROLE %s LOGIN;" % (role.name,))
-			if not check_password_exist(role.name):
+
+			if role.password and not row["rolhaspasswd"]:
 				update_password(role.name, cursor)
 		if row["rolcanlogin"] and role.nologin:
 			logging.verbose("ALTER ROLE %s NOLOGIN;" % (role.name,))
 			cursor.execute("ALTER ROLE %s NOLOGIN;" % (role.name,))
-		if row["rolcanlogin"] and role.login:
-			if not check_password_exist(role.name):
-				update_password(role.name, cursor)
+		if row["rolcanlogin"] and role.login and role.password and not row["rolhaspasswd"]:
+			update_password(role.name, cursor)
 	else:
 		login = ""
 		if role.login:
 			login = "LOGIN"
 		if role.nologin:
 			login = "NOLOGIN"
+
+		print("CREATE ROLE %s %s" % (role.name, login))
+		cursor.execute("CREATE ROLE %s %s;" % (role.name, login))
+
 		if role.password:
-			if not check_password_exist(role.name):
-				print("CREATE ROLE %s %s" % (role.name, login))
-				cursor.execute("CREATE ROLE %s %s;" % (role.name, login))
-				update_password(role.name, cursor)
-		else:
-			print("CREATE ROLE %s %s" % (role.name, login))
-			cursor.execute("CREATE ROLE %s %s;" % (role.name, login))
+			update_password(role.name, cursor)
 
 def install(dbname, project, ver, conninfo, directory, create_db, is_require):
 	if ver.parts and create_db:
