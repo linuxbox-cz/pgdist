@@ -89,7 +89,7 @@ def main():
 	parser.add_argument("args", nargs="*")
 
 	# develop projects
-	parser.add_argument("--git", dest="git", help="generate diff against diff files", action="store_true", default=False)
+	parser.add_argument("--git-diff", dest="git_diff", help="generate diff against git files", action="store_true", default=False)
 	parser.add_argument("--less", help="print output in less", action="store_true")
 	parser.add_argument("--noless", help="don't print output in less", action="store_true")
 	parser.add_argument("--all", help="use all files", action="store_true")
@@ -120,7 +120,7 @@ def main():
 	parser.add_argument("-d", "--dbname", dest="dbname", help="Specifies the name of the database to connect to.")
 	parser.add_argument("-h", "--host", dest="host", help="Specifies the host name of the machine on which the server is running.")
 	parser.add_argument("-p", "--port", dest="port", help="Specifies the TCP port or the local Unix-domain socket file.")
-	parser.add_argument("-U", "--username", dest="user", help="Connect to the database as the user username. Default: postgres")
+	parser.add_argument("-U", "--username", dest="user", help="Connect to the database as the user username.")
 	parser.add_argument("-C", "--create", dest="create", help="Create the database.", action="store_true")
 	parser.add_argument("--directory", help="directory contains script install and update")
 	parser.add_argument("--syslog-facility", dest="syslog_facility", help="syslog facility")
@@ -186,8 +186,8 @@ def main():
 			color.set("always")
 		else:
 			color.set(args.color)
-		if args.git:
-			config.set_dump_git()
+
+		config.git_diff = args.git_diff
 
 	if args.cmd in ("list", "install", "check-update", "update", "clean", "set-version", "get-version","pgdist-update"):
 		sys.path.insert(1, os.path.join(sys.path[0], "mng"))

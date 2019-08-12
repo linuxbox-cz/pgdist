@@ -177,13 +177,10 @@ def create_role(conn, role):
 		if not row["rolcanlogin"] and role.login:
 			logging.verbose("ALTER ROLE %s LOGIN;" % (role.name,))
 			cursor.execute("ALTER ROLE %s LOGIN;" % (role.name,))
-
-			if role.password and not row["passwd"]:
-				update_password(role.name, cursor)
 		if row["rolcanlogin"] and role.nologin:
 			logging.verbose("ALTER ROLE %s NOLOGIN;" % (role.name,))
 			cursor.execute("ALTER ROLE %s NOLOGIN;" % (role.name,))
-		if row["rolcanlogin"] and role.login and role.password and not row["passwd"]:
+		if role.login and role.password and not row["passwd"]:
 			update_password(role.name, cursor)
 	else:
 		login = ""

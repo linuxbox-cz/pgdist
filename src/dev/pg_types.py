@@ -27,7 +27,7 @@ class Element:
 				self.schema, ws_name = splitted
 			else:
 				self.schema = splitted[0]
-			if config.get_pg_version() < 10 and not config.can_dump_git() and ws_name:
+			if config.get_pg_version() < 10 and not config.git_diff and ws_name:
 				self.command = re.sub(re.escape(ws_name), name, command, 1)
 			else:
 				self.command = command
@@ -112,13 +112,7 @@ class Element:
 		return "-- TODO DROP?\n" + re.sub(r"^", "--", self.command, flags=re.MULTILINE)
 
 	def update_element(self, file, element2):
-		change_command = False
-		change_owner = False
-
-		if self.command != element2.command:
-			change_command = True
-		if self.owner != element2.owner:
-			change_owner = True
+		change_command = self.command != element2.command
 
 		if change_command:
 			file.write("\n-- TODO ALTER OR DROP?\n")
@@ -126,7 +120,9 @@ class Element:
 			file.write("\n\n")
 			file.write(element2.command)
 			file.write("\n")
-		if change_owner:
+		if self.owner != element2.owner:
+			if not change_command:
+				file.write("\n-- %s\n" % (element2.name))
 			if self.owner:
 				file.write("-- OWNER -%s\n" % (self.owner))
 			if element2.owner:
@@ -254,7 +250,6 @@ class Project:
 		for name in elements1:
 			if name not in elements2:
 				file.write(elements1[name].drop_info())
-				#file.write("\n\n")
 
 		for name in elements2:
 			if name not in elements1:

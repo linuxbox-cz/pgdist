@@ -540,52 +540,6 @@ def get_test_dbname(project_name, dbs=None):
 	else:
 		return "pgdist_test_%s_%s" % (getpass.getuser(), project_name)
 
-def dump(project):
-	dump = ""
-	for i, part in enumerate(project.parts):
-		dump += "--\n"
-		dump += "-- pgdist project\n"
-		dump += "--\n"
-		dump += "-- name: %s\n" % (project.name,)
-		if i == 0:
-			if project.dbparam:
-				dump += "-- dbparam: %s\n" % (project.dbparam,)
-			if project.roles:
-				dump += "--\n"
-				for user in project.roles:
-					dump += "-- role: %s\n" % (user,)
-			if project.requires:
-				dump += "--\n"
-				for require in project.requires:
-					dump += "-- require: %s\n" % (require.project_name,)
-		dump += "--\n"
-		dump += "-- part: %s\n" % (i+1)
-		if part.single_transaction:
-			dump += "-- single_transaction\n"
-		else:
-			dump += "-- not single_transaction\n"
-		dump += "-- end header\n"
-		dump += "--\n"
-		dump += "\n"
-		for pfname in part.files:
-			dump += "\n"
-			dump += "--\n"
-			dump += "-- sqldist file: %s\n" % (pfname)
-			dump += "--\n"
-			dump += "\n"
-			src_file = project.get_file(pfname)
-			for line in src_file:
-				dump += line
-			src_file.close()
-			dump += "\n"
-			dump += ";-- end sqldist file\n"
-		dump += "\n"
-		dump += "--\n"
-		dump += "-- end sqldist project\n"
-		dump += "--\n"
-		dump += "\n"
-	return dump
-
 def load_and_dump(project, clean=True, no_owner=False, no_acl=False, pre_load=None, post_load=None, updates=None, dbs=None, pg_extractor=None, create_update=False):
 	try:
 		pg = pg_conn.PG(config.test_db, dbname=get_test_dbname(project.name, dbs))
@@ -681,7 +635,7 @@ def test_load(clean=True, pre_load=None, post_load=None, pg_extractor=None):
 	print("")
 
 def create_update(git_tag, new_version, force, gitversion=None, clean=True, pre_load=None, post_load=None,
-		pre_load_old=None, pre_load_new=None, post_load_old=None, post_load_new=None, git=False):
+		pre_load_old=None, pre_load_new=None, post_load_old=None, post_load_new=None):
 
 	if not pre_load_old:
 		pre_load_old = pre_load
@@ -701,12 +655,48 @@ def create_update(git_tag, new_version, force, gitversion=None, clean=True, pre_
 		old_version = re.sub(r"^[^\d]*", "", git_tag)
 	new_version = re.sub(r"^[^\d]*", "", new_version)
 
-	if config.can_dump_git():
-		dump_old = dump(project_old)
-		dump_new = dump(project_new)
-	else:
-		dump_old, x = load_and_dump(project_old, clean=clean, pre_load=pre_load_old, post_load=post_load_old, dbs="old", create_update=True)
-		dump_new, x = load_and_dump(project_new, clean=clean, pre_load=pre_load_new, post_load=post_load_new, dbs="new", create_update=True)
+	diff_files = []
+
+	if config.git_diff:
+		old_files = []
+		new_files = []
+
+		old_file = project_old.get_file("pg_project.sql")
+		old_project = old_file.read()
+		old_file.close()
+
+		for line in old_project.splitlines():
+			if line.startswith("\ir"):
+				old_files.append(line.replace("\ir ", ""))
+
+		new_file = project_new.get_file("pg_project.sql")
+		new_project = new_file.read()
+		new_file.close()
+
+		for line in new_project.splitlines():
+			if line.startswith("\ir"):
+				new_files.append(line.replace("\ir ", ""))
+
+		for file_name in old_files:
+			if file_name not in new_files:
+				logging.info("old file removed: %s" % (file_name))
+
+		for file_name in new_files:
+			new_file = project_new.get_file(file_name)
+			new_string = new_file.read()
+			new_file.close()
+
+			if file_name not in old_files:
+				diff_files.append([file_name, new_string])
+				logging.verbose("new file added: %s" % (file_name))
+			else:
+				old_file = project_old.get_file(file_name)
+				old_string = old_file.read()
+				old_file.close()
+
+				if old_string != new_string:
+					diff_files.append([file_name, new_string])
+					logging.verbose("file changed: %s" % (file_name))
 
 	if not os.path.isdir(os.path.join(project_old.directory, "sql_dist")):
 		os.mkdir(os.path.join(project_old.directory, "sql_dist"))
@@ -739,9 +729,17 @@ def create_update(git_tag, new_version, force, gitversion=None, clean=True, pre_
 		build_file.write("-- end header\n")
 		build_file.write("--\n")
 		build_file.write("\n")
-		pr_old = pg_parser.parse(io.StringIO(dump_old))
-		pr_new = pg_parser.parse(io.StringIO(dump_new))
-		pr_old.gen_update(build_file, pr_new)
+
+		if config.git_diff:
+			for diff_file in diff_files:
+				build_file.write("\n-- %s\n\n" % (diff_file[0]))
+				build_file.write(diff_file[1])
+		else:
+			dump_old, x = load_and_dump(project_old, clean=clean, pre_load=pre_load_old, post_load=post_load_old, dbs="old", create_update=True)
+			dump_new, x = load_and_dump(project_new, clean=clean, pre_load=pre_load_new, post_load=post_load_new, dbs="new", create_update=True)
+			pr_old = pg_parser.parse(io.StringIO(dump_old))
+			pr_new = pg_parser.parse(io.StringIO(dump_new))
+			pr_old.gen_update(build_file, pr_new)
 	print("Edit created file: %s" % (build_fname))
 	print("and test it by 'pgdist test-update %s %s'" % (git_tag, new_version))
 

@@ -16,9 +16,11 @@ def load(fname):
 	global config
 	if fname:
 		load_file(fname)
+	elif os.path.isfile("/etc/pgdist.conf"):
+		load_file("/etc/pgdist.conf")
 	else:
-		if os.path.isfile("/etc/pgdist/pgdist.ini"):
-			load_file("/etc/pgdist/pgdist.ini")
+		logging.error("Load config: /etc/pgdist.conf failed: file not found" % ())
+		sys.exit(1)
 
 def load_file(fname):
 	logging.verbose("Load config: %s" % (fname,))
@@ -29,7 +31,7 @@ def load_file(fname):
 			logging.error("Load config: %s failed" % (fname))
 			sys.exit(1)
 	except Exception as e:
-		logging.error("Load config: %s fail: %s" % (fname, str(e)))
+		logging.error("Load config: %s failed: %s" % (fname, str(e)))
 		sys.exit(1)
 
 def get_install_path():
@@ -50,7 +52,8 @@ def get_password_path():
 
 def get_db_user():
 	global config
+	user = None
 
 	if config.has_section("pgdist") and config.has_option("pgdist", "db_user"):
 		user = config.get("pgdist", "db_user")
-	return user or "postgres"
+	return user

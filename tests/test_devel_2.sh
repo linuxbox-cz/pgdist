@@ -59,7 +59,7 @@ echo "ALTER TABLE pgdist_test_schema.test_table_2 ADD CONSTRAINT test_table_2_id
 
 #create update
 log_pgdist "create-update v1.0 1.1"
-python "${PATH_PGDIST_SRC}/pgdist.py" create-update v1.0 1.1 --git
+python "${PATH_PGDIST_SRC}/pgdist.py" create-update v1.0 1.1
 
 #copy update file to install path
 log "cp -a ${PATH_SQL_DIST}/. ${PATH_PGDIST_INSTALL}"
