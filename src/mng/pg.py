@@ -171,7 +171,7 @@ def update_password(role_name, cursor):
 def create_role(conn, role):
 	logging.debug("check role: %s" % (role,))
 	cursor = conn.cursor()
-	cursor.execute("SELECT rolname, rolcanlogin, passwd FROM pg_roles LEFT JOIN pg_shadow ON usename=rolname WHERE rolname=%s;", (role.name, role.name))
+	cursor.execute("SELECT rolname, rolcanlogin, passwd FROM pg_roles LEFT JOIN pg_shadow ON usename=rolname WHERE rolname=%s;", (role.name,))
 	row = cursor.fetchone()
 	if row:
 		if not row["rolcanlogin"] and role.login:
