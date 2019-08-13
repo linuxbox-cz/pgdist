@@ -89,6 +89,7 @@ def main():
 	parser.add_argument("args", nargs="*")
 
 	# develop projects
+	parser.add_argument("--git-diff", dest="git_diff", help="generate diff against git files", action="store_true", default=False)
 	parser.add_argument("--less", help="print output in less", action="store_true")
 	parser.add_argument("--noless", help="don't print output in less", action="store_true")
 	parser.add_argument("--all", help="use all files", action="store_true")
@@ -121,7 +122,7 @@ def main():
 	parser.add_argument("-p", "--port", dest="port", help="Specifies the TCP port or the local Unix-domain socket file.")
 	parser.add_argument("-U", "--username", dest="user", help="Connect to the database as the user username.")
 	parser.add_argument("-C", "--create", dest="create", help="Create the database.", action="store_true")
-	parser.add_argument("--directory", help="directory contains script install and update", default="/usr/share/pgdist/install")
+	parser.add_argument("--directory", help="directory contains script install and update")
 	parser.add_argument("--syslog-facility", dest="syslog_facility", help="syslog facility")
 	parser.add_argument("--syslog-ident", dest="syslog_ident", help="syslog ident")
 
@@ -186,10 +187,18 @@ def main():
 		else:
 			color.set(args.color)
 
+		config.git_diff = args.git_diff
+
 	if args.cmd in ("list", "install", "check-update", "update", "clean", "set-version", "get-version","pgdist-update"):
 		sys.path.insert(1, os.path.join(sys.path[0], "mng"))
+		import config
 		import conninfo
 		import pg_project
+
+		config.load(args.config)
+
+		if not args.user:
+			args.user = config.get_db_user()
 
 	if args.pg_extractor:
 		pg_extractor = pg_extractor_m.PG_extractor(args.pg_extractor_basedir)
@@ -300,19 +309,19 @@ def main():
 	# install projects
 	elif args.cmd == "list" and len(args.args) in (0, 1, 2,):
 		(project_name, dbname) = args_parse(args.args, 2)
-		pg_project.prlist(project_name, dbname, conninfo.ConnInfo(args), args.directory, args.showall)
+		pg_project.prlist(project_name, dbname, conninfo.ConnInfo(args), args.directory or config.get_install_path(), args.showall)
 
 	elif args.cmd == "install" and len(args.args) in (2, 3,):
 		(project_name, dbname, version) = args_parse(args.args, 3)
-		pg_project.install(project_name, dbname, version, conninfo.ConnInfo(args), args.directory, args.create, False)
+		pg_project.install(project_name, dbname, version, conninfo.ConnInfo(args), args.directory or config.get_install_path(), args.create, False)
 
 	elif args.cmd == "check-update" and len(args.args) in (0, 1, 2, 3,):
 		(project_name, dbname, version) = args_parse(args.args, 3)
-		pg_project.check_update(project_name, dbname, version, conninfo.ConnInfo(args), args.directory)
+		pg_project.check_update(project_name, dbname, version, conninfo.ConnInfo(args), args.directory or config.get_install_path())
 
 	elif args.cmd == "update" and len(args.args) in (0, 1, 2, 3,):
 		(project_name, dbname, version) = args_parse(args.args, 3)
-		pg_project.update(project_name, dbname, version, conninfo.ConnInfo(args), args.directory)
+		pg_project.update(project_name, dbname, version, conninfo.ConnInfo(args), args.directory or config.get_install_path())
 
 	elif args.cmd == "clean" and len(args.args) in (1, 2,):
 		(project_name, dbname) = args_parse(args.args, 2)

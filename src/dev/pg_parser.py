@@ -319,7 +319,7 @@ def parse(dump_stream):
 
 			# FUNCTION
 
-			x = re.match(r"CREATE FUNCTION (?P<name>[^()]+)(?P<args>\(.*\)) RETURNS( SETOF)? (?P<returns>\S.*\S)", command)
+			x = re.match(r"CREATE( OR REPLACE)? FUNCTION\s+(?P<name>[^\(]+)(?P<args>\(.*\))\s+RETURNS(\s+SETOF)?\s+(?P<returns>\S.*\S)\s+", command)
 			if x:
 				args = remove_default(x.group('args'))
 				project.functions[schema(set_schema, x.group('name')) + str(args)] = Function(command, schema(set_schema, x.group('name')), x.group('args'))
@@ -334,11 +334,11 @@ def parse(dump_stream):
 
 			# TABLE
 
-			x = re.match(r"CREATE( UNLOGGED)?( FOREIGN)? TABLE (?P<name>\S+) \(", command)
+			x = re.match(r"CREATE( UNLOGGED)?( FOREIGN)? TABLE (?P<name>\S+) ?\(", command)
 			if x:
 				columns = []
 				for line in command.split('\n'):
-					y = re.match(r"CREATE( UNLOGGED)?( FOREIGN)? TABLE (?P<name>\S+) \(", line)
+					y = re.match(r"CREATE( UNLOGGED)?( FOREIGN)? TABLE (?P<name>\S+) ?\(", line)
 					if y:
 						continue
 					y = re.match(r"\);", line)
@@ -370,22 +370,22 @@ def parse(dump_stream):
 					logging.warning("Parser warning, element '%s' not found, command: %s" % (schema(set_schema, x.group('name')), command))
 					continue
 
-			x = re.match(r"ALTER TABLE ONLY (?P<name>\S+) ALTER (?P<default>COLUMN (?P<column>\S+) SET DEFAULT .*);$", command)
+			x = re.match(r"ALTER TABLE( ONLY)? (?P<name>\S+) ALTER (?P<default>COLUMN (?P<column>\S+) SET DEFAULT .*);$", command)
 			if x:
 				project.tables[schema(set_schema, x.group('name'))].defaults.append(x.group('default'))
 				continue
 
-			x = re.match(r"ALTER TABLE ONLY (?P<name>\S+)\s*ADD (?P<constraint>CONSTRAINT.*);", command, re.M)
+			x = re.match(r"ALTER TABLE( ONLY)? (?P<name>\S+)\s*ADD (?P<constraint>CONSTRAINT.*);", command, re.M)
 			if x:
 				project.tables[schema(set_schema, x.group('name'))].constraints.append(x.group('constraint'))
 				continue
 
-			x = re.match(r"ALTER TABLE ONLY (?P<name>\S+)\s*ALTER (?P<conf>COLUMN.*);", command, re.M)
+			x = re.match(r"ALTER TABLE( ONLY)? (?P<name>\S+)\s*ALTER (?P<conf>COLUMN.*);", command, re.M)
 			if x:
 				project.tables[schema(set_schema, x.group('name'))].columns_conf.append(x.group('conf'))
 				continue
 
-			x = re.match(r"CREATE (?P<index>(UNIQUE )?INDEX (?P<name>\S+) ON (?P<table_name>\S+) .*);$", command)
+			x = re.match(r"CREATE (?P<index>(UNIQUE)?\s?INDEX (?P<name>\S+)?\s?ON (?P<table_name>\S+).*);$", command)
 			if x:
 				project.tables[schema(set_schema, x.group('table_name'))].indexes.append(x.group('index'))
 				continue
@@ -424,7 +424,7 @@ def parse(dump_stream):
 
 			# VIEW
 
-			x = re.match(r"CREATE( MATERIALIZED)? VIEW (?P<name>\S+) AS", command)
+			x = re.match(r"CREATE( MATERIALIZED)?( OR REPLACE)? VIEW (?P<name>\S+) AS", command)
 			if x:
 				project.views[schema(set_schema, x.group('name'))] = View(command, schema(set_schema, x.group('name')))
 				continue

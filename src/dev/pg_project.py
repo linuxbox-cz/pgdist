@@ -376,7 +376,7 @@ def project_init(name, directory):
 
 def create_schema(schema_name):
 	directory = find_directory()
-	for d in ("extensions", "functions", "schema", "tables", "triggers", "types", "views", "grants"):
+	for d in ("extensions", "functions", "schema", "tables", "triggers", "types", "views", "grants", "constraints", "data", "indexes"):
 		logging.verbose("mkdir %s" % (d, ))
 		os.makedirs(os.path.join(directory, "sql", schema_name, d))
 	print("Schema %s created." % (schema_name,))
@@ -456,7 +456,7 @@ def rm(files, all):
 		files = files_ok
 	for file in files:
 		print("Removed from project:")
-		print("\t%s")
+		print("\t%s" % (file,))
 		project.rm_file(file)
 	project.save_conf()
 
@@ -540,12 +540,13 @@ def get_test_dbname(project_name, dbs=None):
 	else:
 		return "pgdist_test_%s_%s" % (getpass.getuser(), project_name)
 
-def load_and_dump(project, clean=True, no_owner=False, no_acl=False, pre_load=None, post_load=None, updates=None, dbs=None, pg_extractor=None):
+def load_and_dump(project, clean=True, no_owner=False, no_acl=False, pre_load=None, post_load=None, updates=None, dbs=None, pg_extractor=None, create_update=False):
 	try:
 		pg = pg_conn.PG(config.test_db, dbname=get_test_dbname(project.name, dbs))
 		pg.init()
 		pg.load_file(pre_load)
-		load_requires(project, pg)
+		if not create_update:
+			load_requires(project, pg)
 		print("load project %s to test pg" % (project.name,), file=sys.stderr)
 		pg.load_project(project)
 		if updates:
@@ -654,8 +655,32 @@ def create_update(git_tag, new_version, force, gitversion=None, clean=True, pre_
 		old_version = re.sub(r"^[^\d]*", "", git_tag)
 	new_version = re.sub(r"^[^\d]*", "", new_version)
 
-	dump_old, x = load_and_dump(project_old, clean=clean, pre_load=pre_load_old, post_load=post_load_old, dbs="old")
-	dump_new, x = load_and_dump(project_new, clean=clean, pre_load=pre_load_new, post_load=post_load_new, dbs="new")
+	diff_files = []
+
+	if config.git_diff:
+		old_files = project_old.get_files()
+		new_files = project_new.get_files()
+
+		for file_name in old_files:
+			if file_name not in new_files:
+				logging.info("old file removed: %s" % (file_name))
+
+		for file_name in new_files:
+			new_file = project_new.get_file(file_name)
+			new_string = new_file.read()
+			new_file.close()
+
+			if file_name not in old_files:
+				diff_files.append([file_name, new_string])
+				logging.verbose("new file added: %s" % (file_name))
+			else:
+				old_file = project_old.get_file(file_name)
+				old_string = old_file.read()
+				old_file.close()
+
+				if old_string != new_string:
+					diff_files.append([file_name, new_string])
+					logging.verbose("file changed: %s" % (file_name))
 
 	if not os.path.isdir(os.path.join(project_old.directory, "sql_dist")):
 		os.mkdir(os.path.join(project_old.directory, "sql_dist"))
@@ -688,9 +713,17 @@ def create_update(git_tag, new_version, force, gitversion=None, clean=True, pre_
 		build_file.write("-- end header\n")
 		build_file.write("--\n")
 		build_file.write("\n")
-		pr_old = pg_parser.parse(io.StringIO(dump_old))
-		pr_new = pg_parser.parse(io.StringIO(dump_new))
-		pr_old.gen_update(build_file, pr_new)
+
+		if config.git_diff:
+			for diff_file in diff_files:
+				build_file.write("\n-- %s\n\n" % (diff_file[0]))
+				build_file.write(diff_file[1])
+		else:
+			dump_old, x = load_and_dump(project_old, clean=clean, pre_load=pre_load_old, post_load=post_load_old, dbs="old", create_update=True)
+			dump_new, x = load_and_dump(project_new, clean=clean, pre_load=pre_load_new, post_load=post_load_new, dbs="new", create_update=True)
+			pr_old = pg_parser.parse(io.StringIO(dump_old))
+			pr_new = pg_parser.parse(io.StringIO(dump_new))
+			pr_old.gen_update(build_file, pr_new)
 	print("Edit created file: %s" % (build_fname))
 	print("and test it by 'pgdist test-update %s %s'" % (git_tag, new_version))
 

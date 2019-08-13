@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 import os
 import sys
+import config
 import logging
 import psycopg2
 import psycopg2.extras
@@ -161,10 +162,16 @@ def pgdist_update(dbname, conninfo):
 			pgdist_install(db, conn)
 		conn.close()
 
+def update_password(role_name, cursor):
+	password = ''.join(random.SystemRandom().choice(string.ascii_letters + string.digits ) for _ in range(12))
+	print("ALTER ROLE %s PASSWORD" % (role_name,))
+	cursor.execute("ALTER ROLE %s PASSWORD %%s;" % (role_name,), (password,))
+	open(os.path.join(config.get_password_path(), role_name), 'w').write("PGPASSWORD=%s\n" % (password, ))
+
 def create_role(conn, role):
 	logging.debug("check role: %s" % (role,))
 	cursor = conn.cursor()
-	cursor.execute("SELECT rolname, rolcanlogin FROM pg_roles WHERE rolname=%s;", (role.name,))
+	cursor.execute("SELECT rolname, rolcanlogin, passwd FROM pg_roles LEFT JOIN pg_shadow ON usename=rolname WHERE rolname=%s;", (role.name,))
 	row = cursor.fetchone()
 	if row:
 		if not row["rolcanlogin"] and role.login:
@@ -173,20 +180,20 @@ def create_role(conn, role):
 		if row["rolcanlogin"] and role.nologin:
 			logging.verbose("ALTER ROLE %s NOLOGIN;" % (role.name,))
 			cursor.execute("ALTER ROLE %s NOLOGIN;" % (role.name,))
+		if role.login and role.password and not row["passwd"]:
+			update_password(role.name, cursor)
 	else:
 		login = ""
 		if role.login:
 			login = "LOGIN"
 		if role.nologin:
 			login = "NOLOGIN"
+
+		print("CREATE ROLE %s %s" % (role.name, login))
+		cursor.execute("CREATE ROLE %s %s;" % (role.name, login))
+
 		if role.password:
-			password = ''.join(random.SystemRandom().choice(string.ascii_letters + string.digits ) for _ in range(12))
-			print("CREATE ROLE %s %s" % (role.name, login))
-			cursor.execute("CREATE ROLE %s %s PASSWORD %%s;" % (role.name, login), (password, ))
-			open("/etc/lbox/postgresql/roles/"+role.name, 'w').write("PGPASSWORD=%s\n" % (password, ))
-		else:
-			print("CREATE ROLE %s %s" % (role.name, login))
-			cursor.execute("CREATE ROLE %s %s;" % (role.name, login))
+			update_password(role.name, cursor)
 
 def install(dbname, project, ver, conninfo, directory, create_db, is_require):
 	if ver.parts and create_db:
