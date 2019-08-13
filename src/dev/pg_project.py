@@ -658,24 +658,8 @@ def create_update(git_tag, new_version, force, gitversion=None, clean=True, pre_
 	diff_files = []
 
 	if config.git_diff:
-		old_files = []
-		new_files = []
-
-		old_file = project_old.get_file("pg_project.sql")
-		old_project = old_file.read()
-		old_file.close()
-
-		for line in old_project.splitlines():
-			if line.startswith("\ir"):
-				old_files.append(line.replace("\ir ", ""))
-
-		new_file = project_new.get_file("pg_project.sql")
-		new_project = new_file.read()
-		new_file.close()
-
-		for line in new_project.splitlines():
-			if line.startswith("\ir"):
-				new_files.append(line.replace("\ir ", ""))
+		old_files = project_old.get_files()
+		new_files = project_new.get_files()
 
 		for file_name in old_files:
 			if file_name not in new_files:
