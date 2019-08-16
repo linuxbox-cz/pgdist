@@ -488,10 +488,11 @@ class Range(Element):
 		Element.__init__(self, "Range", command, name)
 
 class Function(Element):
-	def __init__(self, command, name, args):
+	def __init__(self, command, name, args, parsed_args):
 		Element.__init__(self, "Function", command, name+args)
 		self.fname = name
 		self.args = args
+		self.parsed_args = parsed_args
 
 	def update_element(self, file, element2):
 		change_command = False
@@ -526,7 +527,7 @@ class Function(Element):
 			file.write("\n")
 
 	def drop_info(self):
-		return "DROP FUNCTION %s%s;" % (self.fname, self.args)
+		return "DROP FUNCTION %s(%s);" % (self.fname, ", ".join(self.parsed_args))
 
 class Sequence(Element):
 	def __init__(self, command, name):

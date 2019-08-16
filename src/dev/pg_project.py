@@ -679,8 +679,21 @@ def create_update(git_tag, new_version, force, gitversion=None, clean=True, pre_
 				old_file.close()
 
 				if old_string != new_string:
-					diff_files.append([file_name, new_string])
-					logging.verbose("file changed: %s" % (file_name))
+					if "CREATE TABLE" in new_string:
+						x = re.search(r"CREATE( UNLOGGED)?( FOREIGN)? TABLE (?P<name>\S+) ?\(", new_string)
+						print("TODO - table: %s has changed" % (x.group('name')))
+						diff_c = difflib.unified_diff(old_string.splitlines(), new_string.splitlines(), fromfile="removeline542358", tofile="removeline542358")
+						for d in diff_c:
+							if "removeline542358" in d:
+								continue
+							elif d.startswith("-"):
+								print("\t"+color.red(d))
+							elif d.startswith("+"):
+								print("\t"+color.green(d))
+						print
+					else:
+						diff_files.append([file_name, new_string])
+						logging.verbose("file changed: %s" % (file_name))
 
 	if not os.path.isdir(os.path.join(project_old.directory, "sql_dist")):
 		os.mkdir(os.path.join(project_old.directory, "sql_dist"))

@@ -19,6 +19,7 @@ config = None
 git_diff = False
 
 def load(fname):
+	global config
 	if fname:
 		load_file(fname)
 	else:
@@ -36,6 +37,10 @@ def load(fname):
 		for path in paths:
 			if os.path.isfile(os.path.join(path, ".pgdist")):
 				load_file(os.path.join(path, ".pgdist"))
+
+		if not config:
+			logging.error("Load config: .pgdist failed")
+			sys.exit(1)
 
 def load_file(fname):
 	logging.verbose("Load config: %s" % (fname,))
