@@ -73,8 +73,8 @@ clean_up() {
     rm -rfv --preserve-root --one-file-system $PATH_PGDIST_INSTALL
     rm -rfv --preserve-root --one-file-system $PATH_PGDIST_INSTALL
     rm -rfv --preserve-root --one-file-system $PATH_PGDIST_INSTALL
-    rm -fv --preserve-root --one-file-system $PATH_CONFIG_1
-    rm -fv --preserve-root --one-file-system $PATH_CONFIG_2
+    rm -fv --preserve-root --one-file-system $PATH_CONFIG_DEV
+    rm -fv --preserve-root --one-file-system $PATH_CONFIG_MNG
     psql -U postgres -c "DROP DATABASE IF EXISTS pgdist_test_database;"
     psql -U postgres -c "DROP ROLE IF EXISTS pgdist_test_role_1;"
     psql -U postgres -c "DROP ROLE IF EXISTS pgdist_test_role_2;"
