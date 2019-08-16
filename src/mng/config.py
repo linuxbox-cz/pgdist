@@ -56,6 +56,6 @@ def get_db_user():
 	global config
 	user = None
 
-	if config.has_section("pgdist") and config.has_option("pgdist", "db_user"):
-		user = config.get("pgdist", "db_user")
+	if config.has_section("pgdist") and config.has_option("pgdist", "pguser"):
+		user = config.get("pgdist", "pguser")
 	return user

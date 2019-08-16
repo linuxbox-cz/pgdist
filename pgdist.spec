@@ -30,10 +30,12 @@ mkdir -p -m 755 ${RPM_BUILD_ROOT}/usr/libexec/pgdist/
 mkdir -p -m 755 ${RPM_BUILD_ROOT}/usr/libexec/pgdist/dev
 mkdir -p -m 755 ${RPM_BUILD_ROOT}/usr/libexec/pgdist/mng
 mkdir -p -m 755 ${RPM_BUILD_ROOT}/usr/bin/
+mkdir -p -m 755 ${RPM_BUILD_ROOT}/etc/
 
 install -m 755 src/pgdist.py ${RPM_BUILD_ROOT}/usr/libexec/pgdist/
 install -m 655 src/dev/* ${RPM_BUILD_ROOT}/usr/libexec/pgdist/dev/
 install -m 655 src/mng/* ${RPM_BUILD_ROOT}/usr/libexec/pgdist/mng/
+install -m 655 etc/* ${RPM_BUILD_ROOT}/etc/
 
 ln -s /usr/libexec/pgdist/pgdist.py ${RPM_BUILD_ROOT}/usr/bin/pgdist
 
@@ -42,10 +44,9 @@ ln -s /usr/libexec/pgdist/pgdist.py ${RPM_BUILD_ROOT}/usr/bin/pgdist
 %attr(755,root,root)                      /usr/libexec/pgdist/*.p*
 %attr(644,root,root)                      /usr/libexec/pgdist/*/*.p*
 %dir %attr(0755,root,root)                /usr/share/pgdist/install
+%attr(644,root,root) %config(noreplace)   /etc/pgdist.conf
 
 %clean
 [ "$RPM_BUILD_ROOT" != "/" ] && rm -rf $RPM_BUILD_ROOT
 
 %changelog
-* Mon Jul 23 2018 Marian Krucina <marian.krucina@linuxbox.cz> - 1.0.0
-- first rpm

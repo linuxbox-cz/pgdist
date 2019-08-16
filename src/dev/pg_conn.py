@@ -122,6 +122,7 @@ class PG:
 
 	def get_roles(self, cache):
 		if cache and self.test_cache_file("roles"):
+			logging.verbose("load roles from cache file")
 			return json.load(open(self.address.cache_file("roles")))
 		cmd = """SELECT string_agg(rolname, ',') FROM pg_roles;"""
 		(retcode, output) = self.psql(cmd=cmd, tuples_only=True)
@@ -158,6 +159,7 @@ class PG:
 
 	def load_update(self, update):
 		for part in update.parts:
+			logging.verbose("load update %s" % (part,))
 			self.psql(single_transaction=part.single_transaction, file=part.fname, change_db=True)
 
 	def load_dump(self, dump):
@@ -165,6 +167,7 @@ class PG:
 
 	def dump(self, no_owner=False, no_acl=False, cache=False):
 		if cache and self.test_cache_file("struct"):
+			logging.verbose("load struct from cache file")
 			return open(self.address.cache_file("struct")).read()
 		(retcode, output) = self.pg_dump(change_db=True, no_owner=no_owner, no_acl=no_acl)
 		r = unicode(output, "UTF8")
@@ -175,10 +178,12 @@ class PG:
 
 	def load_file(self, filename):
 		if filename:
+			logging.verbose("load file: %s" % (filename,))
 			self.psql(single_transaction=True, file=filename, change_db=True)
 
 	def dump_data(self, project, cache=False):
 		if cache and self.test_cache_file("data"):
+			logging.verbose("load data from cache file")
 			return json.load(open(self.address.cache_file("data")))
 		r = {}
 		c = []
