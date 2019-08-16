@@ -37,6 +37,7 @@ def load_file(fname):
 def get_install_path():
 	global config
 	default_path = "/usr/share/pgdist/install"
+	path = None
 
 	if config.has_section("pgdist") and config.has_option("pgdist", "install_path"):
 		path = config.get("pgdist", "install_path")
@@ -45,6 +46,7 @@ def get_install_path():
 def get_password_path():
 	global config
 	default_path = "/etc/lbox/postgresql/roles/"
+	path = None
 
 	if config.has_section("pgdist") and config.has_option("pgdist", "password_path"):
 		path = config.get("pgdist", "password_path")
