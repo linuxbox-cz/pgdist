@@ -41,10 +41,10 @@ PATH_TRIGGERS="${PATH_SQL_SCHEMA}/triggers"
 PATH_INDEXES="${PATH_SQL_SCHEMA}/indexes"
 PATH_DATA="${PATH_SQL_SCHEMA}/data"
 PATH_VIEWS="${PATH_SQL_SCHEMA}/views"
-CONFIG_FILE_1=".pgdist"
-CONFIG_FILE_2="pgdist.conf"
-PATH_CONFIG_1="${PATH_TEST}/${CONFIG_FILE_1}"
-PATH_CONFIG_2="${PATH_TEST}/${CONFIG_FILE_2}"
+CONFIG_FILE_DEV=".pgdist"
+CONFIG_FILE_MNG="pgdist.conf"
+PATH_CONFIG_DEV="${PATH_TEST}/${CONFIG_FILE_DEV}"
+PATH_CONFIG_MNG="${PATH_TEST}/${CONFIG_FILE_MNG}"
 
 TEST_PART=""
 
@@ -121,21 +121,21 @@ clean_up
 cd $PATH_TEST
 
 #config 1
-log "echo '[pgdist]' >> ${CONFIG_FILE_1}"
-echo "[pgdist]" >> $CONFIG_FILE_1
+log "echo '[pgdist]' >> ${CONFIG_FILE_DEV}"
+echo "[pgdist]" >> $CONFIG_FILE_DEV
 
-log "echo 'test_db: postgres@/pgdist' >> ${CONFIG_FILE_1}"
-echo "test_db: postgres@/pgdist" >> $CONFIG_FILE_1
+log "echo 'test_db: postgres@/pgdist' >> ${CONFIG_FILE_DEV}"
+echo "test_db: postgres@/pgdist" >> $CONFIG_FILE_DEV
 
 #config 2
-log "echo '[pgdist]' >> ${CONFIG_FILE_2}"
-echo "[pgdist]" >> $CONFIG_FILE_2
+log "echo '[pgdist]' >> ${CONFIG_FILE_MNG}"
+echo "[pgdist]" >> $CONFIG_FILE_MNG
 
-log "echo 'install_path: ${PATH_TEST}/install' >> ${CONFIG_FILE_2}"
-echo "install_path: ${PATH_PGDIST_INSTALL}" >> $CONFIG_FILE_2
+log "echo 'install_path: ${PATH_TEST}/install' >> ${CONFIG_FILE_MNG}"
+echo "install_path: ${PATH_PGDIST_INSTALL}" >> $CONFIG_FILE_MNG
 
-log "echo 'db_user: postgres' >> ${CONFIG_FILE_2}"
-echo "db_user: postgres" >> $CONFIG_FILE_2
+log "echo 'db_user: postgres' >> ${CONFIG_FILE_MNG}"
+echo "db_user: postgres" >> $CONFIG_FILE_MNG
 
 #create pgdist schema if not exists
 log "psql -c 'CREATE SCHEMA IF NOT EXISTS pgdist' -U postgres"
@@ -152,7 +152,7 @@ source "${PATH_TEST}/test_server.sh"
 
 if [ "$NO_CLEAN" = false ]; then
     log_pgdist "clean pgdist_test_project pgdist_test_database"
-    python "${PATH_PGDIST_SRC}/pgdist.py" clean pgdist_test_project pgdist_test_database -c "${PATH_CONFIG_2}"
+    python "${PATH_PGDIST_SRC}/pgdist.py" clean pgdist_test_project pgdist_test_database -c $PATH_CONFIG_MNG
 fi
 
 TEST_PART=""
