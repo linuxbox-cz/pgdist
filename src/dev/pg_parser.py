@@ -322,7 +322,7 @@ def parse(dump_stream):
 			x = re.match(r"CREATE( OR REPLACE)? FUNCTION\s+(?P<name>[^\(]+)(?P<args>\(.*\))\s+RETURNS(\s+SETOF)?\s+(?P<returns>\S.*\S)\s+", command)
 			if x:
 				args = remove_default(x.group('args'))
-				project.functions[schema(set_schema, x.group('name')) + str(args)] = Function(command, schema(set_schema, x.group('name')), x.group('args'))
+				project.functions[schema(set_schema, x.group('name')) + str(args)] = Function(command, schema(set_schema, x.group('name')), x.group('args'), args)
 				continue
 
 			# ALTER FUNCTION lbadmin.permission_unpack(text[]) OWNER TO lbadmin;

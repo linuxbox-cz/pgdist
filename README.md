@@ -109,21 +109,6 @@ Configuration:
         test_db - PGCONN to testing postgres, user has to create databases and users
 ```
 
-### Tests
-Requires:
-* PostgreSQL
-* Git
-* PGdist
-
-```
-Optional parameters:
-    -u --user     git user name
-    -e --email    git user email
-    -p --pgconn   pg connection (PGCONN)
-    --no-clean    wont clean files and database after test
-    -h --help     prints this help
-```
-
 ## Authors
 
 * Marian Krucina LinuxBox.cz

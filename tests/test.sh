@@ -28,8 +28,8 @@ PATH_D1="${PATH_TEST}/sql_devel_1"
 PATH_D2="${PATH_TEST}/sql_devel_2"
 PATH_PGDIST=$(dirname $PATH_TEST)
 PATH_PGDIST_SRC="${PATH_PGDIST}/src"
-PATH_PGDIST_INSTALL="/usr/share/pgdist/install"
-PATH_PROJECT="/tmp/pgdist_test_1"
+PATH_PGDIST_INSTALL="${PATH_TEST}/install"
+PATH_PROJECT="${PATH_TEST}/pgdist_test_1"
 PATH_SQL="${PATH_PROJECT}/sql"
 PATH_SQL_DIST="${PATH_PROJECT}/sql_dist"
 PATH_SQL_SCHEMA="${PATH_SQL}/pgdist_test_schema"
@@ -41,8 +41,10 @@ PATH_TRIGGERS="${PATH_SQL_SCHEMA}/triggers"
 PATH_INDEXES="${PATH_SQL_SCHEMA}/indexes"
 PATH_DATA="${PATH_SQL_SCHEMA}/data"
 PATH_VIEWS="${PATH_SQL_SCHEMA}/views"
-CONFIG_FILE=".pgdist"
-PATH_CONFIG="~/${CONFIG_FILE}"
+CONFIG_FILE_DEV=".pgdist"
+CONFIG_FILE_MNG="pgdist.conf"
+PATH_CONFIG_DEV="${PATH_TEST}/${CONFIG_FILE_DEV}"
+PATH_CONFIG_MNG="${PATH_TEST}/${CONFIG_FILE_MNG}"
 
 TEST_PART=""
 
@@ -68,12 +70,11 @@ clean_up() {
     log "cleaning up begin"
     cd $PATH_TEST
     rm -rfv --preserve-root --one-file-system -- $PATH_PROJECT
-    rm -fv --preserve-root --one-file-system "${PATH_PGDIST_INSTALL}/pgdist_test_project--1.0--1.1.sql"
-    rm -fv --preserve-root --one-file-system "${PATH_PGDIST_INSTALL}/pgdist_test_project--1.0.sql"
-    rm -fv --preserve-root --one-file-system "${PATH_PGDIST_INSTALL}/pgdist_test_project_2--1.0.sql"
-    if [ "$CLEAN_CONFIG" = true ]; then
-        rm -fv --preserve-root --one-file-system $PATH_CONFIG
-    fi
+    rm -rfv --preserve-root --one-file-system $PATH_PGDIST_INSTALL
+    rm -rfv --preserve-root --one-file-system $PATH_PGDIST_INSTALL
+    rm -rfv --preserve-root --one-file-system $PATH_PGDIST_INSTALL
+    rm -fv --preserve-root --one-file-system $PATH_CONFIG_DEV
+    rm -fv --preserve-root --one-file-system $PATH_CONFIG_MNG
     psql -U postgres -c "DROP DATABASE IF EXISTS pgdist_test_database;"
     psql -U postgres -c "DROP ROLE IF EXISTS pgdist_test_role_1;"
     psql -U postgres -c "DROP ROLE IF EXISTS pgdist_test_role_2;"
@@ -108,7 +109,7 @@ while [ "$1" != "" ]; do
 done
 
 if [ ! "$PGCONN" ]; then
-    PGCONN="postgres:password@localhost"
+    PGCONN="postgres@/"
 fi
 if [ ! "$NO_CLEAN" ]; then
     NO_CLEAN=false
@@ -117,19 +118,28 @@ fi
 #clean and init config if does not exist
 CLEAN_CONFIG=false
 clean_up
-cd ~
+cd $PATH_TEST
 
-if [ ! -e "$CONFIG_FILE" ]; then
-    log "echo '[pgdist]' >> ${CONFIG_FILE}"
-    echo "[pgdist]" >> $CONFIG_FILE
+#config 1
+log "echo '[pgdist]' >> ${CONFIG_FILE_DEV}"
+echo "[pgdist]" >> $CONFIG_FILE_DEV
 
-    log "echo 'test_db: postgres:password@localhost' >> ${CONFIG_FILE}"
-    echo "test_db: postgres:password@localhost" >> $CONFIG_FILE
+log "echo 'test_db: postgres@/pgdist' >> ${CONFIG_FILE_DEV}"
+echo "test_db: postgres@/pgdist" >> $CONFIG_FILE_DEV
 
-    log "echo 'install_path: /usr/share/pgdist/install' >> ${CONFIG_FILE}"
-    echo "install_path: /usr/share/pgdist/install" >> $CONFIG_FILE
-    CLEAN_CONFIG=true
-fi
+#config 2
+log "echo '[pgdist]' >> ${CONFIG_FILE_MNG}"
+echo "[pgdist]" >> $CONFIG_FILE_MNG
+
+log "echo 'install_path: ${PATH_TEST}/install' >> ${CONFIG_FILE_MNG}"
+echo "install_path: ${PATH_PGDIST_INSTALL}" >> $CONFIG_FILE_MNG
+
+log "echo 'db_user: postgres' >> ${CONFIG_FILE_MNG}"
+echo "db_user: postgres" >> $CONFIG_FILE_MNG
+
+#create pgdist schema if not exists
+log "psql -c 'CREATE SCHEMA IF NOT EXISTS pgdist' -U postgres"
+psql -c "CREATE SCHEMA IF NOT EXISTS pgdist" -U postgres
 
 #test pgdist devel_1
 source "${PATH_TEST}/test_devel_1.sh"
@@ -142,7 +152,7 @@ source "${PATH_TEST}/test_server.sh"
 
 if [ "$NO_CLEAN" = false ]; then
     log_pgdist "clean pgdist_test_project pgdist_test_database"
-    python "${PATH_PGDIST_SRC}/pgdist.py" clean pgdist_test_project pgdist_test_database
+    python "${PATH_PGDIST_SRC}/pgdist.py" clean pgdist_test_project pgdist_test_database -c $PATH_CONFIG_MNG
 fi
 
 TEST_PART=""
