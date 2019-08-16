@@ -679,7 +679,9 @@ def create_update(git_tag, new_version, force, gitversion=None, clean=True, pre_
 				old_file.close()
 
 				if old_string != new_string:
-					if "CREATE TABLE" in new_string:
+					element = os.path.basename(os.path.dirname(file_name))
+
+					if element == "table" or element == "tables":
 						x = re.search(r"CREATE( UNLOGGED)?( FOREIGN)? TABLE (?P<name>\S+) ?\(", new_string)
 						print("TODO - table: %s has changed" % (x.group('name')))
 						diff_c = difflib.unified_diff(old_string.splitlines(), new_string.splitlines(), fromfile="removeline542358", tofile="removeline542358")
