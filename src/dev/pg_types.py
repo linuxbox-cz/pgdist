@@ -497,9 +497,9 @@ class Function(Element):
 		change_command = False
 		change_owner = False
 
-		if self.command == element2.command:
+		if self.command != element2.command:
 			change_command = True
-		if self.owner != element2.command:
+		if self.owner != element2.owner:
 			change_owner = True
 
 		if change_command or change_owner:
@@ -515,7 +515,7 @@ class Function(Element):
 			file.write(command)
 			file.write("\n")
 
-		if change_owner:
+		if change_owner and element2.owner:
 			file.write("\n")
 			file.write("ALTER FUNCTION %s OWNER TO %s;" % (element2.name, element2.owner))
 			file.write("\n")
