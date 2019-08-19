@@ -177,6 +177,26 @@ class PG:
 		if filename:
 			self.psql(single_transaction=True, file=filename, change_db=True)
 
+	def load_data(self, data):
+		for table in data:
+			sql = "INSERT INTO %s(%s)" % (table, ", ".join(data[table][0]))
+			table_data = data[table][1:]
+			values = ""
+
+			if len(data[table]) > 2:
+				sql += " VALUES ((%s))"
+			else:
+				sql += " VALUES %s"
+
+			for index, row in enumerate(table_data):
+				values += "('" + "', '".join(row)
+
+				if index + 1 == len(table_data):
+					values += "')"
+				else:
+					values += "'), "
+			self.psql(cmd=sql % (values,), change_db=True)
+
 	def dump_data(self, project, cache=False):
 		if cache and self.test_cache_file("data"):
 			return json.load(open(self.address.cache_file("data")))
