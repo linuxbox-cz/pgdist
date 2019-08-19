@@ -21,26 +21,26 @@ cd $PATH_SQL
 echo "ALTER FUNCTION pgdist_test_schema.test_function_1() OWNER TO pgdist_test_role_1;" >> "${PATH_FUNCTIONS}/d1_function_1.sql"
 
 log_pgdist "add ${PATH_SCHEMAS}/d2_schema_1.sql"
-python "${PATH_PGDIST_SRC}/pgdist.py" add "${PATH_SCHEMAS}/d2_schema_1.sql"
+python "${PATH_PGDIST_SRC}/pgdist.py" add "${PATH_SCHEMAS}/d2_schema_1.sql" -c $PATH_CONFIG_DEV
 
 log_pgdist "add ${PATH_TABLES}/d2_table_1.sql"
-python "${PATH_PGDIST_SRC}/pgdist.py" add "${PATH_TABLES}/d2_table_1.sql"
+python "${PATH_PGDIST_SRC}/pgdist.py" add "${PATH_TABLES}/d2_table_1.sql" -c $PATH_CONFIG_DEV
 
 log_pgdist "add ${PATH_INDEXES}/d2_index_1.sql"
-python "${PATH_PGDIST_SRC}/pgdist.py" add "${PATH_INDEXES}/d2_index_1.sql"
+python "${PATH_PGDIST_SRC}/pgdist.py" add "${PATH_INDEXES}/d2_index_1.sql" -c $PATH_CONFIG_DEV
 
 #change roles
 log_pgdist "role-list"
-python "${PATH_PGDIST_SRC}/pgdist.py" role-list
+python "${PATH_PGDIST_SRC}/pgdist.py" role-list -c $PATH_CONFIG_DEV
 
 log_pgdist "role-change pgdist_test_role_1 login password"
-python "${PATH_PGDIST_SRC}/pgdist.py" role-change pgdist_test_role_1 login password
+python "${PATH_PGDIST_SRC}/pgdist.py" role-change pgdist_test_role_1 login password -c $PATH_CONFIG_DEV
 
 log_pgdist "role-change pgdist_test_role_2 nologin "
-python "${PATH_PGDIST_SRC}/pgdist.py" role-change pgdist_test_role_2 nologin
+python "${PATH_PGDIST_SRC}/pgdist.py" role-change pgdist_test_role_2 nologin -c $PATH_CONFIG_DEV
 
 log_pgdist "role-list"
-python "${PATH_PGDIST_SRC}/pgdist.py" role-list
+python "${PATH_PGDIST_SRC}/pgdist.py" role-list -c $PATH_CONFIG_DEV
 
 #change tables
 log "ALTER TABLE test_table_1 OWNER TO pgdist_test_role_2"
@@ -59,7 +59,7 @@ echo "ALTER TABLE pgdist_test_schema.test_table_2 ADD CONSTRAINT test_table_2_id
 
 #create update
 log_pgdist "create-update v1.0 1.1"
-python "${PATH_PGDIST_SRC}/pgdist.py" create-update v1.0 1.1
+python "${PATH_PGDIST_SRC}/pgdist.py" create-update v1.0 1.1 -c $PATH_CONFIG_DEV
 
 #copy update file to install path
 log "cp -a ${PATH_SQL_DIST}/. ${PATH_PGDIST_INSTALL}"
@@ -68,7 +68,7 @@ cp -a "${PATH_SQL_DIST}/." $PATH_PGDIST_INSTALL
 #test update
 log_pgdist "test-update v1.0 1.1"
 cd $PATH_SQL
-python "${PATH_PGDIST_SRC}/pgdist.py" test-update v1.0 1.1
+python "${PATH_PGDIST_SRC}/pgdist.py" test-update v1.0 1.1 -c $PATH_CONFIG_DEV
 
 #git create tag
 log_git "add ."
