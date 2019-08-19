@@ -128,6 +128,18 @@ class Element:
 			if element2.owner:
 				file.write("-- OWNER +%s\n" % (element2.owner))
 
+	def get_whole_command(self):
+		whole_command = self.command
+		if self.owner:
+			whole_command += "ALTER %s %s OWNER TO %s;\n" % (self.element_name.upper(), self.name, self.owner)
+		if self.grant:
+			whole_command += "".join(self.grant) + "\n"
+		if self.revoke:
+			whole_command += "".join(self.revoke) + "\n"
+		if self.rule:
+			whole_command += "".join(self.rule) + "\n"
+		return whole_command
+
 class Project:
 	def __init__(self):
 		self.schemas = {}
@@ -258,7 +270,7 @@ class Project:
 				file.write("-- %s\n" % (elements2[name]))
 				file.write("--\n")
 				file.write("\n")
-				file.write(elements2[name].command)
+				file.write(elements2[name].get_whole_command())
 				file.write("\n")
 				file.write(";-- end %s\n" % (elements2[name]))
 
@@ -482,6 +494,24 @@ class Table(Element):
 					file.write("-- OWNER %s\n" % (d))
 			file.write("\n")
 		file.write("-- end %s\n" % (self.name,))
+
+	def get_whole_command(self):
+		whole_command = self.command
+		if self.constraints:
+			whole_command += "ALTER TABLE %s ADD " % (self.name) + ("ALTER TABLE %s ADD " % (self.name)).join(self.constraints) + ";\n"
+		if self.indexes:
+			whole_command += "CREATE " + "; CREATE ".join(self.indexes) + ";\n"
+		if self.triggers:
+			whole_command += "CREATE " + ";$ CREATE ".join(self.triggers) + ";$\n"
+		if self.owner:
+			whole_command += "ALTER TABLE %s OWNER TO %s;\n" % (self.name, self.owner)
+		if self.grant:
+			whole_command += "\n".join(self.grant)
+		if self.revoke:
+			whole_command += "\n".join(self.revoke)
+		if self.rule:
+			whole_command += "\n".join(self.rule)
+		return whole_command
 
 class Range(Element):
 	def __init__(self, command, name):
