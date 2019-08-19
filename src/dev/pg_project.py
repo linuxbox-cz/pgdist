@@ -573,7 +573,7 @@ def load_and_dump(project, clean=True, no_owner=False, no_acl=False, pre_load=No
 		print("Check database: %s" % pg.dbname)
 	return dump, table_data
 
-def load_dump_and_dump(dump_remote, project_name="undef", clean=True, no_owner=False, no_acl=False, pre_load=None, post_load=None, dbs=None, pg_extractor=None):
+def load_dump_and_dump(dump_remote, project_name="undef", clean=True, no_owner=False, no_acl=False, pre_load=None, post_load=None, dbs=None, pg_extractor=None, project=None):
 	try:
 		pg = pg_conn.PG(config.test_db, dbname=get_test_dbname(project_name, dbs))
 		pg.init()
@@ -583,6 +583,8 @@ def load_dump_and_dump(dump_remote, project_name="undef", clean=True, no_owner=F
 		pg.load_file(post_load)
 		print("dump structure and data from test pg", file=sys.stderr)
 		dump = pg.dump(no_owner, no_acl)
+		if project:
+			table_data = pg.dump_data(project)
 		if pg_extractor:
 			pg.pg_extractor(pg_extractor, no_owner, no_acl)
 	except pg_conn.PgError as e:
@@ -597,6 +599,8 @@ def load_dump_and_dump(dump_remote, project_name="undef", clean=True, no_owner=F
 		pg.clean()
 	else:
 		print("Check database: %s" % pg.dbname)
+	if project:
+		return dump, table_data
 	return dump
 
 def load_file_and_dump(fname, project_name="undef", clean=True, no_owner=False, no_acl=False, pre_load=None, post_load=None, dbs=None, pg_extractor=None):
@@ -853,9 +857,15 @@ def diff_pg(addr, git_tag, diff_raw, clean, no_owner, no_acl, pre_load=None, pos
 
 	roles_remote = get_roles(addr, cache)
 	sql_remote = dump_remote(addr, no_owner, no_acl, cache)
-	table_data_remote = dump_remote_data(project, addr, cache)
 	create_roles(roles_remote)
-	dump_r = load_dump_and_dump(sql_remote, project.name, clean, no_owner, no_acl, pre_load=pre_remoted_load, post_load=post_remoted_load, dbs="remote", pg_extractor=pg_extractor)
+	table_data_remote = {}
+	table_data_remote_old = dump_remote_data(project, addr, cache)
+
+	dump_r, table_data_remote_new = load_dump_and_dump(sql_remote, project.name, clean, no_owner, no_acl, pre_load=pre_remoted_load, post_load=post_remoted_load, dbs="remote", pg_extractor=pg_extractor, project=project)
+
+	for table in project.table_data:
+		#go through data tables, add new data to old ones
+		table_data_remote[table.table_name] = table_data_remote_old[table.table_name] + table_data_remote_new[table.table_name][1:]
 
 	dump_cur, table_data_cur = load_and_dump(project, clean, no_owner, no_acl, pre_load=pre_load, post_load=post_load, pg_extractor=pg_extractor)
 
