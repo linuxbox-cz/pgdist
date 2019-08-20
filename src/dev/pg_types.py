@@ -272,6 +272,29 @@ class Project:
 		else:
 			self.table_data = data
 
+	def check_elements_owner(self):
+		for schema in self.schemas:
+			if self.schemas[schema].name != "public" and (not self.schemas[schema].owner or self.schemas[schema].owner == config.test_db.get_user()):
+				print(color.red("-- schema: %s is missing owner" % (self.schemas[schema].name,)))
+		for sql_type in self.types:
+			if not self.types[sql_type].owner or self.types[sql_type].owner == config.test_db.get_user():
+				print(color.red("-- type: %s is missing owner" % (self.types[sql_type].name,)))
+		for function in self.functions:
+			if not self.functions[function].owner or self.functions[function].owner == config.test_db.get_user():
+				print(color.red("-- function: %s is missing owner" % (self.functions[function].name,)))
+		for sequence in self.sequences:
+			if not self.sequences[sequence].owner or self.sequences[sequence].owner == config.test_db.get_user():
+				print(color.red("-- sequence: %s is missing owner" % (self.sequences[sequence].name,)))
+		for view in self.views:
+			if not self.views[view].owner or self.views[view].owner == config.test_db.get_user():
+				print(color.red("-- view: %s is missing owner" % (self.views[view].name,)))
+		for operator in self.operators:
+			if not self.operators[operator].owner or self.operators[operator].owner == config.test_db.get_user():
+				print(color.red("-- operator: %s is missing owner" % (self.operators[operator].name,)))
+		for table in self.tables:
+			if not self.tables[table].owner or self.tables[table].owner == config.test_db.get_user():
+				print(color.red("-- table: %s is missing owner" % (self.tables[table].name,)))
+
 class Schema(Element):
 	def __init__(self, command, name):
 		Element.__init__(self, "Schema", command, name)
