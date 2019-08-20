@@ -20,7 +20,7 @@ psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
 PGDIST_VERSION = 1
 
 CREATE_PGDIST = """
-CREATE SCHEMA pgdist;
+CREATE SCHEMA IF NOT EXISTS pgdist;
 
 CREATE TABLE pgdist.pgdist_version (
 	version INTEGER NOT NULL
@@ -115,10 +115,20 @@ def list_database(conninfo):
 
 	return databases
 
-def check_pgdist_installed(dbname, conn):
+def check_pgdist_installed(conn):
 	cursor = conn.cursor()
-	cursor.execute("SELECT nspname FROM pg_namespace WHERE nspname = 'pgdist';")
+	schema = False
+	tables_count = 0
+
+	cursor.execute("SELECT nspname FROM pg_catalog.pg_namespace WHERE nspname = 'pgdist';")
 	for row in cursor:
+		schema = True
+
+	cursor.execute("SELECT table_name FROM information_schema.tables WHERE table_schema = 'pgdist' AND table_name = 'history' OR table_name = 'pgdist_version' OR table_name = 'installed';")
+	for row in cursor:
+		tables_count += 1
+
+	if schema and tables_count == 3:
 		return True
 	return False
 
@@ -136,7 +146,7 @@ def check_pgdist_version(dbname, conn):
 
 def pgdist_install(dbname, conn):
 	cursor = conn.cursor()
-	if not check_pgdist_installed(dbname, conn):
+	if not check_pgdist_installed(conn):
 		logging.verbose("Create PGdist info schema into database %s" % (dbname,))
 		cursor.execute(CREATE_PGDIST)
 	while True:
@@ -149,6 +159,26 @@ def pgdist_install(dbname, conn):
 			cursor.execute(PGDIST_UPDATES[cur_version-1])
 			cursor.execute("UPDATE pgdist.pgdist_version SET version=%s;", (cur_version+1,))
 
+def installed_history(conninfo, project_name=None):
+	conn = connect(conninfo)
+	cursor = conn.cursor()
+	pgdist_install(None, conn)
+	sql_where = ""
+
+	if project_name:
+		cursor.execute("SELECT project, ts::TEXT, version, part::TEXT, comment FROM pgdist.history WHERE project = %s ORDER BY ts DESC;", (project_name,))
+	else:
+		cursor.execute("SELECT project, ts::TEXT, version, part::TEXT, comment FROM pgdist.history ORDER BY ts DESC;")
+
+	headers = ""
+
+	for desc in cursor.description:
+		headers += "%s\t" % (desc[0])
+	print(headers)
+
+	for row in cursor.fetchall():
+		print("\t".join(row))
+
 def pgdist_update(dbname, conninfo):
 	if dbname:
 		dbs = [dbname]
@@ -158,7 +188,7 @@ def pgdist_update(dbname, conninfo):
 	for db in dbs:
 		conn = connect(conninfo, db)
 		cursor = conn.cursor()
-		if check_pgdist_installed(db, conn):
+		if check_pgdist_installed(conn):
 			pgdist_install(db, conn)
 		conn.close()
 
@@ -303,7 +333,7 @@ def get_version(project_name, dbname, conninfo):
 
 def check_installed(dbname, project_name, conninfo):
 	conn = connect(conninfo, dbname)
-	if pg.check_pgdist_installed(db, conn):
+	if pg.check_pgdist_installed(conn):
 		pg.check_pgdist_version(db, conn)
 		cursor = conn.cursor()
 		cursor.execute("SELECT 1 FROM pgdist.installed WHERE project=%s", (project_name,))

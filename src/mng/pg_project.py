@@ -292,7 +292,7 @@ def get_projects(project_name, dbname, conninfo, directory, check_db_exists=Fals
 
 	for db in dbs:
 		conn = pg.connect(conninfo, dbname=db)
-		if pg.check_pgdist_installed(db, conn):
+		if pg.check_pgdist_installed(conn):
 			pg.check_pgdist_version(db, conn)
 			cursor = conn.cursor()
 			cursor.execute("SELECT project, version, from_version, part, parts FROM pgdist.installed")
@@ -365,6 +365,9 @@ def prlist(project_name, dbname, conninfo, directory, show_all):
 	print("============================================================================")
 
 	print("")
+
+def history(project_name, conninfo):
+	pg.installed_history(conninfo, project_name)
 
 def install(project_name, dbname, version, conninfo, directory, create_db, is_require):
 	projects = get_projects(project_name, dbname, conninfo, directory, check_db_exists=create_db)
