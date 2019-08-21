@@ -44,7 +44,7 @@ class Element:
 		return self.name
 
 	def check_owner(self):
-		if self.name != "public" and (not self.owner or self.owner == config.test_db.get_user()):
+		if not self.owner or self.owner == config.test_db.get_user():
 			print(color.red("-- %s: %s is missing owner" % (self.element_name.lower(), self.name,)))
 
 	def print_info(self):
