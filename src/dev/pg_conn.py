@@ -177,25 +177,17 @@ class PG:
 		if filename:
 			self.psql(single_transaction=True, file=filename, change_db=True)
 
-	def load_data(self, data):
-		for table in data:
-			sql = "INSERT INTO %s(%s)" % (table, ", ".join(data[table][0]))
-			table_data = data[table][1:]
-			values = ""
+	def load_data(self, tables):
+		for table in tables:
+			self.psql(cmd="COPY %s FROM STDIN WITH(FORMAT CSV, DELIMITER E'\\t', NULL 'NULL@15#7&679');\n%s" % (table["name"], table["data"]), change_db=True)
 
-			if len(data[table]) > 2:
-				sql += " VALUES ((%s))"
-			else:
-				sql += " VALUES %s"
+	def dump_data_csv(self, project):
+		table_data = []
 
-			for index, row in enumerate(table_data):
-				values += "('" + "', '".join(row)
-
-				if index + 1 == len(table_data):
-					values += "')"
-				else:
-					values += "'), "
-			self.psql(cmd=sql % (values,), change_db=True)
+		for table in project.table_data:
+			(retcode, output) = self.psql(cmd="COPY %s TO STDOUT WITH(FORMAT CSV, DELIMITER E'\\t', NULL 'NULL@15#7&679');" % (table,), change_db=True, exit_on_fail=False)
+			table_data.append({"name": table, "data": output.split("\n", 1)[1]})
+		return table_data
 
 	def dump_data(self, project, cache=False):
 		if cache and self.test_cache_file("data"):
