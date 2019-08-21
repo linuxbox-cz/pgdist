@@ -177,17 +177,12 @@ class PG:
 		if filename:
 			self.psql(single_transaction=True, file=filename, change_db=True)
 
-	def load_data(self, tables):
-		for table in tables:
-			self.psql(cmd="COPY %s FROM STDIN WITH(FORMAT CSV, DELIMITER E'\\t', NULL 'NULL@15#7&679');\n%s" % (table["name"], table["data"]), change_db=True)
-
-	def dump_data_csv(self, project):
-		table_data = []
-
-		for table in project.table_data:
-			(retcode, output) = self.psql(cmd="COPY %s TO STDOUT WITH(FORMAT CSV, DELIMITER E'\\t', NULL 'NULL@15#7&679');" % (table,), change_db=True, exit_on_fail=False)
-			table_data.append({"name": table, "data": output.split("\n", 1)[1]})
-		return table_data
+	def load_data(self, table_data):
+		for table in table_data:
+			csv_data = io.BytesIO()
+			writer = csv.writer(csv_data, delimiter=";".encode("utf8"))
+			writer.writerows(table_data[table][1:])
+			self.psql(cmd="COPY %s FROM STDIN WITH(FORMAT CSV, DELIMITER E';');\n%s" % (table, csv_data.getvalue()), change_db=True)
 
 	def dump_data(self, project, cache=False):
 		if cache and self.test_cache_file("data"):

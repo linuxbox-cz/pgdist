@@ -573,7 +573,7 @@ def load_and_dump(project, clean=True, no_owner=False, no_acl=False, pre_load=No
 		print("Check database: %s" % pg.dbname)
 	return dump, table_data
 
-def load_dump_and_dump(dump_remote, project, tables=None, clean=True, no_owner=False, no_acl=False, pre_load=None, post_load=None, dbs=None, pg_extractor=None, project_name=None):
+def load_dump_and_dump(dump_remote, project, table_data=None, clean=True, no_owner=False, no_acl=False, pre_load=None, post_load=None, dbs=None, pg_extractor=None, project_name=None):
 	try:
 		if not project_name:
 			project_name = project.name
@@ -582,13 +582,13 @@ def load_dump_and_dump(dump_remote, project, tables=None, clean=True, no_owner=F
 		pg.load_file(pre_load)
 		print("load dump to test pg", file=sys.stderr)
 		pg.load_dump(dump_remote)
-		pg.load_data(tables)
+		pg.load_data(table_data)
 		pg.load_file(post_load)
 		print("dump structure and data from test pg", file=sys.stderr)
 		dump = pg.dump(no_owner, no_acl)
-		table_data = None
+		table_data_new = None
 		if project:
-			table_data = pg.dump_data(project)
+			table_data_new = pg.dump_data(project)
 		if pg_extractor:
 			pg.pg_extractor(pg_extractor, no_owner, no_acl)
 	except pg_conn.PgError as e:
@@ -603,7 +603,7 @@ def load_dump_and_dump(dump_remote, project, tables=None, clean=True, no_owner=F
 		pg.clean()
 	else:
 		print("Check database: %s" % pg.dbname)
-	return dump, table_data
+	return dump, table_data_new
 
 def load_file_and_dump(fname, project_name="undef", clean=True, no_owner=False, no_acl=False, pre_load=None, post_load=None, dbs=None, pg_extractor=None):
 	try:
@@ -796,12 +796,10 @@ def dump_remote(addr, no_owner, no_acl, cache):
 		print(e.output)
 		sys.exit(1)
 
-def dump_remote_data(project, addr, cache, csv=False):
+def dump_remote_data(project, addr, cache):
 	try:
 		pg = pg_conn.PG(addr)
-		if csv:
-			return pg.dump_data_csv(project)
-		return pg.dump_data(project, cache=cache, csv=csv)
+		return pg.dump_data(project, cache=cache)
 	except pg_conn.PgError as e:
 		logging.error("Dump fail:")
 		print(e.output)
@@ -862,7 +860,7 @@ def diff_pg(addr, git_tag, diff_raw, clean, no_owner, no_acl, pre_load=None, pos
 	roles_remote = get_roles(addr, cache)
 	sql_remote = dump_remote(addr, no_owner, no_acl, cache)
 	create_roles(roles_remote)
-	table_data_remote_old = dump_remote_data(project, addr, cache, csv=True)
+	table_data_remote_old = dump_remote_data(project, addr, cache)
 
 	dump_r, table_data_remote_new = load_dump_and_dump(sql_remote, project, table_data_remote_old, clean, no_owner, no_acl, pre_load=pre_remoted_load, post_load=post_remoted_load, dbs="remote", pg_extractor=pg_extractor)
 
