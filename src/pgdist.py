@@ -61,7 +61,7 @@ PGdist Server - manage projects in PostgreSQL database
     set-version PROJECT DBNAME VERSION - force change version without run scripts
     get-version PROJECT DBNAME - print installed version of project
     pgdist-update [DBNAME] - update pgdist version in database
-    history [PROJECT] [-d DBNAME] - print history of installed projects
+    history [PROJECT [DBNAME]] - print history of installed projects
 
 PGCONN - ssh connection + connection URI, see:
     https://www.postgresql.org/docs/current/static/libpq-connect.html#LIBPQ-CONNSTRING
@@ -340,9 +340,9 @@ def main():
 		(dbname,) = args_parse(args.args, 1)
 		pg_project.pgdist_update(dbname, conninfo.ConnInfo(args))
 
-	elif args.cmd == "history" and len(args.args) in (0, 1,):
-		(project_name,) = args_parse(args.args, 1)
-		pg_project.history(project_name, conninfo.ConnInfo(args))
+	elif args.cmd == "history" and len(args.args) in (0, 1, 2,):
+		(project_name, dbname) = args_parse(args.args, 2)
+		pg_project.history(project_name, dbname, conninfo.ConnInfo(args))
 
 	else:
 		parser.print_help()

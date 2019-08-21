@@ -366,8 +366,8 @@ def prlist(project_name, dbname, conninfo, directory, show_all):
 
 	print("")
 
-def history(project_name, conninfo):
-	pg.installed_history(conninfo, project_name)
+def history(project_name, dbname, conninfo):
+	pg.installed_history(project_name, dbname, conninfo)
 
 def install(project_name, dbname, version, conninfo, directory, create_db, is_require):
 	projects = get_projects(project_name, dbname, conninfo, directory, check_db_exists=create_db)
