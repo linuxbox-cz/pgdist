@@ -28,6 +28,7 @@ CREATE TABLE pgdist.pgdist_version (
 
 CREATE TABLE pgdist.installed (
 	project TEXT NOT NULL PRIMARY KEY,
+	dbname TEXT NOT NULL,
 	version TEXT NOT NULL,
 	from_version TEXT,
 	part INTEGER NOT NULL,
@@ -157,7 +158,7 @@ def get_pgdist_missing_cols(conn):
 			missing.append(["pgdist_version", col])
 
 	cursor.execute("SELECT * FROM pgdist.installed")
-	installed = ["project", "version", "from_version", "part", "parts"]
+	installed = ["project", "dbname", "version", "from_version", "part", "parts"]
 	header = []
 
 	for desc in cursor.description:
@@ -337,13 +338,13 @@ def install(dbname, project, ver, conninfo, directory, create_db, is_require):
 		print("Install%s %s %s%s to %s" % (str_require, project.name, str(ver.version), str_part, dbname))
 
 		run("psql", conninfo, dbname=dbname, file=os.path.join(directory, part.fname), single_transaction=part.single_transaction)
-		cursor.execute("INSERT INTO pgdist.history (project, version, part, comment) VALUES (%s, %s, %s, %s);",
-			(project.name, str(ver.version), part.part, "installed new version %s, part %d/%d" % (str(ver.version), part.part, len(ver.parts))))
-		cursor.execute("UPDATE pgdist.installed SET version=%s, part=%s, parts=%s WHERE project=%s RETURNING *;",
-			(str(ver.version), part.part, len(ver.parts), project.name))
+		cursor.execute("INSERT INTO pgdist.history (project, dbname, version, part, comment) VALUES (%s, %s, %s, %s, %s);",
+			(project.name, dbname, str(ver.version), part.part, "installed new version %s, part %d/%d" % (str(ver.version), part.part, len(ver.parts))))
+		cursor.execute("UPDATE pgdist.installed SET version=%s, dbname=%s part=%s, parts=%s WHERE project=%s RETURNING *;",
+			(str(ver.version), dbname, part.part, len(ver.parts), project.name))
 		if not cursor.fetchone():
-			cursor.execute("INSERT INTO pgdist.installed (project, version, part, parts) VALUES (%s, %s, %s, %s);",
-				(project.name, str(ver.version), part.part, len(ver.parts)))
+			cursor.execute("INSERT INTO pgdist.installed (project, dbname, version, part, parts) VALUES (%s, %s, %s, %s, %s);",
+				(project.name, dbname, str(ver.version), part.part, len(ver.parts)))
 
 
 def update(dbname, project, update, conninfo, directory):
