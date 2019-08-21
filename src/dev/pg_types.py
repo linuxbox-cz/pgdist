@@ -43,6 +43,10 @@ class Element:
 	def __str__(self):
 		return self.name
 
+	def check_owner(self):
+		if self.name != "public" and (not self.owner or self.owner == config.test_db.get_user()):
+			print(color.red("-- %s: %s is missing owner" % (self.element_name.lower(), self.name,)))
+
 	def print_info(self):
 		print("Element:", self.command)
 
@@ -274,30 +278,27 @@ class Project:
 
 	def check_elements_owner(self):
 		for schema in self.schemas:
-			if self.schemas[schema].name != "public" and (not self.schemas[schema].owner or self.schemas[schema].owner == config.test_db.get_user()):
-				print(color.red("-- schema: %s is missing owner" % (self.schemas[schema].name,)))
+			self.schemas[schema].check_owner()
 		for sql_type in self.types:
-			if not self.types[sql_type].owner or self.types[sql_type].owner == config.test_db.get_user():
-				print(color.red("-- type: %s is missing owner" % (self.types[sql_type].name,)))
+			self.types[sql_type].check_owner()
 		for function in self.functions:
-			if not self.functions[function].owner or self.functions[function].owner == config.test_db.get_user():
-				print(color.red("-- function: %s is missing owner" % (self.functions[function].name,)))
+			self.functions[function].check_owner()
 		for sequence in self.sequences:
-			if not self.sequences[sequence].owner or self.sequences[sequence].owner == config.test_db.get_user():
-				print(color.red("-- sequence: %s is missing owner" % (self.sequences[sequence].name,)))
+			self.sequences[sequence].check_owner()
 		for view in self.views:
-			if not self.views[view].owner or self.views[view].owner == config.test_db.get_user():
-				print(color.red("-- view: %s is missing owner" % (self.views[view].name,)))
+			self.views[view].check_owner()
 		for operator in self.operators:
-			if not self.operators[operator].owner or self.operators[operator].owner == config.test_db.get_user():
-				print(color.red("-- operator: %s is missing owner" % (self.operators[operator].name,)))
+			self.operators[operator].check_owner()
 		for table in self.tables:
-			if not self.tables[table].owner or self.tables[table].owner == config.test_db.get_user():
-				print(color.red("-- table: %s is missing owner" % (self.tables[table].name,)))
+			self.tables[table].check_owner()
 
 class Schema(Element):
 	def __init__(self, command, name):
 		Element.__init__(self, "Schema", command, name)
+
+	def check_owner(self):
+		if self.name != "public" and (not self.owner or self.owner == config.test_db.get_user()):
+				print(color.red("-- %s: %s is missing owner" % (self.element_name.lower(), self.name,)))
 
 class Extention(Element):
 	def __init__(self, command, name, schema_name):
