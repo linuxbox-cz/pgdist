@@ -28,7 +28,6 @@ CREATE TABLE pgdist.pgdist_version (
 
 CREATE TABLE pgdist.installed (
 	project TEXT NOT NULL PRIMARY KEY,
-	dbname TEXT NOT NULL,
 	version TEXT NOT NULL,
 	from_version TEXT,
 	part INTEGER NOT NULL,
@@ -37,7 +36,6 @@ CREATE TABLE pgdist.installed (
 
 CREATE TABLE pgdist.history (
 	project TEXT NOT NULL,
-	dbname TEXT NOT NULL,
 	ts TIMESTAMPTZ DEFAULT NOW(),
 	version TEXT NOT NULL,
 	part INTEGER NOT NULL,
@@ -45,7 +43,7 @@ CREATE TABLE pgdist.history (
 );
 
 INSERT INTO pgdist.pgdist_version VALUES (%d);
-INSERT INTO pgdist.history (project, dbname, version, part, comment) VALUES ('pgdist', %%s, %d, 1, 'Create PGdist info schema.');
+INSERT INTO pgdist.history (project, version, part, comment) VALUES ('pgdist', %d, 1, 'Create PGdist info schema.');
 
 """ % (PGDIST_VERSION, PGDIST_VERSION)
 
@@ -133,42 +131,6 @@ def check_pgdist_installed(conn):
 
 	return False
 
-def get_pgdist_missing_cols(conn):
-	cursor = conn.cursor()
-	missing = []
-
-	cursor.execute("SELECT * FROM pgdist.history")
-	history = ["project", "dbname", "ts", "version", "part", "comment"]
-	header = []
-
-	for desc in cursor.description:
-		header.append(desc[0])
-	for col in history:
-		if col not in header:
-			missing.append(["history", col])
-
-	cursor.execute("SELECT * FROM pgdist.pgdist_version")
-	pgdist_version = ["version"]
-	header = []
-
-	for desc in cursor.description:
-		header.append(desc[0])
-	for col in pgdist_version:
-		if col not in header:
-			missing.append(["pgdist_version", col])
-
-	cursor.execute("SELECT * FROM pgdist.installed")
-	installed = ["project", "dbname", "version", "from_version", "part", "parts"]
-	header = []
-
-	for desc in cursor.description:
-		header.append(desc[0])
-	for col in installed:
-		if col not in header:
-			missing.append(["installed", col])
-
-	return missing
-
 def check_pgdist_version(dbname, conn):
 	cursor = conn.cursor()
 	cursor.execute("SELECT version FROM pgdist.pgdist_version;")
@@ -185,19 +147,17 @@ def pgdist_install(dbname, conn):
 	cursor = conn.cursor()
 	if not check_pgdist_installed(conn):
 		logging.verbose("Create PGdist info schema into database %s" % (dbname,))
-		cursor.execute(CREATE_PGDIST, (dbname or "postgres",))
-	else:
-		missing_cols = get_pgdist_missing_cols(conn)
-
-		for missing in missing_cols:
-			logging.error("Error: table: pgdist.%s is missing col: %s" % (missing[0], missing[1]))
-
-		if missing_cols:
-			sys.exit(1)
+		cursor.execute(CREATE_PGDIST)
 
 	while True:
 		cursor.execute("SELECT version FROM pgdist.pgdist_version;")
-		for row in cursor.fetchall():
+		version = cursor.fetchall()
+
+		if not version:
+			cursor.execute("INSERT INTO pgdist.pgdist_version VALUES (%s);", (PGDIST_VERSION,))
+			cursor.execute("INSERT INTO pgdist.history (project, version, part, comment) VALUES ('pgdist', %s, 1, 'Create PGdist info schema.');", (PGDIST_VERSION,))
+
+		for row in version:
 			cur_version = row["version"]
 			if cur_version >= PGDIST_VERSION:
 				return
@@ -205,59 +165,60 @@ def pgdist_install(dbname, conn):
 			cursor.execute(PGDIST_UPDATES[cur_version-1])
 			cursor.execute("UPDATE pgdist.pgdist_version SET version=%s;", (cur_version+1,))
 
-def installed_history(project_name, dbname, conninfo):
-	conn = connect(conninfo)
+def get_history(conninfo, project_name, dbname):
+	history = []
+	conn = connect(conninfo, dbname)
 	cursor = conn.cursor()
 	pgdist_install(None, conn)
+	logging.verbose("getting history from db: %s" % (dbname))
 
-	sql = "SELECT project, dbname, ts::TEXT, version, part::TEXT, comment FROM pgdist.history %s %s ORDER BY ts ASC;"
-	sql_where = ""
-	sql_and = []
-	sql_arg = []
-
-	if project_name or dbname:
-		sql_where = "WHERE"
 	if project_name:
-		sql_and.append("project = %s")
-		sql_arg.append(project_name)
-	if dbname:
-		sql_and.append("dbname = %s")
-		sql_arg.append(dbname)
-
-	cursor.execute(sql % (sql_where, "AND ".join(sql_and)), sql_arg)
-
-	headers = []
-	data = []
-	col_max_len = []
-
-	for desc in cursor.description:
-		headers.append(desc[0])
-		col_max_len.append(len(desc[0]))
+		cursor.execute("SELECT project, ts::TEXT, version, part::TEXT, comment FROM pgdist.history WHERE project = %s ORDER BY ts ASC;", (project_name,))
+	else:
+		cursor.execute("SELECT project, ts::TEXT, version, part::TEXT, comment FROM pgdist.history ORDER BY ts ASC;")
 
 	for row in cursor.fetchall():
-		data.append(row)
+		history.append([dbname] + row)
+	return history
 
+def installed_history(project_name, dbname, conninfo):
+	history = []
+
+	if dbname:
+		history = get_history(conninfo, project_name, dbname)
+	else:
+		for database in list_database(conninfo):
+			history += get_history(conninfo, project_name, database)
+
+	headers = ["database", "project", "ts", "version", "part", "comment"]
+	col_max_len = []
+
+	for header in headers:
+		col_max_len.append(len(header))
+
+	for row in history:
 		for i, col in enumerate(col_max_len):
 			if len(row[i]) > col:
 				col_max_len[i] = len(row[i])
 
-	total_length = 0
+	total_length = -1 #last space
+
 	for i in col_max_len:
-		total_length += i + 2
+		total_length += i
 
 	print
 
 	for i, col in enumerate(headers):
-		print("%s%s" % (col, " " + " " * (col_max_len[i] - len(col)))),
+		print("%s%s" % (col, " " * (col_max_len[i] - len(col)))),
 	print
 
-	print("=" * total_length)
+	print("=" * (total_length + len(headers)))
 
-	for row in data:
+	for row in history:
 		for i, col in enumerate(row):
-			print("%s%s" % (col, " " + " " * (col_max_len[i] - len(col)))),
+			print("%s%s" % (col, " " * (col_max_len[i] - len(col)))),
 		print
-	print
+	print("=" * (total_length + len(headers)))
 
 def pgdist_update(dbname, conninfo):
 	if dbname:
@@ -338,13 +299,13 @@ def install(dbname, project, ver, conninfo, directory, create_db, is_require):
 		print("Install%s %s %s%s to %s" % (str_require, project.name, str(ver.version), str_part, dbname))
 
 		run("psql", conninfo, dbname=dbname, file=os.path.join(directory, part.fname), single_transaction=part.single_transaction)
-		cursor.execute("INSERT INTO pgdist.history (project, dbname, version, part, comment) VALUES (%s, %s, %s, %s, %s);",
-			(project.name, dbname, str(ver.version), part.part, "installed new version %s, part %d/%d" % (str(ver.version), part.part, len(ver.parts))))
-		cursor.execute("UPDATE pgdist.installed SET version=%s, dbname=%s part=%s, parts=%s WHERE project=%s RETURNING *;",
-			(str(ver.version), dbname, part.part, len(ver.parts), project.name))
+		cursor.execute("INSERT INTO pgdist.history (project, version, part, comment) VALUES (%s, %s, %s, %s, %s);",
+			(project.name, str(ver.version), part.part, "installed new version %s, part %d/%d" % (str(ver.version), part.part, len(ver.parts))))
+		cursor.execute("UPDATE pgdist.installed SET version=%s, part=%s, parts=%s WHERE project=%s RETURNING *;",
+			(str(ver.version), part.part, len(ver.parts), project.name))
 		if not cursor.fetchone():
-			cursor.execute("INSERT INTO pgdist.installed (project, dbname, version, part, parts) VALUES (%s, %s, %s, %s, %s);",
-				(project.name, dbname, str(ver.version), part.part, len(ver.parts)))
+			cursor.execute("INSERT INTO pgdist.installed (project, version, part, parts) VALUES (%s, %s, %s, %s, %s);",
+				(project.name, str(ver.version), part.part, len(ver.parts)))
 
 
 def update(dbname, project, update, conninfo, directory):
