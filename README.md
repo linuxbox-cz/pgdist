@@ -187,6 +187,14 @@ Configuration:
 
 	**NOTICE** - If you already made some role in your database, this will not help you to remove it from database.
 
+4. List roles in project:
+
+	```
+	pgdist role-list
+	```
+
+	* Lists all roles in your project
+
 
 
 ### Project file managment
@@ -233,6 +241,8 @@ Configuration:
 
 2. As the above point points out to file order, try to adjust or split your SQL dependencies in the order, so you don't have to adjust your `version.sql` file.
 
+3. Data will be added only in file created by `create-version`
+
 
 
 ### Versions
@@ -265,6 +275,8 @@ Configuration:
 
 		* The above command creates new file `My_Project--1.0.0.sql` in your `sql_dist` folder.
 
+		**NOTICE** - Something can be added only when using this command, like `require-add` or `data`
+
 * You already made your first version and forgot to add something? Don't worry, we got you.
 
 	3. Create update from your version:
@@ -295,7 +307,7 @@ Configuration:
 
 
 
-## Project installation
+### Project installation
 
 * So you have prepared version of your project and now want to load it to database?
 
@@ -311,7 +323,7 @@ Configuration:
 
 * Now that you have installed your project, you might want to update it with `My_Project--1.0.1.sql`.
 
-	1. Update installed project:
+	2. Update installed project:
 
 		```
 		pgdist update My_Project pg_database 1.0.1
@@ -320,6 +332,60 @@ Configuration:
 		* Takes `My_Project--1.0.0--1.0.1.sql` and loads it to *pg_database*.
 
 		* If you don´t specify any parameter, pgdist will try to update each of your installed project.
+
+* You installed some version of your project to your servers. Now you made a lot of changes in your project and you want to see the diffrence?
+
+	* You have added some `data.sql` to your project and you want to compare them with your new data?
+
+		1. Add data from tables data to compare:
+
+			```
+			pgdist data-add some_table table_column_1 table_column_2
+			```
+
+			* PGdist will add this table to his list of tables data to compare with.
+
+			* As you can see, you may also specify which columns you want to compare.
+
+	* You don´t like your data anymore?
+
+		2. Remove data from tables data to compare:
+
+			```
+			pgdist data-rm some_table
+			```
+
+			* Removes *some_table* from pgdist list of tables data to compare
+
+	* You have literally mess in what table data you have added/removed?
+
+		3. List data from tables data to compare:
+
+			```
+			pgdist data-list
+			```
+
+			* Shows list from tables data to compare
+
+	3. Show difference between your current project and installed project:
+
+		```
+		pgdist diff-db root:password@my_server//pg_user:pg_password@/pg_database v1.0.0
+		```
+
+		* Specify *PGCONN* and git tag, pgdist will then dump database from *PGCONN* and compare it with your project
+
+* You want to see difference only between some SQL file and database?
+
+	4. Show difference between selected file and installed project:
+
+		```
+		pgdist diff-db-file root:password@my_server//pg_user:pg_password@/pg_database /path/to/your/SQL/file
+		```
+
+		* Dumps remote database and compare it with you file
+
+		**NOTICE** - If you want to show differences the opposite way, use `diff-file-db` and swap the arguments
 
 
 
