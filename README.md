@@ -109,6 +109,71 @@ Configuration:
         test_db - PGCONN to testing postgres, user has to create databases and users
 ```
 
+## Tutorial
+
+### Creating project directory
+
+1. Init your project with:
+```
+pgdist init My_Project /path/to/my/project
+```
+
+* That creates directory structure as follows:
+```
+├── sql
+│   └── pg_project.sql
+└── sql_dist
+```
+
+2. Init schema directory:
+```
+pgdist create-schema my_schema
+```
+
+* That creates schema directory to your project:
+```
+├── sql
+│   ├── pg_project.sql
+│   └── my_schema
+│       ├── constraints
+│       ├── data
+│       ├── extensions
+│       ├── functions
+│       ├── grants
+│       ├── indexes
+│       ├── schema
+│       ├── tables
+│       ├── triggers
+│       ├── types
+│       ├── views
+└── sql_dist
+```
+* **NOTICE** - This will NOT create any *my_schema.sql* in my_schema folder.
+
+### Project file managment
+
+1. Add file to project:
+* Move your SQL file to the correct directory (`table.sql` to `tables`, `schema.sql` to `schema`, etc.)
+```
+pgdist add /path/to/your/SQL/file_1 /path/to/your/SQL/file_2
+```
+* **NOTICE** - This command will ONLY remove it from `pg_project.sql`, if you want to delete the file, use argument `--manage-file`
+
+2. Remove file from project:
+* There's two ways you can do it:
+	1. Delete line with path to your file you want to delete from *pg_project.sql*
+	2. Use pgdist command rm
+```
+pgdist rm /path/to/your/SQL/file_1 /path/to/your/SQL/file_2
+```
+
+3. Show status of project files:
+
+
+**Recommendation:**
+1. Add your files to your project in the order as if you would be addding them to your database directly (this will ensure, that you won't have to adjust import file order in `pg_project.sql`).
+2. As the above point points out to file order, try to adjust or split your SQL dependencies in the order, so you don't have to adjust your `version.sql` file.
+
 ## Authors
 
 * Marian Krucina LinuxBox.cz
