@@ -214,41 +214,55 @@ Configuration:
 		```
 		* First parameter defines **PROJECT** version, second one is **GIT-TAG**.
 		* Git tag is not required, use it only if you want to create version from specified git tag.
+
 		* Those parameters don´t have to be same, so if you have like git tag v6.7.9, and you want to create project version 1.0.0, you can do so.
+		
 		* The above command creates new file `My_Project--1.0.0.sql` in your `sql_dist` folder.
+
 * You already made your first version and forgot to add something? Don't worry, we got you.
 	3. Create update from your version:
 		```
 		pgdist create-update v1.0.0 1.0.1
 		```
 		* First parameter is already mentioned git tag, pgdist will create update for given git tag.
+		
 		* Second parameter is NEW project version.
+		
 		* This command creates new file `My_Project--1.0.0--1.0.1.sql` in your `sql_dist` folder.
+
 * You made create-update and you want to know, if you can load it to database?
 	4. Test update of your project:
 		```
 		pgdist test-update v1.0.0 1.0.1
 		```
 		* First paramater, again, git tag.
+		
 		* Second parameter project version.
+		
 		* Loads git tag version of your project to test database, then tries to use your update on it.
 
 
 
 ## Project installation
+
 * So you have prepared version of your project and now want to load it to database?
 	1. Install project to database:
 		```
 		pgdist install My_Project pg_database 1.0.0
 		```
+
 		* Takes `My_Project--1.0.0.sql` and loads it to *pg_database*.
+
 		* If you don´t specify project version, latest is taken.
+
 * Now that you have installed your project, you might want to update it with `My_Project--1.0.1.sql`.
 	1. Update installed project:
 		```
 		pgdist update My_Project pg_database 1.0.1
 		```
+		
 		* Takes `My_Project--1.0.0--1.0.1.sql` and loads it to *pg_database*.
+		
 		* If you don´t specify any parameter, pgdist will try to update each of your installed project.
 
 
