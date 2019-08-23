@@ -204,8 +204,8 @@ Configuration:
 		```
 		pgdist test-load
 		```
-		* It will try to load current state of your project
-		**NOTICE** - This command requires configuration file to have setted *PGCONN* in section *pgdist*
+		* It will try to load current state of your project.
+		**NOTICE** - This command requires configuration file to have setted *PGCONN* in section *pgdist*.
 
 * If your `test-load` ended successfully, you may create version.
 	2. Create version of your project:
