@@ -241,19 +241,25 @@ def update_password(role_name, cursor):
 
 def create_role(conn, role):
 	logging.debug("check role: %s" % (role,))
+	added = False
+	changed = False
 	cursor = conn.cursor()
 	cursor.execute("SELECT rolname, rolcanlogin, passwd FROM pg_roles LEFT JOIN pg_shadow ON usename=rolname WHERE rolname=%s;", (role.name,))
 	row = cursor.fetchone()
 	if row:
 		if not row["rolcanlogin"] and role.login:
+			changed = True
 			logging.verbose("ALTER ROLE %s LOGIN;" % (role.name,))
 			cursor.execute("ALTER ROLE %s LOGIN;" % (role.name,))
 		if row["rolcanlogin"] and role.nologin:
+			changed = True
 			logging.verbose("ALTER ROLE %s NOLOGIN;" % (role.name,))
 			cursor.execute("ALTER ROLE %s NOLOGIN;" % (role.name,))
 		if role.login and role.password and not row["passwd"]:
+			changed = True
 			update_password(role.name, cursor)
 	else:
+		added = True
 		login = ""
 		if role.login:
 			login = "LOGIN"
@@ -266,13 +272,23 @@ def create_role(conn, role):
 		if role.password:
 			update_password(role.name, cursor)
 
+	return added, changed, role
+
 def install(dbname, project, ver, conninfo, directory, create_db, is_require):
+	roles_added = []
+	roles_changed = []
+
 	if ver.parts and create_db:
 		if not dbname in list_database(conninfo):
 			conn = connect(conninfo)
 			for part in ver.parts:
 				for role in part.roles:
-					create_role(conn, role)
+					added, changed, role_ = create_role(conn, role)
+
+					if added:
+						roles_added.append(str(role_))
+					if changed:
+						roles_changed.append(str(role_))
 			cursor = conn.cursor()
 			cmd = "CREATE DATABASE %s %s" % (dbname, ver.parts[0].dbparam)
 			print(cmd)
@@ -289,6 +305,12 @@ def install(dbname, project, ver, conninfo, directory, create_db, is_require):
 	for part in ver.parts:
 		for role in part.roles:
 			create_role(conn, role)
+			added, changed, role_ = create_role(conn, role)
+
+			if added:
+				roles_added.append(str(role_))
+			if changed:
+				roles_changed.append(str(role_))
 	for part in ver.parts:
 		str_part = ""
 		str_require = ""
@@ -299,12 +321,12 @@ def install(dbname, project, ver, conninfo, directory, create_db, is_require):
 		print("Install%s %s %s%s to %s" % (str_require, project.name, str(ver.version), str_part, dbname))
 
 		run("psql", conninfo, dbname=dbname, file=os.path.join(directory, part.fname), single_transaction=part.single_transaction)
-		cursor.execute("INSERT INTO pgdist.history (project, version, part, comment) VALUES (%s, %s, %s, %s, %s);",
-			(project.name, str(ver.version), part.part, "installed new version %s, part %d/%d" % (str(ver.version), part.part, len(ver.parts))))
+		cursor.execute("INSERT INTO pgdist.history (project, version, part, comment) VALUES (%s, %s, %s, %s);",
+			(project.name, str(ver.version), part.part, "installed new version %s, part %d/%d, roles added: %s, roles changed: %s" % (str(ver.version), part.part, len(ver.parts), ", ".join(roles_added), ", ".join(roles_changed))))
 		cursor.execute("UPDATE pgdist.installed SET version=%s, part=%s, parts=%s WHERE project=%s RETURNING *;",
 			(str(ver.version), part.part, len(ver.parts), project.name))
 		if not cursor.fetchone():
-			cursor.execute("INSERT INTO pgdist.installed (project, version, part, parts) VALUES (%s, %s, %s, %s, %s);",
+			cursor.execute("INSERT INTO pgdist.installed (project, version, part, parts) VALUES (%s, %s, %s, %s);",
 				(project.name, str(ver.version), part.part, len(ver.parts)))
 
 
