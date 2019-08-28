@@ -631,9 +631,13 @@ def load_file_and_dump(fname, project_name="undef", clean=True, no_owner=False, 
 		print("Check database: %s" % pg.dbname)
 	return dump
 
-def test_load(clean=True, pre_load=None, post_load=None, pg_extractor=None):
+def test_load(clean=True, pre_load=None, post_load=None, pg_extractor=None, no_owner=False):
 	project = ProjectFs()
-	load_and_dump(project, clean=clean, pre_load=pre_load, post_load=post_load, pg_extractor=pg_extractor)
+	dump, x = load_and_dump(project, clean=clean, pre_load=pre_load, post_load=post_load, pg_extractor=pg_extractor)
+	if not no_owner:
+		logging.info("checking element owners")
+		project_types = pg_parser.parse(io.StringIO(dump))
+		project_types.check_elements_owner()
 	if pg_extractor:
 		pg_extractor.print_dump_info()
 	print("")
@@ -750,7 +754,7 @@ def create_update(git_tag, new_version, force, gitversion=None, clean=True, pre_
 
 
 def test_update(git_tag, new_version, clean=True, gitversion=None, pre_load=None, post_load=None,
-		pre_load_old=None, pre_load_new=None, post_load_old=None, post_load_new=None, pg_extractor=None):
+		pre_load_old=None, pre_load_new=None, post_load_old=None, post_load_new=None, pg_extractor=None, no_owner=False):
 
 	if not pre_load_old:
 		pre_load_old = pre_load
@@ -784,6 +788,9 @@ def test_update(git_tag, new_version, clean=True, gitversion=None, pre_load=None
 	else:
 		pr_cur = pg_parser.parse(io.StringIO(dump_cur))
 		pr_updated = pg_parser.parse(io.StringIO(dump_updated))
+		if not no_owner:
+			logging.info("checking element owners")
+			pr_updated.check_elements_owner()
 		pr_updated.diff(pr_cur)
 
 def dump_remote(addr, no_owner, no_acl, cache):

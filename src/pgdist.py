@@ -226,7 +226,7 @@ def main():
 		pg_project.rm(args.args, args.all)
 
 	elif args.cmd == "test-load" and len(args.args) in (0,):
-		pg_project.test_load(not args.no_clean, args.pre_load, args.post_load, pg_extractor=pg_extractor)
+		pg_project.test_load(not args.no_clean, args.pre_load, args.post_load, pg_extractor=pg_extractor, no_owner=args.no_owner)
 
 	elif args.cmd == "create-version" and len(args.args) in (1, 2,):
 		(version, git_tag) = args_parse(args.args, 2)
@@ -241,7 +241,7 @@ def main():
 		(git_tag, new_version) = args_parse(args.args, 1)
 		pg_project.test_update(git_tag, new_version, gitversion=args.gitversion, clean=not args.no_clean, pre_load=args.pre_load, post_load=args.post_load,
 			pre_load_old=args.pre_load_old, pre_load_new=args.pre_load_new, post_load_old=args.post_load_old, post_load_new=args.post_load_new,
-			pg_extractor=pg_extractor)
+			pg_extractor=pg_extractor, no_owner=args.no_owner)
 
 	elif args.cmd == "diff-db" and len(args.args) in (1, 2):
 		(pgconn, git_tag) = args_parse(args.args, 2)

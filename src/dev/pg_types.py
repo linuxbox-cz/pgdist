@@ -43,6 +43,10 @@ class Element:
 	def __str__(self):
 		return self.name
 
+	def check_owner(self):
+		if not self.owner or self.owner == config.test_db.get_user():
+			print(color.red("-- %s: %s is missing owner" % (self.element_name.lower(), self.name,)))
+
 	def print_info(self):
 		print("Element:", self.command)
 
@@ -284,9 +288,29 @@ class Project:
 		else:
 			self.table_data = data
 
+	def check_elements_owner(self):
+		for schema in self.schemas:
+			self.schemas[schema].check_owner()
+		for sql_type in self.types:
+			self.types[sql_type].check_owner()
+		for function in self.functions:
+			self.functions[function].check_owner()
+		for sequence in self.sequences:
+			self.sequences[sequence].check_owner()
+		for view in self.views:
+			self.views[view].check_owner()
+		for operator in self.operators:
+			self.operators[operator].check_owner()
+		for table in self.tables:
+			self.tables[table].check_owner()
+
 class Schema(Element):
 	def __init__(self, command, name):
 		Element.__init__(self, "Schema", command, name)
+
+	def check_owner(self):
+		if self.name != "public" and (not self.owner or self.owner == config.test_db.get_user()):
+				print(color.red("-- %s: %s is missing owner" % (self.element_name.lower(), self.name,)))
 
 class Extention(Element):
 	def __init__(self, command, name, schema_name):
