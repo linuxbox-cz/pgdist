@@ -239,9 +239,8 @@ def update_password(role_name, cursor):
 	cursor.execute("ALTER ROLE %s PASSWORD %%s;" % (role_name,), (password,))
 	open(os.path.join(config.get_password_path(), role_name), 'w').write("PGPASSWORD=%s\n" % (password, ))
 
-def create_role(conn, role):
+def create_role(conn, conn_db, role, project_name, version, part):
 	logging.debug("check role: %s" % (role,))
-	added = False
 	changed = False
 	cursor = conn.cursor()
 	cursor.execute("SELECT rolname, rolcanlogin, passwd FROM pg_roles LEFT JOIN pg_shadow ON usename=rolname WHERE rolname=%s;", (role.name,))
@@ -258,8 +257,9 @@ def create_role(conn, role):
 		if role.login and role.password and not row["passwd"]:
 			changed = True
 			update_password(role.name, cursor)
+		if changed:
+			conn_db.cursor().execute("INSERT INTO pgdist.history(project, version, part, comment) VALUES(%s, %s, %s, %s)", (project_name, str(version), part, "role changed: %s" % (str(role))))
 	else:
-		added = True
 		login = ""
 		if role.login:
 			login = "LOGIN"
@@ -271,28 +271,21 @@ def create_role(conn, role):
 
 		if role.password:
 			update_password(role.name, cursor)
-
-	return added, changed, role
+		conn_db.cursor().execute("INSERT INTO pgdist.history(project, version, part, comment) VALUES(%s, %s, %s, %s)", (project_name, str(version), part, "role added: %s" % (str(role))))
+	conn_db.close()
 
 def install(dbname, project, ver, conninfo, directory, create_db, is_require):
-	roles_added = []
-	roles_changed = []
-
 	if ver.parts and create_db:
 		if not dbname in list_database(conninfo):
 			conn = connect(conninfo)
-			for part in ver.parts:
-				for role in part.roles:
-					added, changed, role_ = create_role(conn, role)
-
-					if added:
-						roles_added.append(str(role_))
-					if changed:
-						roles_changed.append(str(role_))
 			cursor = conn.cursor()
 			cmd = "CREATE DATABASE %s %s" % (dbname, ver.parts[0].dbparam)
 			print(cmd)
 			cursor.execute(cmd)
+
+			for part in ver.parts:
+				for role in part.roles:
+					create_role(conn, connect(conninfo, dbname), role, project.name, ver.version, part.part)
 			conn.close()
 	conn = connect(conninfo, dbname)
 	cursor = conn.cursor()
@@ -304,13 +297,7 @@ def install(dbname, project, ver, conninfo, directory, create_db, is_require):
 				pg_project.install(require, dbname, None, conninfo, directory, create_db, True)
 	for part in ver.parts:
 		for role in part.roles:
-			create_role(conn, role)
-			added, changed, role_ = create_role(conn, role)
-
-			if added:
-				roles_added.append(str(role_))
-			if changed:
-				roles_changed.append(str(role_))
+			create_role(conn, connect(conninfo, dbname), role, project.name, ver.version, part.part)
 	for part in ver.parts:
 		str_part = ""
 		str_require = ""
@@ -322,7 +309,7 @@ def install(dbname, project, ver, conninfo, directory, create_db, is_require):
 
 		run("psql", conninfo, dbname=dbname, file=os.path.join(directory, part.fname), single_transaction=part.single_transaction)
 		cursor.execute("INSERT INTO pgdist.history (project, version, part, comment) VALUES (%s, %s, %s, %s);",
-			(project.name, str(ver.version), part.part, "installed new version %s, part %d/%d, roles added: %s, roles changed: %s" % (str(ver.version), part.part, len(ver.parts), ", ".join(roles_added), ", ".join(roles_changed))))
+			(project.name, str(ver.version), part.part, "installed new version %s, part %d/%d" % (str(ver.version), part.part, len(ver.parts))))
 		cursor.execute("UPDATE pgdist.installed SET version=%s, part=%s, parts=%s WHERE project=%s RETURNING *;",
 			(str(ver.version), part.part, len(ver.parts), project.name))
 		if not cursor.fetchone():
@@ -341,7 +328,7 @@ def update(dbname, project, update, conninfo, directory):
 				pg_project.install(require, dbname, None, conninfo, directory, False, True)
 	for part in update.parts:
 		for role in part.roles:
-			create_role(conn, role)
+			create_role(conn, connect(conninfo, dbname), role, project.name, update.version, part.part)
 	for part in update.parts:
 		if len(update.parts) == 1:
 			print("Update %s in %s %s > %s" % (project.name, dbname, str(update.version_old), str(update.version_new)))
