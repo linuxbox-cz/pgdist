@@ -241,22 +241,21 @@ def update_password(role_name, cursor):
 
 def create_role(conn, role, project_name, version, part):
 	logging.debug("check role: %s" % (role,))
-	changed = False
 	cursor = conn.cursor()
 	cursor.execute("SELECT rolname, rolcanlogin, passwd FROM pg_roles LEFT JOIN pg_shadow ON usename=rolname WHERE rolname=%s;", (role.name,))
 	row = cursor.fetchone()
 	if row:
 		if not row["rolcanlogin"] and role.login:
-			cursor.execute("INSERT INTO pgdist.history(project, version, part, comment) VALUES(%s, %s, %s, %s)", (project_name, str(version), part, "ALTER ROLE %s LOGIN" % (str(role.name))))
 			logging.verbose("ALTER ROLE %s LOGIN;" % (role.name,))
 			cursor.execute("ALTER ROLE %s LOGIN;" % (role.name,))
+			cursor.execute("INSERT INTO pgdist.history(project, version, part, comment) VALUES(%s, %s, %s, %s)", (project_name, str(version), part, "ALTER ROLE %s LOGIN" % (str(role.name))))
 		if row["rolcanlogin"] and role.nologin:
-			cursor.execute("INSERT INTO pgdist.history(project, version, part, comment) VALUES(%s, %s, %s, %s)", (project_name, str(version), part, "ALTER ROLE %s NOLOGIN" % (str(role.name))))
 			logging.verbose("ALTER ROLE %s NOLOGIN;" % (role.name,))
 			cursor.execute("ALTER ROLE %s NOLOGIN;" % (role.name,))
+			cursor.execute("INSERT INTO pgdist.history(project, version, part, comment) VALUES(%s, %s, %s, %s)", (project_name, str(version), part, "ALTER ROLE %s NOLOGIN" % (str(role.name))))
 		if role.login and role.password and not row["passwd"]:
-			cursor.execute("INSERT INTO pgdist.history(project, version, part, comment) VALUES(%s, %s, %s, %s)", (project_name, str(version), part, "ALTER ROLE %s PASSWORD" % (str(role.name))))
 			update_password(role.name, cursor)
+			cursor.execute("INSERT INTO pgdist.history(project, version, part, comment) VALUES(%s, %s, %s, %s)", (project_name, str(version), part, "ALTER ROLE %s PASSWORD" % (str(role.name))))
 	else:
 		login = ""
 		if role.login:
@@ -269,7 +268,7 @@ def create_role(conn, role, project_name, version, part):
 
 		if role.password:
 			update_password(role.name, cursor)
-		cursor.execute("INSERT INTO pgdist.history(project, version, part, comment) VALUES(%s, %s, %s, %s)", (project_name, str(version), part, "role added: %s" % (str(role))))
+		cursor.execute("INSERT INTO pgdist.history(project, version, part, comment) VALUES(%s, %s, %s, %s)", (project_name, str(version), part, "CREATE ROLE %s" % (str(role))))
 
 def install(dbname, project, ver, conninfo, directory, create_db, is_require):
 	if ver.parts and create_db:
