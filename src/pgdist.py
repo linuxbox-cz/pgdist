@@ -61,6 +61,7 @@ PGdist Server - manage projects in PostgreSQL database
     set-version PROJECT DBNAME VERSION - force change version without run scripts
     get-version PROJECT DBNAME - print installed version of project
     pgdist-update [DBNAME] - update pgdist version in database
+    log [PROJECT [DBNAME]] - print history of installed projects
 
 PGCONN - ssh connection + connection URI, see:
     https://www.postgresql.org/docs/current/static/libpq-connect.html#LIBPQ-CONNSTRING
@@ -189,7 +190,7 @@ def main():
 
 		config.git_diff = args.git_diff
 
-	if args.cmd in ("list", "install", "check-update", "update", "clean", "set-version", "get-version","pgdist-update"):
+	if args.cmd in ("list", "install", "check-update", "update", "clean", "set-version", "get-version","pgdist-update", "log"):
 		sys.path.insert(1, os.path.join(sys.path[0], "mng"))
 		import config
 		import conninfo
@@ -309,7 +310,7 @@ def main():
 	# install projects
 	elif args.cmd == "list" and len(args.args) in (0, 1, 2,):
 		(project_name, dbname) = args_parse(args.args, 2)
-		pg_project.prlist(project_name, dbname, conninfo.ConnInfo(args), args.directory or config.get_install_path(), args.showall)
+		pg_project.prlist(project_name, dbname or args.dbname, conninfo.ConnInfo(args), args.directory or config.get_install_path(), args.showall)
 
 	elif args.cmd == "install" and len(args.args) in (2, 3,):
 		(project_name, dbname, version) = args_parse(args.args, 3)
@@ -338,6 +339,10 @@ def main():
 	elif args.cmd == "pgdist-update" and len(args.args) in (0,1):
 		(dbname,) = args_parse(args.args, 1)
 		pg_project.pgdist_update(dbname, conninfo.ConnInfo(args))
+
+	elif args.cmd == "log" and len(args.args) in (0, 1, 2,):
+		(project_name, dbname) = args_parse(args.args, 2)
+		pg_project.history(project_name, dbname, conninfo.ConnInfo(args))
 
 	else:
 		parser.print_help()
