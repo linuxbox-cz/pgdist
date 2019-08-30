@@ -310,7 +310,7 @@ def main():
 	# install projects
 	elif args.cmd == "list" and len(args.args) in (0, 1, 2,):
 		(project_name, dbname) = args_parse(args.args, 2)
-		pg_project.prlist(project_name, dbname, conninfo.ConnInfo(args), args.directory or config.get_install_path(), args.showall)
+		pg_project.prlist(project_name, dbname or args.dbname, conninfo.ConnInfo(args), args.directory or config.get_install_path(), args.showall)
 
 	elif args.cmd == "install" and len(args.args) in (2, 3,):
 		(project_name, dbname, version) = args_parse(args.args, 3)
