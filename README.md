@@ -347,13 +347,23 @@ So once you have prepared version of your project, you can try to install it.
 pgdist install My_Project pg_database 1.0.0
 ```
 
+* If you want PGdist to create the database, add `--create`
+
 * Takes `My_Project--1.0.0.sql` and loads it to *pg_database*.
 
 * If you don´t specify project version, latest is taken.
 
+After installation of your project, you may want to check for updates (you created obviously):
 
+```
+pgdist check-update My_Project pg_database 1.0.0
+```
 
-Now that you have installed your project, you might want to update it with `My_Project--1.0.1.sql`.
+* First parameter is your project name
+* Second parameter is database that it is installed in
+* Third parameter is from what version you want to find udpates
+
+Now that you have checked for updates, you might want to update it with `My_Project--1.0.1.sql`.
 
 ```
 pgdist update My_Project pg_database 1.0.1
@@ -362,6 +372,20 @@ pgdist update My_Project pg_database 1.0.1
 * Takes `My_Project--1.0.0--1.0.1.sql` and loads it to *pg_database*.
 
 * If you don´t specify any parameter, pgdist will try to update each of your installed project.
+
+To show list of installed projects:
+
+```
+pgdist list My_Project pg_database
+```
+
+* Shows (if it is installed of course) info about My_Project in pg_database
+
+If you want to remove info about your project:
+
+```
+pgdist clean My_Project pg_database
+```
 
 
 
@@ -412,6 +436,12 @@ pgdist diff-db-file root:password@my_server//pg_user:pg_password@/pg_database /p
 * Dumps remote database and compare it with you file
 
 **NOTICE** - If you want to show differences the opposite way, use `diff-file-db` and swap arguments
+
+Set version to your project by force:
+
+```
+pgdist set-version My_Project pg_database 1.0.2
+```
 
 
 
