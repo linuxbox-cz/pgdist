@@ -159,81 +159,81 @@ Configuration:
 
 ### Roles
 
-1. Add role to project:
+Add role to project:
 
-	```
-	pgdist role-add My_beatufiul_role login password
-	```
+```
+pgdist role-add My_beatufiul_role login password
+```
 
-	* The above command creates role *My_beautiful_role* with ability to **login**, creates **password** and stores it to directory defined either by you with `--directory` OR in path setted in configuration file
+* The above command creates role *My_beautiful_role* with ability to **login**, creates **password** and stores it to directory defined either by you with `--directory` OR in path setted in configuration file
 
-	* If you want to create role without *password*, just don't add it, or if you want to create role without login, use `nologin`
+* If you want to create role without *password*, just don't add it, or if you want to create role without login, use `nologin`
 
-2. Change settings for your role in project:
+Change settings for your role in project:
 
-	```
-	pgdist role-change My_beautiful_role nologin
-	```
+```
+pgdist role-change My_beautiful_role nologin
+```
 
-	* You don't like your role anymore? You can change its settings by above command.
+* You don't like your role anymore? You can change its settings by above command.
 
-3. Remove role from project:
+Remove role from project:
 
-	```
-	pgdist role-rm My_beautiful_role
-	```
+```
+pgdist role-rm My_beautiful_role
+```
 
-	* Do you hate your role so much, you want to delete it? Yep, above command.
+* Do you hate your role so much, you want to delete it? Yep, above command.
 
-	**NOTICE** - If you already made some role in your database, this will not help you to remove it from database.
+**NOTICE** - If you already made some role in your database, this will not help you to remove it from database.
 
-4. List roles in project:
+List roles in project:
 
-	```
-	pgdist role-list
-	```
+```
+pgdist role-list
+```
 
-	* Lists all roles in your project
+* Lists all roles in your project
 
 
 
 ### Project file managment
 
-1. Add file to project:
+Add file to project:
 
-	* Move your SQL file to the correct directory (`table.sql` to `tables`, `schema.sql` to `schema`, etc.)
+* Move your SQL file to the correct directory (`table.sql` to `tables`, `schema.sql` to `schema`, etc.)
 
-	```
-	pgdist add /path/to/your/SQL/file_1 /path/to/your/SQL/file_2
-	```
+```
+pgdist add /path/to/your/SQL/file_1 /path/to/your/SQL/file_2
+```
 
-	**NOTICE** - This command will ONLY remove it from `pg_project.sql`, if you want to delete the file, you have to do it yourself.
+**NOTICE** - This command will ONLY remove it from `pg_project.sql`, if you want to delete the file, you have to do it yourself.
 
-2. Remove file from project:
+Remove file from project:
 
-	* There's three ways you can do it:
+* There's three ways you can do it:
 
-		1. Delete line with path to your file you want to delete from `pg_project.sql`
+	1. Delete line with path to your file you want to delete from `pg_project.sql`
 
-		2. Use pgdist command `rm`
+	2. Use pgdist command `rm`
 
-		3. You can use command `status` to show difference in your project folder and than remove deleted files from your project by adding parameter `--manage-files`
+	3. You can use command `status` to show difference in your project folder and than remove deleted files from your project by adding parameter `--manage-files`
 
-	```
-	pgdist rm /path/to/your/SQL/file_1 /path/to/your/SQL/file_2
-	```
+```
+pgdist rm /path/to/your/SQL/file_1 /path/to/your/SQL/file_2
+```
 
-3. Show status of project files:
+Show status of project files:
 
-	```
-	pgdist status
-	```
+```
+pgdist status
+```
 
-	* Shows files, which are in project directory, but are not added to project as NEW FILE
+* Shows files, which are in project directory, but are not added to project as NEW FILE
 
-	* Shows files, which are added to project, but were not found in project directory as REMOVED FILE
+* Shows files, which are added to project, but were not found in project directory as REMOVED FILE
 
-	* If you want to remove deleted files from your project, add parameter `--manage-files`:
+* If you want to remove deleted files from your project, add parameter `--manage-files`:
 
 **Recommendations:**
 
@@ -241,151 +241,177 @@ Configuration:
 
 2. As the above point points out to file order, try to adjust or split your SQL dependencies in the order, so you don't have to adjust your `version.sql` file.
 
-3. Data will be added only in file created by `create-version`
+3. Data will be added only in file created by `create-version`.
+
+
+
+### Project reuqires
+
+If your project has dependency on some other project, you can add a require on other project:
+
+```
+pgdist require-add My_Other_Project https://url_or_ssh_to_your_other_project branch_name
+```
+
+**NOTICE** - Above command works only when used before `create-version`.
+
+Well if you changed your mind or your project just does not have dependency on other project, you can remove it:
+
+```
+pgdist require-rm My_Other_Project
+```
+
+
+
+### DB-parameters
+
+Before you load your project to database, you may want to set some things before crerating database:
+
+```
+pgdist dbparam-set OWNER My_beatufil_role ENCODING utf8 CONNECTION LIMIT -1
+```
+
+* Parameters are described here: https://www.postgresql.org/docs/9.6/sql-createdatabase.html, PGdist will literally take it and put it at the end of command
+
+And you will also want to list them:
+
+```
+pgdist dbparam-get
+```
 
 
 
 ### Versions
 
-* Once you're satisfied with your project, you can try to load it to database, to test, if it would even pass without errors.
+Once you're satisfied with your project, you can try to load it to database, to test, if it would even pass without errors.
 
-	1. Try load your project to database:
+```
+pgdist test-load
+```
 
-		```
-		pgdist test-load
-		```
+* It will try to load current state of your project.
 
-		* It will try to load current state of your project.
+**NOTICE** - This command requires configuration file to have setted *PGCONN* in section *pgdist*.
 
-		**NOTICE** - This command requires configuration file to have setted *PGCONN* in section *pgdist*.
+If your `test-load` ended successfully, you may create version.  
 
-* If your `test-load` ended successfully, you may create version.
+Create version of your project:
 
-	2. Create version of your project:
+```
+pgdist create-version 1.0.0 v1.0.0
+```
 
-		```
-		pgdist create-version 1.0.0 v1.0.0
-		```
+* First parameter defines **PROJECT** version, second one is **GIT-TAG**.
 
-		* First parameter defines **PROJECT** version, second one is **GIT-TAG**.
+* Git tag is not required, use it only if you want to create version from specified git tag.
 
-		* Git tag is not required, use it only if you want to create version from specified git tag.
+* Those parameters don´t have to be same, so if you have like git tag v6.7.9, and you want to create project version 1.0.0, you can do so.
 
-		* Those parameters don´t have to be same, so if you have like git tag v6.7.9, and you want to create project version 1.0.0, you can do so.
+* The above command creates new file `My_Project--1.0.0.sql` in your `sql_dist` folder.
 
-		* The above command creates new file `My_Project--1.0.0.sql` in your `sql_dist` folder.
+**NOTICE** - Something can be added only when using this command, like `require-add` or `data`
 
-		**NOTICE** - Something can be added only when using this command, like `require-add` or `data`
+You already made your first version and forgot to add something? Don't worry, we got you.
 
-* You already made your first version and forgot to add something? Don't worry, we got you.
+Create update from your version:
 
-	3. Create update from your version:
+	```
+	pgdist create-update v1.0.0 1.0.1
+	```
 
-		```
-		pgdist create-update v1.0.0 1.0.1
-		```
+	* First parameter is already mentioned git tag, pgdist will create update for given git tag.
 
-		* First parameter is already mentioned git tag, pgdist will create update for given git tag.
+	* Second parameter is NEW project version.
 
-		* Second parameter is NEW project version.
+	* This command creates new file `My_Project--1.0.0--1.0.1.sql` in your `sql_dist` folder.
 
-		* This command creates new file `My_Project--1.0.0--1.0.1.sql` in your `sql_dist` folder.
+Test update of your project:
 
-* You made create-update and you want to know, if you can load it to database?
+```
+pgdist test-update v1.0.0 1.0.1
+```
 
-	4. Test update of your project:
+* First paramater, again, git tag.
 
-		```
-		pgdist test-update v1.0.0 1.0.1
-		```
+* Second parameter project version.
 
-		* First paramater, again, git tag.
-
-		* Second parameter project version.
-
-		* Loads git tag version of your project to test database, then tries to use your update on it.
+* Loads git tag version of your project to test database, then tries to use your update on it.
 
 
 
 ### Project installation
 
-* So you have prepared version of your project and now want to load it to database?
+So once you have prepared version of your project, you can try to install it.
 
-	1. Install project to database:
+```
+pgdist install My_Project pg_database 1.0.0
+```
 
-		```
-		pgdist install My_Project pg_database 1.0.0
-		```
+* Takes `My_Project--1.0.0.sql` and loads it to *pg_database*.
 
-		* Takes `My_Project--1.0.0.sql` and loads it to *pg_database*.
+* If you don´t specify project version, latest is taken.
 
-		* If you don´t specify project version, latest is taken.
 
-* Now that you have installed your project, you might want to update it with `My_Project--1.0.1.sql`.
 
-	2. Update installed project:
+Now that you have installed your project, you might want to update it with `My_Project--1.0.1.sql`.
 
-		```
-		pgdist update My_Project pg_database 1.0.1
-		```
+```
+pgdist update My_Project pg_database 1.0.1
+```
 
-		* Takes `My_Project--1.0.0--1.0.1.sql` and loads it to *pg_database*.
+* Takes `My_Project--1.0.0--1.0.1.sql` and loads it to *pg_database*.
 
-		* If you don´t specify any parameter, pgdist will try to update each of your installed project.
+* If you don´t specify any parameter, pgdist will try to update each of your installed project.
 
-* You installed some version of your project to your servers. Now you made a lot of changes in your project and you want to see the diffrence?
 
-	* You have added some `data.sql` to your project and you want to compare them with your new data?
 
-		1. Add data from tables data to compare:
+### Project diff
 
-			```
-			pgdist data-add some_table table_column_1 table_column_2
-			```
+Let's say you've installed some version of your project to your servers. Now you made a lot of changes in your project and you want to see the diffrence.  
 
-			* PGdist will add this table to his list of tables data to compare with.
+If you've added some `data.sql` to your project and want to compare them:
 
-			* As you can see, you may also specify which columns you want to compare.
+```
+pgdist data-add some_table table_column_1 table_column_2
+```
 
-	* You don´t like your data anymore?
+* PGdist will add this table to his list of tables data to compare with.
 
-		2. Remove data from tables data to compare:
+* As you can see, you may also specify which columns you want to compare.
 
-			```
-			pgdist data-rm some_table
-			```
+Remove data from comparing:
 
-			* Removes *some_table* from pgdist list of tables data to compare
+```
+pgdist data-rm some_table
+```
 
-	* You have literally mess in what table data you have added/removed?
+* Removes *some_table* from pgdist list of tables data to compare
 
-		3. List data from tables data to compare:
+To see what table data you have added/removed:
 
-			```
-			pgdist data-list
-			```
+```
+pgdist data-list
+```
 
-			* Shows list from tables data to compare
+* Shows list from tables data to compare
 
-	3. Show difference between your current project and installed project:
+Show difference between your current project and installed project:
 
-		```
-		pgdist diff-db root:password@my_server//pg_user:pg_password@/pg_database v1.0.0
-		```
+```
+pgdist diff-db root:password@my_server//pg_user:pg_password@/pg_database v1.0.0
+```
 
-		* Specify *PGCONN* and git tag, pgdist will then dump database from *PGCONN* and compare it with your project
+* Specify *PGCONN* and git tag, pgdist will then dump database from *PGCONN* and compare it with your project
 
-* You want to see difference only between some SQL file and database?
+Show difference between selected file and installed project:
 
-	4. Show difference between selected file and installed project:
+```
+pgdist diff-db-file root:password@my_server//pg_user:pg_password@/pg_database /path/to/your/SQL/file
+```
 
-		```
-		pgdist diff-db-file root:password@my_server//pg_user:pg_password@/pg_database /path/to/your/SQL/file
-		```
+* Dumps remote database and compare it with you file
 
-		* Dumps remote database and compare it with you file
-
-		**NOTICE** - If you want to show differences the opposite way, use `diff-file-db` and swap the arguments
+**NOTICE** - If you want to show differences the opposite way, use `diff-file-db` and swap arguments
 
 
 
