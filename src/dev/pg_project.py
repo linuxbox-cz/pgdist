@@ -573,16 +573,22 @@ def load_and_dump(project, clean=True, no_owner=False, no_acl=False, pre_load=No
 		print("Check database: %s" % pg.dbname)
 	return dump, table_data
 
-def load_dump_and_dump(dump_remote, project_name="undef", clean=True, no_owner=False, no_acl=False, pre_load=None, post_load=None, dbs=None, pg_extractor=None):
+def load_dump_and_dump(dump_remote, project, table_data=None, clean=True, no_owner=False, no_acl=False, pre_load=None, post_load=None, dbs=None, pg_extractor=None, project_name=None):
 	try:
+		if not project_name:
+			project_name = project.name
 		pg = pg_conn.PG(config.test_db, dbname=get_test_dbname(project_name, dbs))
 		pg.init()
 		pg.load_file(pre_load)
 		print("load dump to test pg", file=sys.stderr)
 		pg.load_dump(dump_remote)
+		pg.load_data(table_data)
 		pg.load_file(post_load)
 		print("dump structure and data from test pg", file=sys.stderr)
 		dump = pg.dump(no_owner, no_acl)
+		table_data_new = None
+		if project:
+			table_data_new = pg.dump_data(project)
 		if pg_extractor:
 			pg.pg_extractor(pg_extractor, no_owner, no_acl)
 	except pg_conn.PgError as e:
@@ -597,7 +603,7 @@ def load_dump_and_dump(dump_remote, project_name="undef", clean=True, no_owner=F
 		pg.clean()
 	else:
 		print("Check database: %s" % pg.dbname)
-	return dump
+	return dump, table_data_new
 
 def load_file_and_dump(fname, project_name="undef", clean=True, no_owner=False, no_acl=False, pre_load=None, post_load=None, dbs=None, pg_extractor=None):
 	try:
@@ -625,9 +631,13 @@ def load_file_and_dump(fname, project_name="undef", clean=True, no_owner=False, 
 		print("Check database: %s" % pg.dbname)
 	return dump
 
-def test_load(clean=True, pre_load=None, post_load=None, pg_extractor=None):
+def test_load(clean=True, pre_load=None, post_load=None, pg_extractor=None, no_owner=False):
 	project = ProjectFs()
-	load_and_dump(project, clean=clean, pre_load=pre_load, post_load=post_load, pg_extractor=pg_extractor)
+	dump, x = load_and_dump(project, clean=clean, pre_load=pre_load, post_load=post_load, pg_extractor=pg_extractor)
+	if not no_owner:
+		logging.info("checking element owners")
+		project_types = pg_parser.parse(io.StringIO(dump))
+		project_types.check_elements_owner()
 	if pg_extractor:
 		pg_extractor.print_dump_info()
 	print("")
@@ -744,7 +754,7 @@ def create_update(git_tag, new_version, force, gitversion=None, clean=True, pre_
 
 
 def test_update(git_tag, new_version, clean=True, gitversion=None, pre_load=None, post_load=None,
-		pre_load_old=None, pre_load_new=None, post_load_old=None, post_load_new=None, pg_extractor=None):
+		pre_load_old=None, pre_load_new=None, post_load_old=None, post_load_new=None, pg_extractor=None, no_owner=False):
 
 	if not pre_load_old:
 		pre_load_old = pre_load
@@ -778,6 +788,9 @@ def test_update(git_tag, new_version, clean=True, gitversion=None, pre_load=None
 	else:
 		pr_cur = pg_parser.parse(io.StringIO(dump_cur))
 		pr_updated = pg_parser.parse(io.StringIO(dump_updated))
+		if not no_owner:
+			logging.info("checking element owners")
+			pr_updated.check_elements_owner()
 		pr_updated.diff(pr_cur)
 
 def dump_remote(addr, no_owner, no_acl, cache):
@@ -853,9 +866,10 @@ def diff_pg(addr, git_tag, diff_raw, clean, no_owner, no_acl, pre_load=None, pos
 
 	roles_remote = get_roles(addr, cache)
 	sql_remote = dump_remote(addr, no_owner, no_acl, cache)
-	table_data_remote = dump_remote_data(project, addr, cache)
 	create_roles(roles_remote)
-	dump_r = load_dump_and_dump(sql_remote, project.name, clean, no_owner, no_acl, pre_load=pre_remoted_load, post_load=post_remoted_load, dbs="remote", pg_extractor=pg_extractor)
+	table_data_remote_old = dump_remote_data(project, addr, cache)
+
+	dump_r, table_data_remote_new = load_dump_and_dump(sql_remote, project, table_data_remote_old, clean, no_owner, no_acl, pre_load=pre_remoted_load, post_load=post_remoted_load, dbs="remote", pg_extractor=pg_extractor)
 
 	dump_cur, table_data_cur = load_and_dump(project, clean, no_owner, no_acl, pre_load=pre_load, post_load=post_load, pg_extractor=pg_extractor)
 
@@ -863,7 +877,7 @@ def diff_pg(addr, git_tag, diff_raw, clean, no_owner, no_acl, pre_load=None, pos
 		pg_extractor.print_diff(swap, ignore_space)
 		pg_extractor.clean()
 	else:
-		print_diff(dump_r, dump_cur, table_data_remote, table_data_cur, diff_raw, no_owner, no_acl, fromfile=addr.addr, tofile="local project", swap=swap, ignore_space=ignore_space)
+		print_diff(dump_r, dump_cur, table_data_remote_new, table_data_cur, diff_raw, no_owner, no_acl, fromfile=addr.addr, tofile="local project", swap=swap, ignore_space=ignore_space)
 
 def diff_pg_file(addr, fname, diff_raw, clean, no_owner, no_acl, pre_load=None, post_load=None, pre_remoted_load=None, post_remoted_load=None, swap=False, pg_extractor=None, cache=False, ignore_space=False):
 	config.check_set_test_db()
@@ -871,7 +885,7 @@ def diff_pg_file(addr, fname, diff_raw, clean, no_owner, no_acl, pre_load=None, 
 	roles_remote = get_roles(addr, cache)
 	sql_remote = dump_remote(addr, no_owner, no_acl, cache)
 	create_roles(roles_remote)
-	dump_r = load_dump_and_dump(sql_remote, "project", clean, no_owner, no_acl, pre_load=pre_remoted_load, post_load=post_remoted_load, dbs="remote", pg_extractor=pg_extractor)
+	dump_r, x = load_dump_and_dump(sql_remote, None, clean, no_owner, no_acl, pre_load=pre_remoted_load, post_load=post_remoted_load, dbs="remote", pg_extractor=pg_extractor, project_name="project")
 
 	dump_file = load_file_and_dump(fname, "project", clean, no_owner, no_acl, pre_load=pre_load, post_load=post_load, dbs="file", pg_extractor=pg_extractor)
 

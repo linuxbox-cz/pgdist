@@ -43,6 +43,10 @@ class Element:
 	def __str__(self):
 		return self.name
 
+	def check_owner(self):
+		if not self.owner or self.owner == config.test_db.get_user():
+			print(color.red("-- %s: %s is missing owner" % (self.element_name.lower(), self.name,)))
+
 	def print_info(self):
 		print("Element:", self.command)
 
@@ -127,6 +131,18 @@ class Element:
 				file.write("-- OWNER -%s\n" % (self.owner))
 			if element2.owner:
 				file.write("-- OWNER +%s\n" % (element2.owner))
+
+	def get_whole_command(self):
+		whole_command = self.command
+		if self.owner:
+			whole_command += "ALTER %s %s OWNER TO %s;\n" % (self.element_name.upper(), self.name, self.owner)
+		if self.grant:
+			whole_command += "".join(self.grant) + "\n"
+		if self.revoke:
+			whole_command += "".join(self.revoke) + "\n"
+		if self.rule:
+			whole_command += "".join(self.rule) + "\n"
+		return whole_command
 
 class Project:
 	def __init__(self):
@@ -258,7 +274,7 @@ class Project:
 				file.write("-- %s\n" % (elements2[name]))
 				file.write("--\n")
 				file.write("\n")
-				file.write(elements2[name].command)
+				file.write(elements2[name].get_whole_command())
 				file.write("\n")
 				file.write(";-- end %s\n" % (elements2[name]))
 
@@ -272,9 +288,29 @@ class Project:
 		else:
 			self.table_data = data
 
+	def check_elements_owner(self):
+		for schema in self.schemas:
+			self.schemas[schema].check_owner()
+		for sql_type in self.types:
+			self.types[sql_type].check_owner()
+		for function in self.functions:
+			self.functions[function].check_owner()
+		for sequence in self.sequences:
+			self.sequences[sequence].check_owner()
+		for view in self.views:
+			self.views[view].check_owner()
+		for operator in self.operators:
+			self.operators[operator].check_owner()
+		for table in self.tables:
+			self.tables[table].check_owner()
+
 class Schema(Element):
 	def __init__(self, command, name):
 		Element.__init__(self, "Schema", command, name)
+
+	def check_owner(self):
+		if self.name != "public" and (not self.owner or self.owner == config.test_db.get_user()):
+				print(color.red("-- %s: %s is missing owner" % (self.element_name.lower(), self.name,)))
 
 class Extention(Element):
 	def __init__(self, command, name, schema_name):
@@ -482,6 +518,24 @@ class Table(Element):
 					file.write("-- OWNER %s\n" % (d))
 			file.write("\n")
 		file.write("-- end %s\n" % (self.name,))
+
+	def get_whole_command(self):
+		whole_command = self.command
+		if self.constraints:
+			whole_command += "ALTER TABLE %s ADD " % (self.name) + ("ALTER TABLE %s ADD " % (self.name)).join(self.constraints) + ";\n"
+		if self.indexes:
+			whole_command += "CREATE " + "; CREATE ".join(self.indexes) + ";\n"
+		if self.triggers:
+			whole_command += "CREATE " + ";$ CREATE ".join(self.triggers) + ";$\n"
+		if self.owner:
+			whole_command += "ALTER TABLE %s OWNER TO %s;\n" % (self.name, self.owner)
+		if self.grant:
+			whole_command += "\n".join(self.grant)
+		if self.revoke:
+			whole_command += "\n".join(self.revoke)
+		if self.rule:
+			whole_command += "\n".join(self.rule)
+		return whole_command
 
 class Range(Element):
 	def __init__(self, command, name):
