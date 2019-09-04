@@ -126,7 +126,7 @@ class Element:
 			file.write("\n")
 		if self.owner != element2.owner:
 			if not change_command:
-				file.write("\n-- %s\n" % (element2.name))
+				file.write("\n-- %s: %s\n" % (element2.element_name, element2.name))
 			if self.owner:
 				file.write("-- OWNER -%s\n" % (self.owner))
 			if element2.owner:
@@ -572,7 +572,7 @@ class Function(Element):
 
 		if change_owner and element2.owner:
 			file.write("\n")
-			file.write("ALTER FUNCTION %s OWNER TO %s;" % (element2.name, element2.owner))
+			file.write("ALTER FUNCTION %s(%s) OWNER TO %s;" % (self.fname, ", ".join(self.parsed_args), element2.owner))
 			file.write("\n")
 
 		if change_command or change_owner:
