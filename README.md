@@ -132,9 +132,9 @@ db_user = postgres
 	└── sql_dist
 	```
 
-	Source SQL files are in `sql/your_schema` folder.
+	Source SQL files are in `sql/your_schema` folder.  
 
-	**NOTICE** - This will NOT create any *my_schema.sql* in my_schema folder.
+	**NOTICE** - This will NOT create any *my_schema.sql* in my_schema folder. If this directory structure does not fit your demands, you can use any other, this structure is only recommended.
 
 
 
@@ -202,7 +202,7 @@ Before PGdist installs project into the databse, it will check if roles defined 
 
 ### Project file managment
 
-To add file to your project, move it to the correct directory (`table.sql` to `tables`, `schema.sql` to `schema`, etc.) and run command below.
+To add file to your project, move it to the `sql` directory if you are using your directory structure, or move it to the correct directory (`table.sql` to `tables`, `schema.sql` to `schema`, etc.) and run command below.
 
 ```
 pgdist add /path/to/your/SQL/file_1 /path/to/your/SQL/file_2
@@ -250,11 +250,13 @@ pgdist status
 
 #### Recommendations:
 
-- Add your files to your project in the order as if you would be addding them to your database directly (this will ensure, that you won't have to adjust import file order in `pg_project.sql`). **Example**: first you would add all your `schema.sql` into your project then everything else that depends on it.
+- Add your files to your project in the order as if you would be addding them to your database directly (this will ensure, that you won't have to adjust import file order in `pg_project.sql`).  
+
+**Example**: first you would add all your `schema.sql` into your project then everything else that depends on it.
 
 - As the above point points out to file order, try to adjust or split your SQL dependencies in the order, so you don't have to adjust your `version.sql` file.
 
-**NOTICE** -  Table data from `sql/schema/data` will be added only in file created by `create-version`.
+**NOTICE** - Table data from `sql/schema/data` will be added only in file created by `create-version`.
 
 
 
