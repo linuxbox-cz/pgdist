@@ -460,17 +460,10 @@ def create_version(version, git_tag, force):
 
 			for pfname in part.files:
 				logging.verbose("add file: %s" % (pfname))
-				build_file.write("\n")
-				build_file.write("--\n")
-				build_file.write("-- sqldist file: %s\n" % (pfname))
-				build_file.write("--\n")
-				build_file.write("\n")
 				src_file = project.get_file(pfname)
-				for line in src_file:
-					build_file.write(line)
+				build_file.write(utils.get_command(src_file.read(), pfname))
 				src_file.close()
-				build_file.write("\n")
-				build_file.write(";-- end sqldist file\n")
+
 			build_file.write("\n")
 			build_file.write("--\n")
 			build_file.write("-- end sqldist project\n")

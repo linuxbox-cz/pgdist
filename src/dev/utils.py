@@ -56,3 +56,14 @@ def get_header(project_name, header_type, parts, roles=None, requires=None, vers
 		hs += "-- end header_data\n"
 		hs += nl
 	return hs
+
+def get_command(command, name, element_name="sqldist file"):
+	cs = "\n" # cs = command_string
+	cs += "--\n"
+	cs += "-- %s: %s\n" % (element_name, name)
+	cs += "--\n"
+	cs += "\n"
+	cs += command
+	cs += "\n"
+	cs += ";-- end %s: %s\n" % (element_name, name)
+	return cs
