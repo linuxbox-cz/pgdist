@@ -1,40 +1,41 @@
-def get_header(header_data):
-	if header_data["type"] == 'config':
+def get_header(project_name, header_type, parts, roles=None, requires=None, version=None, old_version=None, new_version=None, dbparam=None, tables_data=None):
+	if header_type == 'config':
 		nl = "\n" # nl = new_line
+		hs = "" # hs = header_string
 	else:
 		nl = "--\n" # nl = new_line
-	hs = nl # hs = header_string
-	if header_data["type"] == 'update':
+		hs = nl # hs = header_string
+	if header_type == 'update':
 		hs += "-- pgdist update\n"
 	else:
 		hs += "-- pgdist project\n"
-	hs += "-- name: %s\n" % (header_data["project_name"])
+	hs += "-- name: %s\n" % (project_name)
 	hs += nl
-	if header_data.get("version"):
-		hs += "-- version: %s\n" % (header_data["version"])
+	if version:
+		hs += "-- version: %s\n" % (version)
 		hs += nl
-	if header_data.get("old_version") and header_data.get("new_version"):
-		hs += "-- old version: %s\n" % (header_data["old_version"])
-		hs += "-- new version: %s\n" % (header_data["new_version"])
+	if old_version and new_version:
+		hs += "-- old version: %s\n" % (old_version)
+		hs += "-- new version: %s\n" % (new_version)
 		hs += nl
-	if header_data.get("dbparam"):
-		hs += "-- dbparam: %s\n" % (header_data["dbparam"])
+	if dbparam:
+		hs += "-- dbparam: %s\n" % (dbparam)
 		hs += nl
-	if header_data["roles"]:
-		for role in header_data["roles"]:
+	if roles:
+		for role in roles:
 			hs += "-- role: %s\n" % (role)
 		hs += nl
-	if header_data["requires"]:
-		for require in header_data["requires"]:
+	if requires:
+		for require in requires:
 			hs += "-- require: %s\n" % (require)
 		hs += nl
-	if header_data.get("tables_data"):
-		for table_data in header_data["tables_data"]:
+	if tables_data:
+		for table_data in tables_data:
 			hs += "-- table_data: %s\n" % (table_data)
 		hs += nl
 	ps = "" # ps = part_string
-	for part in header_data["parts"]:
-		if header_data["type"] == 'config':
+	for part in parts:
+		if header_type == 'config':
 			ps += "-- part\n"
 		else:
 			ps += "-- part: %s\n" % (part["number"])
@@ -42,10 +43,10 @@ def get_header(header_data):
 			ps += "-- single_transaction\n"
 		else:
 			ps += "-- not single_transaction\n"
-		if part.get("data") and header_data["type"] == 'config':
+		if part.get("data") and header_type == 'config':
 			ps += nl
 			ps += "%s" % (part["data"])
-	if header_data["type"] == 'config':
+	if header_type == 'config':
 		hs += "-- end header_data\n"
 		hs += nl
 		hs += ps
@@ -53,4 +54,5 @@ def get_header(header_data):
 		hs += ps
 		hs += nl
 		hs += "-- end header_data\n"
+		hs += nl
 	return hs

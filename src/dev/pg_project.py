@@ -152,15 +152,7 @@ class ProjectBase:
 
 	def save_conf(self):
 		new_conf = io.StringIO()
-		new_conf.write(utils.get_header({
-			"project_name": self.name,
-			"type": "config",
-			"dbparam": self.dbparam,
-			"roles": self.roles,
-			"requires": self.requires,
-			"tables_data": self.table_data,
-			"parts": [{"single_transaction": part.single_transaction, "data": part.data} for part in self.parts]
-		}))
+		new_conf.write(utils.get_header(self.name, "config", parts=[{"single_transaction": part.single_transaction, "data": part.data} for part in self.parts], roles=self.roles, requires=self.requires, dbparam=self.dbparam, tables_data=self.table_data))
 		new_conf.seek(0)
 		with open(os.path.join(self.directory, "sql", "pg_project.sql"), "w") as f:
 			for l in new_conf:
@@ -461,18 +453,10 @@ def create_version(version, git_tag, force):
 			sys.exit(1)
 		logging.verbose("Create file: %s" % (build_fname,))
 		with open(build_fname, "w") as build_file:
-			header_data = {
-				"project_name": project.name,
-				"type": "new",
-				"version": version,
-				"parts": [{"single_transaction": part.single_transaction, "number": i+1} for part in project.parts]
-			}
-
 			if i == 0:
-				header_data["dbparam"] = project.dbparam
-				header_data["roles"] = project.roles
-				header_data["requires"] = project.requires
-			build_file.write(utils.get_header(header_data))
+				build_file.write(utils.get_header(project.name, "new", [{"single_transaction": part.single_transaction, "number": i+1}], roles=project.roles, requires=project.requires, version=version, dbparam=project.dbparam))
+			else:
+				build_file.write(utils.get_header(project.name, "new", [{"single_transaction": part.single_transaction, "number": i+1}], version=version))
 
 			for pfname in part.files:
 				logging.verbose("add file: %s" % (pfname))
@@ -689,15 +673,7 @@ def create_update(git_tag, new_version, force, gitversion=None, clean=True, pre_
 		sys.exit(1)
 	logging.verbose("Create file: %s" % (build_fname,))
 	with open(build_fname, "w") as build_file:
-		build_file.write(utils.get_header({
-			"project_name": project_new.name,
-			"type": "update",
-			"old_version": old_version,
-			"new_version": new_version,
-			"roles": project_new.roles,
-			"requires": project_new.requires,
-			"parts": [{"single_transaction": True, "number": 1}]
-		}))
+		build_file.write(utils.get_header(project_new.name, "update", [{"single_transaction": True, "number": 1}], roles=project_new.roles, requires=project_new.requires, old_version=old_version, new_version=new_version))
 
 		if config.git_diff:
 			for diff_file in diff_files:
