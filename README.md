@@ -124,11 +124,11 @@ pgport = 5042
 	pgdist init My_Project /path/to/my/project
 	```
 
-	**ARGS - required**:
+	**args - required**:
 
 	- `project` - name of your desired project
 
-	**ARGS - optional**:
+	**args - optional**:
 
 	- `path` - path to folder to create project in
 
@@ -149,7 +149,7 @@ pgport = 5042
 	pgdist create-schema my_schema
 	```
 
-	**ARGS - required**:
+	**args - required**:
 
 	- `schema` - name of your desired schema
 
@@ -184,14 +184,14 @@ pgport = 5042
 Add role to project:
 
 ```
-pgdist role-add My_beatufiul_role login password
+pgdist role-add My_beautiful_role login password
 ```
 
-**ARGS - required**:
+**args - required**:
 
 - `role_name` - name of your role
 
-**ARGS - optional**:
+**args - optional**:
 
 - `login` - *choose* - *login* for enabling login for your role, otherwise *nologin*
 
@@ -199,7 +199,7 @@ pgdist role-add My_beatufiul_role login password
 
 - The above command creates role *My_beautiful_role* with ability to **login** and when installing PGdist creates **password** and stores it to directory defined either by you with `--directory` OR in path setted in *Distribution* configuration file.
 
-- If you want to create role without *password*, just don't add it, or if you want to create role without login, use `nologin`.
+- If you want to create role without *password*, just don´t add it, or if you want to create role without login, use `nologin`.
 
 Change settings for your role in project:
 
@@ -207,17 +207,17 @@ Change settings for your role in project:
 pgdist role-change My_beautiful_role nologin
 ```
 
-**ARGS - required**:
+**args - required**:
 
 - `role_name` - name of role you want to change
 
-**ARGS - optional**:
+**args - optional**:
 
 - `login` - *choose* - *login* for enabling login for your role, otherwise *nologin*
 
 - `password` - *choose* - *password* if you want PGdist to create and set password for your role when installing/updating your project
 
-- You don't like your role anymore? You can change its settings by above command.
+- You don´t like your role anymore? You can change its settings by above command.
 
 Remove role from project:
 
@@ -225,7 +225,7 @@ Remove role from project:
 pgdist role-rm My_beautiful_role
 ```
 
-**ARGS - required**:
+**args - required**:
 
 - `role_name` - name of role you want to remove from project
 
@@ -249,11 +249,11 @@ To add file to your project, move it to the `sql` directory if you are using you
 pgdist add /path/to/your/SQL/file_1 /path/to/your/SQL/file_2
 ```
 
-**ARGS - required**:
+**args - required**:
 
 - `path` - *multiple* - path to file you want to add to your project
 
-**ARGS - optional**:
+**args - optional**:
 
 - `--all` - *enable* - adds all *NEW FILE* to your project
 
@@ -263,11 +263,11 @@ Remove file from project:
 pgdist rm /path/to/your/SQL/file_1 /path/to/your/SQL/file_2
 ```
 
-**ARGS - required**:
+**args - required**:
 
 - `path` - *multiple* - path to file you want to add to your project
 
-**ARGS - optional**:
+**args - optional**:
 
 - `--all` - *enable* - removes all *REMOVED FILE* from your project
 
@@ -281,17 +281,17 @@ pgdist status
 
 - Shows files, which are in project directory.
 
-- Files in project's directory which have not been added to project: *NEW FILE*
+- Files in project´s directory which have not been added to project: *NEW FILE*
 
-- Files in which are added to project but are not in project's directory: *REMOVED FILE*
+- Files in which are added to project but are not in project´s directory: *REMOVED FILE*
 
 #### Recommendations:
 
-- Add your files to your project in the order as if you would be addding them to your database directly (this will ensure, that you won't have to adjust import file order in `pg_project.sql`).  
+- Add your files to your project in the order as if you would be addding them to your database directly (this will ensure, that you won´t have to adjust import file order in `pg_project.sql`).  
 
 **Example**: first you would add all your `schema.sql` into your project then everything else that depends on it.
 
-- As the above point points out to file order, try to adjust or split your SQL dependencies in the order, so you don't have to adjust your `version.sql` file.
+- As the above point points out to file order, try to adjust or split your SQL dependencies in the order, so you don´t have to adjust your `version.sql` file.
 
 **NOTICE** - Table data from `sql/schema/data` will be added only in file created by `create-version`.
 
@@ -305,7 +305,7 @@ If your project has dependency on some other project, you can add a require on o
 pgdist require-add My_Other_Project https://url_or_ssh_to_your_other_project branch_name
 ```
 
-**ARGS - required**:
+**args - required**:
 
 - `project` - name of required project
 
@@ -322,7 +322,7 @@ Well if you changed your mind or your project just does not have dependency on o
 pgdist require-rm My_Other_Project
 ```
 
-**ARGS - required**:
+**args - required**:
 
 - `project` - name of project to remove from required projects
 
@@ -336,7 +336,7 @@ Before you load your project to database, you may want to set some things before
 pgdist dbparam-set OWNER My_beatufil_role ENCODING utf8 CONNECTION LIMIT -1
 ```
 
-**ARGS - required**:
+**args - required**:
 
 - `dbparam` - parameters to create database with, see more: https://www.postgresql.org/docs/current/sql-createdatabase.html, PGdist will literally take it and put it at the end of command
 
@@ -350,15 +350,15 @@ pgdist dbparam-get
 
 ### Versions [▲](#content)
 
-Once you're satisfied with your project, you can try to load it to database, to test, if it would even pass without errors.
+Once you´re satisfied with your project, you can try to load it to database, to test, if it would even pass without errors.
 
 ```
 pgdist test-load
 ```
 
-**ARGS - optional**:
+**args - optional**:
 
-- `--no-clean` - *enable* - after loading project to database, it won't clean it
+- `--no-clean` - *enable* - after loading project to database, it won´t clean it
 
 - `--pre-load` - path to file you want to load BEFORE loading project to database
 
@@ -380,11 +380,11 @@ Create version of your project:
 pgdist create-version 1.0.0 v1.0.0
 ```
 
-**ARGS - required**:
+**args - required**:
 
 - `version` - version of project
 
-**ARGS - optional**:
+**args - optional**:
 
 - `git_tag` - create version from git tag
 
@@ -396,7 +396,7 @@ In case, you need to divide your project installation to parts (like *single/not
 
 **NOTICE** - Something can be added only when using this command, like `require-add` or *table data*
 
-You already made your first version and forgot to add something? Don't worry, we got you.
+You already made your first version and forgot to add something? Don´t worry, we got you.
 
 Create update from your version:
 
@@ -404,19 +404,19 @@ Create update from your version:
 pgdist create-update v1.0.0 1.0.1
 ```
 
-**ARGS - required**:
+**args - required**:
 
 - `git_tag` - create update from git tag
 
 - `version` - version of project
 
-**ARGS - optional**:
+**args - optional**:
 
 - `-f` `--force` - *enable* - if version file already exists, rewrite it
 
 - `--gitversion` - use this as old version name to create update from (only name/file purposes)
 
-- `--no-clean` - *enable* - after loading project to database (parse purpose), it won't clean it
+- `--no-clean` - *enable* - after loading project to database (parse purpose), it won´t clean it
 
 - `--pre-load` - path to file you want to load, if `pre-load-old/new` is not specified, load **before both** projects
 
@@ -438,17 +438,17 @@ Test update of your project:
 pgdist test-update v1.0.0 1.0.1
 ```
 
-**ARGS - required**:
+**args - required**:
 
 - `git_tag` - create update from git tag
 
 - `version` - version of project
 
-**ARGS - optional**:
+**args - optional**:
 
 - `--gitversion` - use this as old version name to test update from (only name/file purposes)
 
-- `--no-clean` - *enable* - after loading project to database (parse purpose), it won't clean it
+- `--no-clean` - *enable* - after loading project to database (parse purpose), it won´t clean it
 
 - `--pre-load` - path to file you want to load, if `pre-load-old/new` is not specified, load **before both** projects
 
@@ -474,15 +474,15 @@ Set version in info of your installed project by force:
 pgdist set-version My_Project pg_database 1.0.2
 ```
 
-**ARGS - required**:
+**args - required**:
 
 - `project` - change info about project
 
 - `dbname` - change info about project in database
 
-- `version` - change info about project's version
+- `version` - change info about project´s version
 
-**ARGS - optional**:
+**args - optional**:
 
 - `-U` `--username` - PG username to connect with
 
@@ -498,13 +498,13 @@ Get version of installed project:
 pgdist get-version My_Project pg_database
 ```
 
-**ARGS - required**:
+**args - required**:
 
 - `project` - get version of project
 
 - `dbname` - get version of project in database
 
-**ARGS - optional**:
+**args - optional**:
 
 - `-U` `--username` - PG username to connect with
 
@@ -524,13 +524,13 @@ So once you have prepared version of your project, you can try to install it.
 pgdist install My_Project pg_database 1.0.0
 ```
 
-**ARGS - required**:
+**args - required**:
 
 - `project` - name of project you want to install
 
 - `dbname` - name of database to install to
 
-**ARGS - optional**:
+**args - optional**:
 
 - `version` - version of project to install
 
@@ -556,7 +556,7 @@ After installation of your project, you may want to check for updates (you creat
 pgdist check-update My_Project pg_database 1.0.0
 ```
 
-**ARGS - optional**:
+**args - optional**:
 
 - `project` - search updates for project name
 
@@ -580,7 +580,7 @@ Now that you have checked for updates, you might want to update it with `My_Proj
 pgdist update My_Project pg_database 1.0.1
 ```
 
-**ARGS - optional**:
+**args - optional**:
 
 - `project` - update project
 
@@ -608,7 +608,7 @@ To show list of installed projects and their updates:
 pgdist list My_Project pg_database
 ```
 
-**ARGS - optional**:
+**args - optional**:
 
 - `project` - show info about project
 
@@ -634,11 +634,11 @@ If you want to remove info (showed by `list`) about your project:
 pgdist clean My_Project pg_database
 ```
 
-**ARGS - required**:
+**args - required**:
 
 - `project` - clean info about project
 
-**ARGS - optional**:
+**args - optional**:
 
 - `dbname` - clean project from database
 
@@ -654,19 +654,19 @@ pgdist clean My_Project pg_database
 
 ### Compare projects [▲](#content)
 
-Let's say you've installed some version of your project to your servers. Now you made a lot of changes in your project and you want to see the diffrence.  
+Let´s say you´ve installed some version of your project to your servers. Now you made a lot of changes in your project and you want to see the difference.  
 
-If you've added some `data.sql` to your project and want to compare them:
+If you´ve added some `data.sql` to your project and want to compare them:
 
 ```
 pgdist data-add some_table table_column_1 table_column_2
 ```
 
-**ARGS - required**:
+**args - required**:
 
 - `table` - table you want to add to comparison
 
-**ARGS - optional**:
+**args - optional**:
 
 - `column` - *multiple* - columns you want to add to comparsion
 
@@ -676,7 +676,7 @@ Remove data from comparison:
 pgdist data-rm some_table
 ```
 
-**ARGS - required**:
+**args - required**:
 
 - `table` - table you want to remove from comparison
 
@@ -692,21 +692,21 @@ Show difference between your current project and installed project:
 pgdist diff-db root:password@my_server//pg_user:pg_password@/pg_database v1.0.0
 ```
 
-**ARGS - required**:
+**args - required**:
 
 - `PGCONN` - connection to PG
 
-**ARGS - optional**:
+**args - optional**:
 
 - `git_tag` - compare project git tag with database
 
 - `--diff-raw` - *enable* - compare raw SQL dumps
 
-- `--no-clean` - *enable* - after loading project to database (parse purpose), it won't clean it
+- `--no-clean` - *enable* - after loading project to database (parse purpose), it won´t clean it
 
-- `--no-owner` - *enable* - don't compare owners
+- `--no-owner` - *enable* - don´t compare owners
 
-- `--no-acl` - *enable* - don't compare access privileges (grant/revoke commands)
+- `--no-acl` - *enable* - don´t compare access privileges (grant/revoke commands)
 
 - `--swap` - *enable* - swap data to compare
 
@@ -738,21 +738,21 @@ Show difference between selected file and installed project:
 pgdist diff-file-db/path/to/your/SQL/file root:password@my_server//pg_user:pg_password@/pg_database
 ```
 
-**ARGS - required**:
+**args - required**:
 
 - `PGCONN` - connection to PG
 
 - `file` - compare database with path to file
 
-**ARGS - optional**:
+**args - optional**:
 
 - `--diff-raw` - *enable* - compare raw SQL dumps
 
-- `--no-clean` - *enable* - after loading project to database (parse purpose), it won't clean it
+- `--no-clean` - *enable* - after loading project to database (parse purpose), it won´t clean it
 
-- `--no-owner` - *enable* - don't compare owners
+- `--no-owner` - *enable* - don´t compare owners
 
-- `--no-acl` - *enable* - don't compare access privileges (grant/revoke commands)
+- `--no-acl` - *enable* - don´t compare access privileges (grant/revoke commands)
 
 - `--swap` - *enable* - swap data to compare
 
