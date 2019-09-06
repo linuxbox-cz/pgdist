@@ -26,7 +26,7 @@ PGdist also can compare very old installation (and possible hand-made changes) a
 
 **Develop part** - It is for usage on local computer. It cooperates with git.  
 
-**Distribution part** - It is for usage on production server. It cooperates with git.
+**Distribution part** - It is for usage on production server.
 
 ### Develop config file
 
@@ -37,11 +37,11 @@ Configuration file is located at `~/.pgdist`.
 test_db: pgdist@sqltest/postgres
 ```
 
-test_db is PG connection to testing postgres database.
+- `test_db` - PG connection to testing postgres database.
 
 #### PGCONN
 
-It defines ssh connection + connection URI.  
+It defines ssh connection (not required) + connection URI.  
 See more about connection URI: https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING *without 'postgresql://' string*.
 
 ```
@@ -64,12 +64,23 @@ Configuration file is located at `/etc/pgdist.conf`.
 [pgdist]
 installation_path = /usr/share/pgdist/install
 password_path = /etc/lbox/postgresql/roles
-db_user = postgres
+pguser = postgres
+pgdatabase = pg_database
+pghost = localhost
+pgport = 5042
 ```
 
-`installation_path` - path to version/updates scripts.  
-`password_path` - path to roles passwords.  
-`db_user` - default PG user to connect with.
+- `installation_path` - path to version/updates scripts  
+
+- `password_path` - path to roles passwords  
+
+- `pguser` - default PG user to connect with  
+
+- `pgdatabase` - *optional* - name of database to connect to  
+
+- `pghost` - *optional* - PG host  
+
+- `pgport` - *optional* - port that PG listens to  
 
 
 
