@@ -1,5 +1,35 @@
 # PGdist - PostgreSQL projects control system
 
+## Content
+
+* [Description](#description-▲)
+
+	* [Develop config file](#develop-config-file-▲)
+
+		* [PGCONN](#pgconn-▲)
+
+	* [Distribution config file](#distribution-config-file-▲)
+
+* [Tutorial](#tutorial-▲)
+
+	* [Create project](#create-project-▲)
+
+	* [Roles](#roles-▲)
+
+	* [File management](#file-management-▲)
+
+	* [Requires](#requires-▲)
+
+	* [DB parameters](#db-parameters-▲)
+
+	* [Versions](#versions-▲)
+
+	* [Install project](#install-project-▲)
+
+	* [Compare projects](#compare-projects-▲)
+
+## Description [▲](#content)
+
 Let me introduce our project PGdist, used for postgres projects management from development to production.
 URL: https://github.com/linuxbox-cz/pgdist
 
@@ -28,7 +58,7 @@ PGdist also can compare very old installation (and possible hand-made changes) a
 
 **Distribution part** - It is for usage on production server.
 
-### Develop config file
+### Develop config file [▲](#content)
 
 Configuration file is located at `~/.pgdist`.
 
@@ -39,7 +69,7 @@ test_db: pgdist@sqltest/postgres
 
 - `test_db` - PG connection to testing postgres database.
 
-#### PGCONN
+#### PGCONN [▲](#content)
 
 It defines ssh connection (not required) + connection URI.  
 See more about connection URI: https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING *without 'postgresql://' string*.
@@ -56,7 +86,7 @@ Below PGCONN will define ssh connection to *my_server* with user *root*, then op
 root@my_server//postgres:PASSWORD@localhost:5042/test_database?connection_timetout=10
 ```
 
-### Distribution config file
+### Distribution config file [▲](#content)
 
 Configuration file is located at `/etc/pgdist.conf`.
 
@@ -84,9 +114,9 @@ pgport = 5042
 
 
 
-## Tutorial
+## Tutorial [▲](#content)
 
-### Creating project directory
+### Create project [▲](#content)
 
 1. Init your project with:
 
@@ -149,7 +179,7 @@ pgport = 5042
 
 
 
-### Roles
+### Roles [▲](#content)
 
 Add role to project:
 
@@ -211,7 +241,7 @@ Before PGdist installs project into the databse, it will check if roles defined 
 
 
 
-### Project file managment
+### File management [▲](#content)
 
 To add file to your project, move it to the `sql` directory if you are using your directory structure, or move it to the correct directory (`table.sql` to `tables`, `schema.sql` to `schema`, etc.) and run command below.
 
@@ -226,8 +256,6 @@ pgdist add /path/to/your/SQL/file_1 /path/to/your/SQL/file_2
 **ARGS - optional**:
 
 - `--all` - *enable* - adds all *NEW FILE* to your project
-
-- In case you've added many files, add `--all`, it will add all files.
 
 Remove file from project:
 
@@ -244,8 +272,6 @@ pgdist rm /path/to/your/SQL/file_1 /path/to/your/SQL/file_2
 - `--all` - *enable* - removes all *REMOVED FILE* from your project
 
 - This command will **ONLY** remove it from `pg_project.sql`, if you want to delete the file, you have to do it yourself.
-
-- Again, in case you want to remove all **deleted** files, add `--all`.
 
 Show status of project files:
 
@@ -271,7 +297,7 @@ pgdist status
 
 
 
-### Project reuqires
+### Requires [▲](#content)
 
 If your project has dependency on some other project, you can add a require on other project:
 
@@ -302,7 +328,7 @@ pgdist require-rm My_Other_Project
 
 
 
-### DB-parameters
+### DB parameters [▲](#content)
 
 Before you load your project to database, you may want to set some things before crerating database:
 
@@ -322,7 +348,7 @@ pgdist dbparam-get
 
 
 
-### Versions
+### Versions [▲](#content)
 
 Once you're satisfied with your project, you can try to load it to database, to test, if it would even pass without errors.
 
@@ -490,7 +516,7 @@ pgdist get-version My_Project pg_database
 
 
 
-### Project installation
+### Install project [▲](#content)
 
 So once you have prepared version of your project, you can try to install it.
 
@@ -600,6 +626,8 @@ pgdist list My_Project pg_database
 
 - `-p` `--port` - port that PG listens to
 
+- If you want to show list of projects in some database without specifying project, use `-d` or `--dbname`.
+
 If you want to remove info (showed by `list`) about your project:
 
 ```
@@ -624,7 +652,7 @@ pgdist clean My_Project pg_database
 
 
 
-### Project diff
+### Compare projects [▲](#content)
 
 Let's say you've installed some version of your project to your servers. Now you made a lot of changes in your project and you want to see the diffrence.  
 
