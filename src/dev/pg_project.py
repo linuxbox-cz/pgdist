@@ -15,6 +15,7 @@ import cStringIO
 import subprocess
 
 import color
+import utils
 import pg_conn
 import config
 import pg_parser
@@ -143,41 +144,23 @@ class ProjectBase:
 			# part data
 			# import file
 			if part:
-				part.add_data(line)
 				x = re.match(r"\\ir\s+(?P<file>.*\S)", line)
 				if x:
+					part.add_data(line)
 					part.files.append(x.group("file"))
 		file.close()
 
 	def save_conf(self):
 		new_conf = io.StringIO()
-		new_conf.write("-- pgdist project\n")
-		new_conf.write("-- name: %s\n" % (self.name, ))
-		new_conf.write("\n")
-		if self.roles:
-			for role in self.roles:
-				new_conf.write("-- role: %s\n" % (role,))
-			new_conf.write("\n")
-		if self.requires:
-			for require in self.requires:
-				new_conf.write("-- require: %s\n" % (require,))
-			new_conf.write("\n")
-		if self.table_data:
-			for td in self.table_data:
-				new_conf.write("-- table_data: %s\n" % (td,))
-			new_conf.write("\n")
-		if self.dbparam:
-			new_conf.write("-- dbparam: %s\n" % (self.dbparam,))
-			new_conf.write("\n")
-		new_conf.write("-- end header\n")
-		for part in self.parts:
-			new_conf.write("\n")
-			new_conf.write("-- part\n")
-			if part.single_transaction:
-				new_conf.write("-- single_transaction\n")
-			else:
-				new_conf.write("-- not single_transaction\n")
-			new_conf.write(part.data)
+		new_conf.write(utils.get_header({
+			"project_name": self.name,
+			"type": "config",
+			"dbparam": self.dbparam,
+			"roles": self.roles,
+			"requires": self.requires,
+			"tables_data": self.table_data,
+			"parts": [{"single_transaction": part.single_transaction, "data": part.data} for part in self.parts]
+		}))
 		new_conf.seek(0)
 		with open(os.path.join(self.directory, "sql", "pg_project.sql"), "w") as f:
 			for l in new_conf:
@@ -478,31 +461,19 @@ def create_version(version, git_tag, force):
 			sys.exit(1)
 		logging.verbose("Create file: %s" % (build_fname,))
 		with open(build_fname, "w") as build_file:
-			build_file.write("--\n")
-			build_file.write("-- pgdist project\n")
-			build_file.write("--\n")
-			build_file.write("-- name: %s\n" % (project.name,))
-			build_file.write("-- version: %s\n" % (version))
+			header_data = {
+				"project_name": project.name,
+				"type": "new",
+				"version": version,
+				"parts": [{"single_transaction": part.single_transaction, "number": i+1} for part in project.parts]
+			}
+
 			if i == 0:
-				if project.dbparam:
-					build_file.write("-- dbparam: %s\n" % (project.dbparam,))
-				if project.roles:
-					build_file.write("--\n")
-					for user in project.roles:
-						build_file.write("-- role: %s\n" % (user,))
-				if project.requires:
-					build_file.write("--\n")
-					for require in project.requires:
-						build_file.write("-- require: %s\n" % (require.project_name,))
-			build_file.write("--\n")
-			build_file.write("-- part: %s\n" % (i+1))
-			if part.single_transaction:
-				build_file.write("-- single_transaction\n")
-			else:
-				build_file.write("-- not single_transaction\n")
-			build_file.write("-- end header\n")
-			build_file.write("--\n")
-			build_file.write("\n")
+				header_data["dbparam"] = project.dbparam
+				header_data["roles"] = project.roles
+				header_data["requires"] = project.requires
+			build_file.write(utils.get_header(header_data))
+
 			for pfname in part.files:
 				logging.verbose("add file: %s" % (pfname))
 				build_file.write("\n")
@@ -718,26 +689,15 @@ def create_update(git_tag, new_version, force, gitversion=None, clean=True, pre_
 		sys.exit(1)
 	logging.verbose("Create file: %s" % (build_fname,))
 	with open(build_fname, "w") as build_file:
-		build_file.write("--\n")
-		build_file.write("-- pgdist update\n")
-		build_file.write("--\n")
-		build_file.write("-- name: %s\n" % (project_old.name,))
-		build_file.write("-- old version: %s\n" % (old_version))
-		build_file.write("-- new version: %s\n" % (new_version))
-		if project_new.roles:
-			build_file.write("--\n")
-			for user in project_new.roles:
-				build_file.write("-- role: %s\n" % (user,))
-		if project_new.requires:
-			build_file.write("--\n")
-			for require in project_new.requires:
-				build_file.write("-- require: %s\n" % (require.project_name,))
-		build_file.write("--\n")
-		build_file.write("-- part: 1\n")
-		build_file.write("-- single_transaction\n")
-		build_file.write("-- end header\n")
-		build_file.write("--\n")
-		build_file.write("\n")
+		build_file.write(utils.get_header({
+			"project_name": project_new.name,
+			"type": "update",
+			"old_version": old_version,
+			"new_version": new_version,
+			"roles": project_new.roles,
+			"requires": project_new.requires,
+			"parts": [{"single_transaction": True, "number": 1}]
+		}))
 
 		if config.git_diff:
 			for diff_file in diff_files:
