@@ -20,9 +20,9 @@ import config
 import pg_parser
 
 class Part:
-	def __init__(self):
+	def __init__(self, single_transaction=True):
 		self.files = []
-		self.single_transaction = True
+		self.single_transaction = single_transaction
 		self.data = ""
 
 	def add_data(self, data):
@@ -216,6 +216,9 @@ class ProjectBase:
 			if td.table_name == name:
 				return td
 		return None
+
+	def add_part(self, single_transaction=True):
+		self.parts.append(Part(single_transaction))
 
 class ProjectNew(ProjectBase):
 	def __init__(self, name, directory=None):
@@ -440,7 +443,6 @@ def add(files, all):
 def rm(files, all):
 	directory = find_directory()
 	project = ProjectFs(directory)
-	new_conf = io.StringIO()
 	if all:
 		loaded_files = load_files(directory)
 		files = [f for f in project.get_files() if f not in loaded_files]
@@ -458,6 +460,17 @@ def rm(files, all):
 		print("Removed from project:")
 		print("\t%s" % (file,))
 		project.rm_file(file)
+	project.save_conf()
+
+def part_add(transaction_type):
+	directory = find_directory()
+	project = ProjectFs(directory)
+
+	if transaction_type == "not_single":
+		project.add_part(single_transaction=False)
+	else:
+		project.add_part(single_transaction=True)
+
 	project.save_conf()
 
 def create_version(version, git_tag, force):

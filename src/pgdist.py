@@ -22,6 +22,7 @@ PGdist Devel - develop PostgreSQL project
     status - show new files and removed files compared to pg_project.sql
     add FILE1 [FILE2 ...] - add files to pg_project.sql
     rm FILE1 [FILE2 ...] - removed files from pg_project.sql
+    part-add [not_single] - add new part with single or not single (if specified) transaction to pg_project.sql
 
     test-load - load project to testing postgres
     create-version VERSION [GIT_TAG] - create version files
@@ -156,7 +157,7 @@ def main():
 		logging.getLogger().addHandler(handler)
 
 	if args.cmd in ("init", "create-schema", "status", "test-load", "create-version", "add", "rm",
-		"create-update", "test-update",
+		"part-add", "create-update", "test-update",
 		"diff-db", "diff-db-file", "diff-file-db",
 		"role-list", "role-add", "role-change", "role-rm",
 		"require-add", "require-rm", "dbparam-set", "dbparam-get",
@@ -225,6 +226,11 @@ def main():
 
 	elif args.cmd ==  "rm":
 		pg_project.rm(args.args, args.all)
+
+	elif args.cmd == "part-add" and len(args.args) in (0,1):
+		(transaction_type,) = args_parse(args.args, 1)
+		print(transaction_type)
+		pg_project.part_add(transaction_type)
 
 	elif args.cmd == "test-load" and len(args.args) in (0,):
 		pg_project.test_load(not args.no_clean, args.pre_load, args.post_load, pg_extractor=pg_extractor, no_owner=args.no_owner)
