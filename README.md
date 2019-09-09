@@ -321,6 +321,20 @@ pgdist status
 
 - Files in which are added to project but are not in project´s directory: *REMOVED FILE*.
 
+#### Add part to project:
+
+In case you need to divide your project to parts, use command below.
+
+```
+pgdist part-add [not_single]
+```
+
+**args - optional**:
+
+- `transaction_type` - adds new part to `pg_project.sql` with *not single_transaction*, if not specified, *single_transaction* is taken instead
+
+**NOTICE** - This still requires you to manage your parts, PGdist won´t remove or modify parts. If part order or something else does not fit you, you have to change it yourself.
+
 #### Recommendations:
 
 - Add your files to your project in the order as if you would be addding them to your database directly (this will ensure, that you won´t have to adjust import file order in `pg_project.sql`).  
