@@ -642,15 +642,7 @@ def create_update(git_tag, new_version, force, gitversion=None, clean=True, pre_
 					if element == "table" or element == "tables":
 						x = re.search(r"CREATE( UNLOGGED)?( FOREIGN)? TABLE (?P<name>\S+) ?\(", new_string)
 						print("TODO - table: %s has changed" % (x.group('name')))
-						diff_c = difflib.unified_diff(old_string.splitlines(), new_string.splitlines(), fromfile="removeline542358", tofile="removeline542358")
-						for d in diff_c:
-							if "removeline542358" in d:
-								continue
-							elif d.startswith("-"):
-								print("\t"+color.red(d))
-							elif d.startswith("+"):
-								print("\t"+color.green(d))
-						print
+						print(utils.diff(old_string.splitlines(), new_string.splitlines(), "\t", True))
 					else:
 						diff_files.append([file_name, new_string])
 						logging.verbose("file changed: %s" % (file_name))
@@ -771,14 +763,7 @@ def print_diff(dump1, dump2, data1, data2, diff_raw, no_owner, no_acl, fromfile,
 		fromfile, tofile = tofile, fromfile
 		data1, data2 = data2, data1
 	if diff_raw:
-		diff_c = difflib.unified_diff(dump1.splitlines(1), dump2.splitlines(1), fromfile=fromfile, tofile=tofile)
-		for d in diff_c:
-			if d.startswith("-"):
-				sys.stdout.write(color.red(d))
-			elif d.startswith("+"):
-				sys.stdout.write(color.green(d))
-			else:
-				sys.stdout.write(d)
+		print(utils.diff(dump1.splitlines(1), dump2.splitlines(1), "", True, fromfile, tofile))
 	else:
 		pr1 = pg_parser.parse(io.StringIO(dump1))
 		pr1.set_data(data1)

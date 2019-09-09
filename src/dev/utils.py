@@ -1,3 +1,7 @@
+import difflib
+
+import color
+
 def get_header(project_name, header_type, parts, roles=None, requires=None, version=None, old_version=None, new_version=None, dbparam=None, tables_data=None):
 	if header_type == 'config':
 		nl = "\n" # nl = new_line
@@ -45,7 +49,7 @@ def get_header(project_name, header_type, parts, roles=None, requires=None, vers
 			ps += "-- not single_transaction\n"
 		if part.get("data") and header_type == 'config':
 			ps += nl
-			ps += "%s" % (part["data"])
+			ps += "%s\n" % (part["data"])
 	if header_type == 'config':
 		hs += "-- end header_data\n"
 		hs += nl
@@ -63,7 +67,25 @@ def get_command(command, name, element_name="sqldist file"):
 	cs += "-- %s: %s\n" % (element_name, name)
 	cs += "--\n"
 	cs += "\n"
-	cs += command
+	cs += command.strip()
 	cs += "\n"
 	cs += ";-- end %s: %s\n" % (element_name, name)
 	return cs
+
+def diff(source, target, start_string="-- ", colored=False, from_file="removeline542358", to_file="removeline542358"):
+	dc = difflib.unified_diff(source, target, fromfile=from_file, tofile=to_file) # dc = diff_c
+	r = "" # r = result
+	for d in dc:
+		if "removeline542358" in d:
+			pass
+		elif d.startswith("-"):
+			if colored:
+				r += "%s%s\n" % (start_string, color.red(d))
+			else:
+				r += "%s%s\n" % (start_string, d)
+		elif d.startswith("+"):
+			if colored:
+				r += "%s%s\n" % (start_string, color.green(d))
+			else:
+				r += "%s%s\n" % (start_string, d)
+	return d + "\n"
