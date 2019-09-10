@@ -343,16 +343,13 @@ def find_directory(whole_path=False):
 	logging.error("Base directory not found.")
 	sys.exit(1)
 
-def load_files(absolute_path=False):
+def load_files():
 	files = []
 	directory = find_directory(True)
 	for root, x, files_paths in os.walk(directory):
 		for file_name in files_paths:
 			if os.path.isfile(os.path.join(root, file_name)) and file_name != 'pg_project.sql':
-				if absolute_path:
-					files.append(os.path.join(root, file_name))
-				else:
-					files.append(os.path.relpath(os.path.join(root, file_name), directory))
+				files.append(os.path.relpath(os.path.join(root, file_name), directory))
 	files.sort()
 	return files
 
@@ -390,14 +387,15 @@ def status():
 	print("PROJECT: %s" % (project.name))
 	change = False
 	for file in files:
-		if not project.is_file(os.path.relpath(file, absolute_path)):
+		if not project.is_file(file):
 			change = True
-			print("NEW FILE: %s" % (os.path.relpath(file, os.getcwd())))
+			print("NEW FILE: %s" % (os.path.relpath(os.path.join(absolute_path, file), os.getcwd())))
+
 	for part in project.parts:
 		for file in part.files:
-			if not os.path.relpath(file, absolute_path) in files:
+			if not file in files:
 				change = True
-				print("REMOVED FILE: %s" % (os.path.relpath(file, os.getcwd())))
+				print("REMOVED FILE: %s" % (os.path.relpath(os.path.join(absolute_path, file), os.getcwd())))
 	if not change:
 		print("Not found new or removed files")
 
@@ -411,7 +409,7 @@ def add(files, all):
 		files_ok = []
 		for file in files:
 			if project.is_file(file):
-				logging.error("File yet in project: %s" % (file,))
+				logging.error("File already in project: %s" % (file,))
 				continue
 			if file in loaded_files:
 				logging.debug("File %s is ok" % (file,))
@@ -420,7 +418,7 @@ def add(files, all):
 			if os.path.isfile(file):
 				nname = get_normal_fname(file)
 				if project.is_file(nname):
-					logging.error("File yet in project: %s as %s" % (file, nname))
+					logging.error("File already in project: %s as %s" % (file, nname))
 					continue
 				logging.debug("File %s prepare to add as %s" % (file, nname))
 				files_ok.append(get_normal_fname(file))
@@ -451,8 +449,11 @@ def rm(files, all):
 			if os.path.isfile(file):
 				file = get_normal_fname(file)
 			if not project.is_file(file):
-				logging.error("File not in project: %s" % (file,))
-				continue
+				file = os.path.relpath(os.path.join(os.getcwd(), file), os.path.join(directory, 'sql'))
+
+				if not project.is_file(file):
+					logging.error("File not in project: %s" % (file,))
+					continue
 			files_ok.append(file)
 		files = files_ok
 	for file in files:
