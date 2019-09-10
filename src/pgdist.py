@@ -229,7 +229,6 @@ def main():
 
 	elif args.cmd == "part-add" and len(args.args) in (0,1):
 		(transaction_type,) = args_parse(args.args, 1)
-		print(transaction_type)
 		pg_project.part_add(transaction_type)
 
 	elif args.cmd == "test-load" and len(args.args) in (0,):
