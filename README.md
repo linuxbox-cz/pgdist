@@ -287,7 +287,7 @@ pgdist add /path/to/your/SQL/file_1 [/path/to/your/SQL/file_2]
 
 **args - required**:
 
-- `path` - *multiple* - path to file you want to add to your project
+- `file` - *multiple* - path to file you want to add to your project
 
 **args - optional**:
 
@@ -301,7 +301,7 @@ pgdist rm /path/to/your/SQL/file_1 [/path/to/your/SQL/file_2]
 
 **args - required**:
 
-- `path` - *multiple* - path to file you want to add to your project
+- `file` - *multiple* - path to file you want to add to your project
 
 **args - optional**:
 
@@ -326,12 +326,12 @@ pgdist status
 In case you need to divide your project to parts, use command below.
 
 ```
-pgdist part-add [not_single]
+pgdist part-add [not-single-transaction]
 ```
 
 **args - optional**:
 
-- `transaction_type` - adds new part to `pg_project.sql` with *not single_transaction*, if not specified, *single_transaction* is taken instead
+- `transaction_type` - adds new part to `pg_project.sql` with *not single transaction*, if not specified, *single transaction* is taken instead
 
 **NOTICE** - This still requires you to manage your parts, PGdist won´t remove or modify parts. If part order or something else does not fit you, you have to change it yourself.
 
@@ -363,7 +363,7 @@ pgdist require-add My_Other_Project https://url_or_ssh_to_your_other_project bra
 
 - `git` - git URL or SSH of required project
 
-- `git_tree` - name of required project git branch
+- `git_tree_ish` - indicates a tree, commit or tag object name of required project
 
 
 **NOTICE** - Above command works only when used before `create-version`.

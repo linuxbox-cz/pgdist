@@ -20,8 +20,8 @@ PGdist Devel - develop PostgreSQL project
     init PROJECT [PATH] - initialize pgdist PROJECT in PATH
     create-schema SCHEMA - create new SCHEMA directory structure
     status - show new files and removed files compared to pg_project.sql
-    add PATH_1 [PATH_2 ...] - add files to pg_project.sql
-    rm PATH_1 [PATH_2 ...] - removed files from pg_project.sql
+    add FILE [FILE ...] - add files to pg_project.sql
+    rm FILE [FILE ...] - removed files from pg_project.sql
 
     test-load - load project to testing postgres
     create-version VERSION [GIT_TAG] - create version files
@@ -33,15 +33,16 @@ PGdist Devel - develop PostgreSQL project
                                           - NEW_VERSION - new version
 
     diff-db PGCONN [GIT_TAG] - diff project and database
-    diff-db-file PGCONN PATH - diff file and database
-    diff-file-db PATH PGCONN - diff database and file
+    diff-db-file PGCONN FILE - diff file and database
+    diff-file-db FILE PGCONN - diff database and file
 
     role-list - print roles in project
     role-add NAME [login|nologin] [password] - add role to project
     role-change NAME [login|nologin] [password] - change role
     role-rm NAME - remove role from project, not remove from databases
 
-    require-add PROJECT GIT GIT_TREE - add require to another project
+    require-add PROJECT GIT GIT_TREE_ISH - add require to another project
+                                          - GIT_TREE_ISH - indicates a tree, commit or tag object name of required project
     require-rm PROJECT - remove require to another project
 
     dbparam-set [PARAM [...]] - parameters with create a database (e.g.: OWNER lbadmin ...)
