@@ -331,7 +331,7 @@ def find_directory(whole_path=False):
 		logging.debug("Search base directory in: %s" % (d, ))
 		if os.path.isdir(os.path.join(d, "sql")) and os.path.isfile(os.path.join(d, "sql", "pg_project.sql")):
 			if whole_path:
-				return d
+				return os.path.join(d, 'sql')
 			if dd == 0:
 				return ''
 			return os.path.join(*([".."]*dd))
@@ -343,13 +343,16 @@ def find_directory(whole_path=False):
 	logging.error("Base directory not found.")
 	sys.exit(1)
 
-def load_files():
+def load_files(absolute_path=False):
 	files = []
 	directory = find_directory(True)
-	for root, x, files_paths in os.walk(os.path.join(directory, 'sql')):
+	for root, x, files_paths in os.walk(directory):
 		for file_name in files_paths:
 			if os.path.isfile(os.path.join(root, file_name)) and file_name != 'pg_project.sql':
-				files.append(os.path.relpath(os.path.join(root, file_name), directory))
+				if absolute_path:
+					files.append(os.path.join(root, file_name))
+				else:
+					files.append(os.path.relpath(os.path.join(root, file_name), directory))
 	files.sort()
 	return files
 
@@ -380,21 +383,21 @@ def create_schema(schema_name):
 	print("Schema %s created." % (schema_name,))
 
 def status():
-	directory = find_directory()
-	project = ProjectFs(directory)
+	absolute_path = find_directory(True)
+	project = ProjectFs(find_directory())
 	files = load_files()
 	logging.debug("Files in project: %s" % (files, ))
 	print("PROJECT: %s" % (project.name))
 	change = False
 	for file in files:
-		if not project.is_file(file):
+		if not project.is_file(os.path.relpath(file, absolute_path)):
 			change = True
-			print("NEW FILE: %s" % (file))
+			print("NEW FILE: %s" % (os.path.relpath(file, os.getcwd())))
 	for part in project.parts:
 		for file in part.files:
-			if not file in files:
+			if not os.path.relpath(file, absolute_path) in files:
 				change = True
-				print("REMOVED FILE: %s" % (file))
+				print("REMOVED FILE: %s" % (os.path.relpath(file, os.getcwd())))
 	if not change:
 		print("Not found new or removed files")
 
