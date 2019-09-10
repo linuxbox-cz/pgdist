@@ -392,6 +392,7 @@ class Table(Element):
 		file.write("\n")
 		file.write("-- TODO: ALTER TABLE?\n")
 		file.write("-- %s: %s\n" % (table2.element_name, table2.name))
+		file.write("\n")
 
 		columns1 = sorted(self.columns)
 		columns2 = sorted(table2.columns)

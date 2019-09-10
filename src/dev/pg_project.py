@@ -468,7 +468,6 @@ def create_version(version, git_tag, force):
 			build_file.write("--\n")
 			build_file.write("-- end sqldist project\n")
 			build_file.write("--\n")
-			build_file.write("\n")
 		print("Created file: %s" % (fname))
 
 def load_requires(project, pg, loop_detect=[]):
@@ -763,7 +762,7 @@ def print_diff(dump1, dump2, data1, data2, diff_raw, no_owner, no_acl, fromfile,
 		fromfile, tofile = tofile, fromfile
 		data1, data2 = data2, data1
 	if diff_raw:
-		print(utils.diff(dump1.splitlines(1), dump2.splitlines(1), "", True, fromfile, tofile))
+		sys.stdout.write(utils.diff(dump1.splitlines(1), dump2.splitlines(1), "", True, fromfile, tofile))
 	else:
 		pr1 = pg_parser.parse(io.StringIO(dump1))
 		pr1.set_data(data1)

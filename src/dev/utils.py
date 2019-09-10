@@ -67,7 +67,7 @@ def get_command(command, name, element_name="sqldist file"):
 	cs += "-- %s: %s\n" % (element_name, name)
 	cs += "--\n"
 	cs += "\n"
-	cs += command.strip()
+	cs += command.strip() + "\n"
 	cs += "\n"
 	cs += ";-- end %s: %s\n" % (element_name, name)
 	return cs
@@ -76,7 +76,7 @@ def diff(source, target, start_string="-- ", colored=False, from_file="removelin
 	dc = difflib.unified_diff(source, target, fromfile=from_file, tofile=to_file) # dc = diff_c
 	r = "" # r = result
 	for d in dc:
-		if "removeline542358" in d:
+		if from_file == "removeline542358" and from_file in d:
 			pass
 		elif d.startswith("-"):
 			if colored:
@@ -88,4 +88,4 @@ def diff(source, target, start_string="-- ", colored=False, from_file="removelin
 				r += "%s%s\n" % (start_string, color.green(d))
 			else:
 				r += "%s%s\n" % (start_string, d)
-	return d + "\n"
+	return r + "\n"
