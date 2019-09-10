@@ -466,7 +466,7 @@ def part_add(transaction_type):
 	directory = find_directory()
 	project = ProjectFs(directory)
 
-	if transaction_type == "not_single":
+	if transaction_type == "not-single-transaction":
 		project.add_part(single_transaction=False)
 	else:
 		project.add_part(single_transaction=True)

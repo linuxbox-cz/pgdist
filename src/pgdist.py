@@ -22,7 +22,7 @@ PGdist Devel - develop PostgreSQL project
     status - show new files and removed files compared to pg_project.sql
     add FILE1 [FILE2 ...] - add files to pg_project.sql
     rm FILE1 [FILE2 ...] - removed files from pg_project.sql
-    part-add [not_single] - add new part with single or not single (if specified) transaction to pg_project.sql
+    part-add [not-single-transaction] - add new part with single or not single (if specified) transaction to pg_project.sql
 
     test-load - load project to testing postgres
     create-version VERSION [GIT_TAG] - create version files
