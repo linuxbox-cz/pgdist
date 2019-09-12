@@ -293,29 +293,74 @@ class ProjectGit(ProjectBase):
 		return self.tar.extractfile("sql/"+fname)
 
 class UpdatePart:
-	def __init__(self, part, fname):
+	def __init__(self, part, fname, single_transaction=True, new=False):
 		self.part = part
 		self.fname = fname
-		self.single_transaction = True
-		with(open(fname)) as f:
+		self.single_transaction = single_transaction
+		self.data = ""
+
+		if not new:
+			self.load_conf()
+
+	def load_conf(self):
+		with open(self.fname) as f:
+			end_header = False
+			end_header_comment = False
+			data_start = False
+
 			for line in f:
-				# single_transaction
-				x = re.match(r"--\s*single_transaction", line)
-				if x:
-					self.single_transaction = True
-				# not single_transaction
-				x = re.match(r"--\s*not\s*single_transaction", line)
-				if x:
-					self.single_transaction = False
-				# end header
-				x = re.match(r"--\s*end\s+header", line)
-				if x:
-					break
+				if data_start:
+					self.data += line
+				else:
+					# single_transaction
+					x = re.match(r"--\s*single_transaction", line)
+					if x:
+						self.single_transaction = True
+					# not single_transaction
+					x = re.match(r"--\s*not\s*single_transaction", line)
+					if x:
+						self.single_transaction = False
+					# end header
+					x = re.match(r"--\s*end\s+header", line)
+					if x:
+						end_header = True
+					# end header comment
+					x = re.match(r"--", line)
+					if x and end_header:
+						end_header_comment = True
+					# end header line
+					x = re.match(r"\n", line)
+					if x and end_header_comment:
+						data_start = True
+
+	def save_conf(self, name, old_version, new_version):
+		with open(self.fname, "w") as f:
+			f.write("--\n")
+			f.write("-- pgdist update\n")
+			f.write("--\n")
+			f.write("-- name: %s\n" % (name,))
+			f.write("-- old version: %s\n" % (old_version))
+			f.write("-- new version: %s\n" % (new_version))
+			f.write("--\n")
+			f.write("-- part: %d\n" % (self.part))
+
+			if self.single_transaction:
+				f.write("-- single_transaction\n")
+			else:
+				f.write("-- not single_transaction\n")
+
+			f.write("-- end header\n")
+			f.write("--\n")
+
+			if self.data:
+				f.write("\n")
+				f.write(self.data)
 
 class Update:
 	def __init__(self, project_name, old_version, new_version, directory=None):
 		self.old_version = old_version
 		self.new_version = new_version
+		self.project_name = project_name
 		if directory:
 			self.directory = directory
 		else:
@@ -325,7 +370,7 @@ class Update:
 		fname = os.path.join(self.directory, "sql_dist", pattern)
 		if os.path.isfile(fname):
 			logging.debug("Update find part: %s" % (fname,))
-			self.parts.append(UpdatePart(0, fname))
+			self.parts.append(UpdatePart(1, fname))
 		pattern = "%s--%s--%s--p*.sql" % (to_fname(project_name), to_fname(old_version), to_fname(new_version))
 		for fname in glob.glob(os.path.join(self.directory, "sql_dist", pattern)):
 			x = re.match(r".*--p(?P<part>\d+)\.sql", fname)
@@ -334,6 +379,48 @@ class Update:
 				part = int(x.group("part"))
 				self.parts.append(UpdatePart(part, fname))
 		self.parts.sort(key=lambda x: x.part)
+
+	def check_n_repair_parts(self):
+		for i, part in enumerate(self.parts):
+			if len(self.parts) == 1:
+				pattern = os.path.join(self.directory, "sql_dist", "%s--%s--%s.sql" % (to_fname(self.project_name), to_fname(self.old_version), to_fname(self.new_version)))
+			else:
+				pattern = os.path.join(self.directory, "sql_dist", "%s--%s--%s--p%02d.sql" % (to_fname(self.project_name), to_fname(self.old_version), to_fname(self.new_version), i + 1))
+
+			if part.fname != pattern:
+				if os.path.isfile(os.path.join(pattern)):
+					return
+				os.rename(os.path.join(part.fname), os.path.join(pattern))
+				part.fname = pattern
+
+			if part.part != i + 1:
+				part.part = i + 1
+			part.save_conf(self.project_name, self.old_version, self.new_version)
+
+	def add_part(self, single_transaction=True):
+		self.check_n_repair_parts()
+
+		if self.parts:
+			new_part = self.parts[-1].part + 1
+			fname = "%s--%s--%s--p%02d.sql" % (to_fname(self.project_name), to_fname(self.old_version), to_fname(self.new_version), new_part)
+			build_fname = os.path.join(self.directory, "sql_dist", fname)
+			self.parts.append(UpdatePart(new_part, build_fname, single_transaction, True))
+			self.parts[-1].save_conf(self.project_name, self.old_version, self.new_version)
+
+	def rm_part(self, number):
+		part_index = None
+
+		for i, part in enumerate(self.parts):
+			if part.part == number:
+				part_index = i
+				break
+
+		if not part_index:
+			return
+
+		part = self.parts.pop(part_index)
+		os.unlink(os.path.join(part.fname))
+		self.check_n_repair_parts()
 
 	def __str__(self):
 		return "%s > %s" % (self.old_version, self.new_version)
@@ -804,6 +891,21 @@ def create_update(git_tag, new_version, force, gitversion=None, clean=True, pre_
 		print("Edit created file: %s" % (build_fname))
 		print("and test it by 'pgdist test-update %s %s'" % (git_tag, new_version))
 
+def part_update_add(old_version, new_version, transaction_type=None):
+	project = ProjectFs()
+	update = Update(project.name, old_version, new_version)
+
+	if transaction_type == "not-single-transaction":
+		single_transaction=False
+	else:
+		single_transaction=True
+
+	update.add_part(single_transaction=single_transaction)
+
+def part_update_rm(old_version, new_version, number):
+	project = ProjectFs()
+	update = Update(project.name, old_version, new_version)
+	update.rm_part(number)
 
 def test_update(git_tag, new_version, clean=True, gitversion=None, pre_load=None, post_load=None,
 		pre_load_old=None, pre_load_new=None, post_load_old=None, post_load_new=None, pg_extractor=None, no_owner=False):
