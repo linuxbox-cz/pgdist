@@ -221,7 +221,7 @@ class ProjectBase:
 		return None
 
 	def add_part(self, single_transaction=True):
-		self.parts.append(Part(single_transaction))
+		self.parts.append(Part(single_transaction, len(self.parts)+1))
 
 	def rm_part(self, number):
 		part_index = None
