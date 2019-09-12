@@ -20,10 +20,11 @@ import config
 import pg_parser
 
 class Part:
-	def __init__(self, single_transaction=True):
+	def __init__(self, single_transaction=True, number=1):
 		self.files = []
 		self.single_transaction = single_transaction
 		self.data = ""
+		self.number = number
 
 	def add_data(self, data):
 		self.data += data
@@ -94,16 +95,18 @@ class ProjectBase:
 
 	def load_conf(self, file):
 		part = None
-		for line in file:
+		part_num = 1
+		for i, line in enumerate(file):
 			# project name
 			x = re.match(r"-- name:\s*(?P<name>.*\S)", line)
 			if x:
 				self.name = x.group("name")
 				continue
 			# part of project
-			x = re.match(r"-- part", line)
+			x = re.match(r"-- part(:\s+(?P<number>\d{1,2}))?", line)
 			if x:
-				part = Part()
+				part = Part(number=int(x.group("number") or part_num))
+				part_num = part.number + 1
 				self.parts.append(part)
 				continue
 			# single_transaction
@@ -170,9 +173,10 @@ class ProjectBase:
 			new_conf.write("-- dbparam: %s\n" % (self.dbparam,))
 			new_conf.write("\n")
 		new_conf.write("-- end header\n")
+		print(len(self.parts))
 		for part in self.parts:
 			new_conf.write("\n")
-			new_conf.write("-- part\n")
+			new_conf.write("-- part: %d\n" % (part.number))
 			if part.single_transaction:
 				new_conf.write("-- single_transaction\n")
 			else:
@@ -219,6 +223,21 @@ class ProjectBase:
 
 	def add_part(self, single_transaction=True):
 		self.parts.append(Part(single_transaction))
+
+	def rm_part(self, number):
+		part_index = None
+
+		for i, part in enumerate(self.parts):
+			if part.number == number:
+				part_index = i
+				break
+		if not part_index:
+			return None
+		part = self.parts.pop(part_index)
+
+		if not self.parts:
+			self.add_part()
+		return part
 
 class ProjectNew(ProjectBase):
 	def __init__(self, name, directory=None):
@@ -473,6 +492,17 @@ def part_add(transaction_type):
 
 	project.save_conf()
 
+def part_rm(number, force):
+	directory = find_directory()
+	project = ProjectFs(directory)
+	part = project.rm_part(number)
+
+	if not force and part:
+		project.parts[-1].files += part.files
+		project.parts[-1].data += part.data
+
+	project.save_conf()
+
 def create_version(version, git_tag, force):
 	if git_tag:
 		project = ProjectGit(git_tag)
@@ -480,11 +510,11 @@ def create_version(version, git_tag, force):
 		project = ProjectFs()
 	if not os.path.isdir(os.path.join(project.directory, "sql_dist")):
 		os.mkdir(os.path.join(project.directory, "sql_dist"))
-	for i, part in enumerate(project.parts):
+	for part in project.parts:
 		if len(project.parts) == 1:
 			fname = "%s--%s.sql" % (to_fname(project.name), to_fname(version))
 		else:
-			fname = "%s--%s--p%02d.sql" % (to_fname(project.name), to_fname(version), i+1)
+			fname = "%s--%s--p%02d.sql" % (to_fname(project.name), to_fname(version), part.number)
 		build_fname = os.path.join(project.directory, "sql_dist", fname)
 		if os.path.isfile(build_fname) and not force:
 			logging.error("Error file exists: %s" % (build_fname,))
@@ -496,7 +526,7 @@ def create_version(version, git_tag, force):
 			build_file.write("--\n")
 			build_file.write("-- name: %s\n" % (project.name,))
 			build_file.write("-- version: %s\n" % (version))
-			if i == 0:
+			if part.number == 1:
 				if project.dbparam:
 					build_file.write("-- dbparam: %s\n" % (project.dbparam,))
 				if project.roles:
@@ -508,7 +538,7 @@ def create_version(version, git_tag, force):
 					for require in project.requires:
 						build_file.write("-- require: %s\n" % (require.project_name,))
 			build_file.write("--\n")
-			build_file.write("-- part: %s\n" % (i+1))
+			build_file.write("-- part: %s\n" % (part.number))
 			if part.single_transaction:
 				build_file.write("-- single_transaction\n")
 			else:
@@ -658,8 +688,7 @@ def test_load(clean=True, pre_load=None, post_load=None, pg_extractor=None, no_o
 	print("")
 
 def create_update(git_tag, new_version, force, gitversion=None, clean=True, pre_load=None, post_load=None,
-		pre_load_old=None, pre_load_new=None, post_load_old=None, post_load_new=None):
-
+		pre_load_old=None, pre_load_new=None, post_load_old=None, post_load_new=None, part_count=None):
 	if not pre_load_old:
 		pre_load_old = pre_load
 	if not pre_load_new:
@@ -724,46 +753,57 @@ def create_update(git_tag, new_version, force, gitversion=None, clean=True, pre_
 		os.mkdir(os.path.join(project_old.directory, "sql_dist"))
 
 	# first part can be without --p%02d (--p01)
-	fname = "%s--%s--%s.sql" % (to_fname(project_old.name), to_fname(old_version), to_fname(new_version))
-	build_fname = os.path.join(project_old.directory, "sql_dist", fname)
-	if os.path.isfile(build_fname) and not force:
-		logging.error("Error file exists: %s" % (build_fname,))
-		sys.exit(1)
-	logging.verbose("Create file: %s" % (build_fname,))
-	with open(build_fname, "w") as build_file:
-		build_file.write("--\n")
-		build_file.write("-- pgdist update\n")
-		build_file.write("--\n")
-		build_file.write("-- name: %s\n" % (project_old.name,))
-		build_file.write("-- old version: %s\n" % (old_version))
-		build_file.write("-- new version: %s\n" % (new_version))
-		if project_new.roles:
-			build_file.write("--\n")
-			for user in project_new.roles:
-				build_file.write("-- role: %s\n" % (user,))
-		if project_new.requires:
-			build_file.write("--\n")
-			for require in project_new.requires:
-				build_file.write("-- require: %s\n" % (require.project_name,))
-		build_file.write("--\n")
-		build_file.write("-- part: 1\n")
-		build_file.write("-- single_transaction\n")
-		build_file.write("-- end header\n")
-		build_file.write("--\n")
-		build_file.write("\n")
-
-		if config.git_diff:
-			for diff_file in diff_files:
-				build_file.write("\n-- %s\n\n" % (diff_file[0]))
-				build_file.write(diff_file[1])
+	for part in xrange(part_count):
+		if part_count == 1:
+			fname_part = ""
 		else:
-			dump_old, x = load_and_dump(project_old, clean=clean, pre_load=pre_load_old, post_load=post_load_old, dbs="old", create_update=True)
-			dump_new, x = load_and_dump(project_new, clean=clean, pre_load=pre_load_new, post_load=post_load_new, dbs="new", create_update=True)
-			pr_old = pg_parser.parse(io.StringIO(dump_old))
-			pr_new = pg_parser.parse(io.StringIO(dump_new))
-			pr_old.gen_update(build_file, pr_new)
-	print("Edit created file: %s" % (build_fname))
-	print("and test it by 'pgdist test-update %s %s'" % (git_tag, new_version))
+			fname_part = "--p%02d" % (part+1)
+
+		fname = "%s--%s--%s%s.sql" % (to_fname(project_old.name), to_fname(old_version), to_fname(new_version), fname_part)
+		build_fname = os.path.join(project_old.directory, "sql_dist", fname)
+
+		if os.path.isfile(build_fname) and not force:
+			logging.error("Error file exists: %s" % (build_fname,))
+			sys.exit(1)
+
+		logging.verbose("Create file: %s" % (build_fname,))
+
+		with open(build_fname, "w") as build_file:
+			build_file.write("--\n")
+			build_file.write("-- pgdist update\n")
+			build_file.write("--\n")
+			build_file.write("-- name: %s\n" % (project_old.name,))
+			build_file.write("-- old version: %s\n" % (old_version))
+			build_file.write("-- new version: %s\n" % (new_version))
+
+			if part == 0:
+				if project_new.roles:
+					build_file.write("--\n")
+					for user in project_new.roles:
+						build_file.write("-- role: %s\n" % (user,))
+				if project_new.requires:
+					build_file.write("--\n")
+					for require in project_new.requires:
+						build_file.write("-- require: %s\n" % (require.project_name,))
+
+			build_file.write("--\n")
+			build_file.write("-- part: %d\n" % (part+1))
+			build_file.write("-- single_transaction\n")
+			build_file.write("-- end header\n")
+			build_file.write("--\n")
+
+			if config.git_diff:
+				for diff_file in diff_files:
+					build_file.write("-- %s\n\n" % (diff_file[0]))
+					build_file.write(diff_file[1])
+			elif part == 0:
+				dump_old, x = load_and_dump(project_old, clean=clean, pre_load=pre_load_old, post_load=post_load_old, dbs="old", create_update=True)
+				dump_new, x = load_and_dump(project_new, clean=clean, pre_load=pre_load_new, post_load=post_load_new, dbs="new", create_update=True)
+				pr_old = pg_parser.parse(io.StringIO(dump_old))
+				pr_new = pg_parser.parse(io.StringIO(dump_new))
+				pr_old.gen_update(build_file, pr_new)
+		print("Edit created file: %s" % (build_fname))
+		print("and test it by 'pgdist test-update %s %s'" % (git_tag, new_version))
 
 
 def test_update(git_tag, new_version, clean=True, gitversion=None, pre_load=None, post_load=None,
