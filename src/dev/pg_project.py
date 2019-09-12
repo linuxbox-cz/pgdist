@@ -173,7 +173,6 @@ class ProjectBase:
 			new_conf.write("-- dbparam: %s\n" % (self.dbparam,))
 			new_conf.write("\n")
 		new_conf.write("-- end header\n")
-		print(len(self.parts))
 		for part in self.parts:
 			new_conf.write("\n")
 			new_conf.write("-- part: %d\n" % (part.number))

@@ -22,7 +22,7 @@ PGdist Devel - develop PostgreSQL project
     status - show new files and removed files compared to pg_project.sql
     add FILE1 [FILE2 ...] - add files to pg_project.sql
     rm FILE1 [FILE2 ...] - removed files from pg_project.sql
-    part-add - add new part with single or not single (if specified) transaction to pg_project.sql
+    part-add [not-single-transaction] - add new part with single or not single (if specified) transaction to pg_project.sql
     part-rm - remove part from pg_project.sql, part files are added to previous part, use -f to remove files from pg_project.sql too
 
     test-load - load project to testing postgres
@@ -118,7 +118,6 @@ def main():
 	parser.add_argument("--post-load-old", dest="post_load_old", help="SQL file to load after load old version of the project")
 	parser.add_argument("--pre-load-new", dest="pre_load_new", help="SQL file to load before load new version of the project")
 	parser.add_argument("--post-load-new", dest="post_load_new", help="SQL file to load after load new version of the project")
-	parser.add_argument("--not-single-transaction", dest="not_single_transaction", help="Set part as not single transaction", action="store_true")
 
 	# install projects
 	parser.add_argument("--showall", help="show all versions", action="store_true")
