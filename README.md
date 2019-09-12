@@ -530,6 +530,42 @@ This command creates new file `My_Project--1.0.0--1.0.1.sql` in your `sql_dist` 
 
 If `part_count` is specified, PGdist will create specified number of parts with headers and it will put all update-sql in **first part**, it is up to you to divide your sql to parts.  
 
+#### Add update part:
+
+If you want to add additional update parts, this command will create new update file.  
+
+```
+pgdist part-update-add 1.0.0 1.0.1 [not-single-transaction]
+```
+
+**args - required**:
+
+- `old_version` - old version of update script
+
+- `new_version` - new version of update script
+
+**args - optional**:
+
+- `transaction_type` - new part created by PGdist will be with *not single transaction*, if not specified, *single transaction* is taken instead
+
+#### Remove update part:
+
+This command will delete specified part.  
+
+```
+pgdist part-update-rm 1.0.0 1.0.1 2
+```
+
+**args - required**:
+
+- `old_version` - old version of update script
+
+- `new_version` - new version of update script
+
+- `part_number` - number of part to remove
+
+**NOTICE** - All data in specified part will be removed.
+
 #### Update file
 
 Once again, update file´s header is almost identical to both *version* and *project configuration* files.  
