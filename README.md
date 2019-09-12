@@ -333,7 +333,23 @@ pgdist part-add [not-single-transaction]
 
 - `transaction_type` - adds new part to `pg_project.sql` with *not single transaction*, if not specified, *single transaction* is taken instead
 
-**NOTICE** - This still requires you to manage your parts, PGdist won´t remove or modify parts. If part order or something else does not fit you, you have to change it yourself.
+#### Remove part from project:
+
+This command will remove specified part, and put all his files to previous part.  
+
+```
+pgdist part-rm 2
+```
+
+**args - required**:
+
+- `part_number` - number of part you want to remove from your project
+
+**args - optional**:
+
+- `-f` `--force` - *enable* - if used, PGdist will also remove all files belongig to specified part
+
+**NOTICE** - PGdist still requires you to manage your parts, PGdist won´t remove or modify parts. If part order or something else does not fit you, you have to change it yourself.
 
 #### Recommendations:
 
@@ -479,7 +495,7 @@ Header of simple version file might look like this:
 You already made your first version and forgot to add something? Don´t worry, we got you.
 
 ```
-pgdist create-update v1.0.0 1.0.1
+pgdist create-update v1.0.0 1.0.1 [2]
 ```
 
 **args - required**:
@@ -489,6 +505,8 @@ pgdist create-update v1.0.0 1.0.1
 - `new_version` - new version of project
 
 **args - optional**:
+
+- `part_count` - define how many parts should PGdist create
 
 - `-f` `--force` - *enable* - if update file already exists, rewrite it
 
@@ -510,7 +528,7 @@ pgdist create-update v1.0.0 1.0.1
 
 This command creates new file `My_Project--1.0.0--1.0.1.sql` in your `sql_dist` folder.  
 
-**NOTICE** - `create-update` does not care about project parts, you need to define them yourself.
+If `part_count` is specified, PGdist will create specified number of parts with headers and it will put all update-sql in **first part**, it is up to you to divide your sql to parts.  
 
 #### Update file
 
