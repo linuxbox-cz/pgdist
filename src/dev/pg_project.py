@@ -37,6 +37,7 @@ class Part:
 	def rm_file(self, fname):
 		self.files.remove(fname)
 		self.data = "\n".join(filter(lambda x: not re.match(r"\\ir\s+%s($|\s)" % (fname,), x), self.data.splitlines()))
+		self.data = self.data.strip() + "\n"
 
 class Role:
 	def __init__(self, name, param=None):
@@ -155,11 +156,12 @@ class ProjectBase:
 
 	def save_conf(self):
 		new_conf = io.StringIO()
-		new_conf.write(utils.get_header(self.name, "config", parts=[{"single_transaction": part.single_transaction, "data": part.data} for part in self.parts], roles=self.roles, requires=self.requires, dbparam=self.dbparam, tables_data=self.table_data))
+		new_conf.write(utils.get_header(self.name, "project-config", roles=self.roles, requires=self.requires, dbparam=self.dbparam, tables_data=self.table_data))
+		new_conf.write(utils.get_part_header(self.parts, "project-config"))
 		new_conf.seek(0)
-		with open(os.path.join(self.directory, "sql", "pg_project.sql"), "w") as f:
-			for l in new_conf:
-				f.write(l)
+		with open(os.path.join(self.directory, "sql", "pg_project.sql"), "w") as file:
+			for line in new_conf:
+				file.write(line)
 		new_conf.close()
 
 	def is_file(self, file):
@@ -195,8 +197,14 @@ class ProjectBase:
 				return td
 		return None
 
+	def check_n_repair_parts(self):
+		for i, part in enumerate(self.parts):
+			if part.number != i + 1:
+				part.number = i + 1
+
 	def add_part(self, single_transaction=True):
 		self.parts.append(Part(single_transaction, len(self.parts)+1))
+		self.check_n_repair_parts()
 
 	def rm_part(self, number):
 		part_index = None
@@ -211,6 +219,7 @@ class ProjectBase:
 
 		if not self.parts:
 			self.add_part()
+		self.check_n_repair_parts()
 		return part
 
 class ProjectNew(ProjectBase):
@@ -269,7 +278,7 @@ class ProjectGit(ProjectBase):
 
 class UpdatePart:
 	def __init__(self, part, fname, single_transaction=True, new=False):
-		self.part = part
+		self.number = part
 		self.fname = fname
 		self.single_transaction = single_transaction
 		self.data = ""
@@ -309,27 +318,14 @@ class UpdatePart:
 						data_start = True
 
 	def save_conf(self, name, old_version, new_version):
-		with open(self.fname, "w") as f:
-			f.write("--\n")
-			f.write("-- pgdist update\n")
-			f.write("--\n")
-			f.write("-- name: %s\n" % (name,))
-			f.write("-- old version: %s\n" % (old_version))
-			f.write("-- new version: %s\n" % (new_version))
-			f.write("--\n")
-			f.write("-- part: %d\n" % (self.part))
-
-			if self.single_transaction:
-				f.write("-- single_transaction\n")
-			else:
-				f.write("-- not single_transaction\n")
-
-			f.write("-- end header\n")
-			f.write("--\n")
+		with open(self.fname, "w") as file:
+			file.write(utils.get_header(name, "project-update", part=self, old_version=old_version, new_version=new_version))
+			file.write(utils.get_part_header([self], "project-update"))
 
 			if self.data:
-				f.write("\n")
-				f.write(self.data)
+				file.write("\n")
+				file.write(self.data.strip())
+				file.write("\n")
 
 class Update:
 	def __init__(self, project_name, old_version, new_version, directory=None):
@@ -353,7 +349,7 @@ class Update:
 				logging.debug("Update find part: %s" % (fname,))
 				part = int(x.group("part"))
 				self.parts.append(UpdatePart(part, fname))
-		self.parts.sort(key=lambda x: x.part)
+		self.parts.sort(key=lambda x: x.number)
 
 	def check_n_repair_parts(self):
 		for i, part in enumerate(self.parts):
@@ -368,25 +364,26 @@ class Update:
 				os.rename(os.path.join(part.fname), os.path.join(pattern))
 				part.fname = pattern
 
-			if part.part != i + 1:
-				part.part = i + 1
+			if part.number != i + 1:
+				part.number = i + 1
 			part.save_conf(self.project_name, self.old_version, self.new_version)
 
 	def add_part(self, single_transaction=True):
 		self.check_n_repair_parts()
 
 		if self.parts:
-			new_part = self.parts[-1].part + 1
+			new_part = self.parts[-1].number + 1
 			fname = "%s--%s--%s--p%02d.sql" % (to_fname(self.project_name), to_fname(self.old_version), to_fname(self.new_version), new_part)
 			build_fname = os.path.join(self.directory, "sql_dist", fname)
 			self.parts.append(UpdatePart(new_part, build_fname, single_transaction, True))
 			self.parts[-1].save_conf(self.project_name, self.old_version, self.new_version)
+		self.check_n_repair_parts()
 
 	def rm_part(self, number):
 		part_index = None
 
 		for i, part in enumerate(self.parts):
-			if part.part == number:
+			if part.number == number:
 				part_index = i
 				break
 
@@ -547,12 +544,7 @@ def rm(files, all):
 def part_add(transaction_type):
 	directory = find_directory()
 	project = ProjectFs(directory)
-
-	if transaction_type == "not-single-transaction":
-		project.add_part(single_transaction=False)
-	else:
-		project.add_part(single_transaction=True)
-
+	project.add_part(single_transaction=not (transaction_type == "not-single-transaction"))
 	project.save_conf()
 
 def part_rm(number, force):
@@ -584,10 +576,11 @@ def create_version(version, git_tag, force):
 			sys.exit(1)
 		logging.verbose("Create file: %s" % (build_fname,))
 		with open(build_fname, "w") as build_file:
-			if i == 0:
-				build_file.write(utils.get_header(project.name, "new", [{"single_transaction": part.single_transaction, "number": i+1}], roles=project.roles, requires=project.requires, version=version, dbparam=project.dbparam))
+			if part.number == 1:
+				build_file.write(utils.get_header(project.name, "project-version", part=part, roles=project.roles, requires=project.requires, version=version, dbparam=project.dbparam))
 			else:
-				build_file.write(utils.get_header(project.name, "new", [{"single_transaction": part.single_transaction, "number": i+1}], version=version))
+				build_file.write(utils.get_header(project.name, "project-version", part=part, version=version))
+			build_file.write(utils.get_part_header([part], "project-version"))
 
 			for pfname in part.files:
 				logging.verbose("add file: %s" % (pfname))
@@ -734,6 +727,7 @@ def create_update(git_tag, new_version, force, gitversion=None, clean=True, pre_
 	if not post_load_new:
 		post_load_new = post_load
 
+	part_count = int(part_count)
 	project_old = ProjectGit(git_tag)
 	project_new = ProjectFs()
 	if gitversion:
@@ -794,32 +788,13 @@ def create_update(git_tag, new_version, force, gitversion=None, clean=True, pre_
 			sys.exit(1)
 
 		logging.verbose("Create file: %s" % (build_fname,))
+		update_part = Part(True, part+1)
 
 		with open(build_fname, "w") as build_file:
-			build_file.write("--\n")
-			build_file.write("-- pgdist update\n")
-			build_file.write("--\n")
-			build_file.write("-- name: %s\n" % (project_old.name,))
-			build_file.write("-- old version: %s\n" % (old_version))
-			build_file.write("-- new version: %s\n" % (new_version))
+			build_file.write(utils.get_header(project_new.name, "project-update", part=update_part, roles=project_new.roles, requires=project_new.requires, old_version=old_version, new_version=new_version))
+			build_file.write(utils.get_part_header([update_part], "project-update"))
 
-			if part == 0:
-				if project_new.roles:
-					build_file.write("--\n")
-					for user in project_new.roles:
-						build_file.write("-- role: %s\n" % (user,))
-				if project_new.requires:
-					build_file.write("--\n")
-					for require in project_new.requires:
-						build_file.write("-- require: %s\n" % (require.project_name,))
-
-			build_file.write("--\n")
-			build_file.write("-- part: %d\n" % (part+1))
-			build_file.write("-- single_transaction\n")
-			build_file.write("-- end header\n")
-			build_file.write("--\n")
-
-			if config.git_diff:
+			if config.git_diff and part == 0:
 				for diff_file in diff_files:
 					build_file.write("-- %s\n\n" % (diff_file[0]))
 					build_file.write(diff_file[1])
@@ -835,13 +810,7 @@ def create_update(git_tag, new_version, force, gitversion=None, clean=True, pre_
 def part_update_add(old_version, new_version, transaction_type=None):
 	project = ProjectFs()
 	update = Update(project.name, old_version, new_version)
-
-	if transaction_type == "not-single-transaction":
-		single_transaction=False
-	else:
-		single_transaction=True
-
-	update.add_part(single_transaction=single_transaction)
+	update.add_part(single_transaction=not (transaction_type == "not-single-transaction"))
 
 def part_update_rm(old_version, new_version, number):
 	project = ProjectFs()
