@@ -17,8 +17,8 @@ description = """
 PGdist - distributes PotgreSQL functions, tables, etc...
 PGdist Devel - develop PostgreSQL project
 
-    init PROJECT [DIRECTORY] - initialize pgdist project
-    create-schema SCHEMA - create new directories schema
+    init PROJECT [PATH] - initialize pgdist PROJECT in PATH
+    create-schema SCHEMA - create new SCHEMA directory structure
     status - show new files and removed files compared to pg_project.sql
     add FILE1 [FILE2 ...] - add files to pg_project.sql
     rm FILE1 [FILE2 ...] - removed files from pg_project.sql
@@ -47,6 +47,7 @@ PGdist Devel - develop PostgreSQL project
     role-rm NAME - remove role from project, not remove from databases
 
     require-add PROJECT GIT GIT_TREE_ISH - add require to another project
+                                          - GIT_TREE_ISH - indicates a tree, commit or tag object name of required project
     require-rm PROJECT - remove require to another project
 
     dbparam-set [PARAM [...]] - parameters with create a database (e.g.: OWNER lbadmin ...)
@@ -75,12 +76,23 @@ PGCONN - ssh connection + connection URI, see:
         localhost/mydb - connect to mydb
         root@server//user@/mydb - connect to server via ssh and next connect to postgres as user into mydb
 
-Configuration:
+Develop configuration:
     connection to testing database in file "~/.pgdist" (or ".pgdist" in project path) with content:
         [pgdist]
         test_db: user@host/dbname
 
         test_db - PGCONN to testing postgres, user has to create databases and users
+Distribution configuration:
+    Configuration file is located at `/etc/pgdist.conf`.
+        [pgdist]
+        installation_path = /usr/share/pgdist/install
+        password_path = /etc/lbox/postgresql/roles
+        pguser = postgres
+        pgdatabase = pg_database
+        pghost = localhost
+        pgport = 5042
+
+        pgdatabase, pghost and pgport are optional (does not have to be setted)
 """
 
 def main():
@@ -205,7 +217,13 @@ def main():
 		config.load(args.config)
 
 		if not args.user:
-			args.user = config.get_db_user()
+			args.user = config.get_pguser()
+		if not args.dbname:
+			args.dbname = config.get_pgdatabase()
+		if not args.host:
+			args.dbname = config.get_pghost()
+		if not args.port:
+			args.dbname = config.get_pgport()
 
 	if args.pg_extractor:
 		pg_extractor = pg_extractor_m.PG_extractor(args.pg_extractor_basedir)

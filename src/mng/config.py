@@ -52,10 +52,34 @@ def get_password_path():
 		path = config.get("pgdist", "password_path")
 	return path or default_path
 
-def get_db_user():
+def get_pguser():
 	global config
 	user = None
 
 	if config.has_section("pgdist") and config.has_option("pgdist", "pguser"):
 		user = config.get("pgdist", "pguser")
 	return user
+
+def get_pgdatabase():
+	global config
+	database = None
+
+	if config.has_section("pgdist") and config.has_option("pgdist", "pgdatabase"):
+		database = config.get("pgdist", "pgdatabase")
+	return database
+
+def get_pghost():
+	global config
+	host = None
+
+	if config.has_section("pgdist") and config.has_option("pgdist", "pghost"):
+		host = config.get("pgdist", "pghost")
+	return host
+
+def get_pgport():
+	global config
+	port = None
+
+	if config.has_section("pgdist") and config.has_option("pgdist", "pgport"):
+		port = config.get("pgdist", "pgport")
+	return port
