@@ -3,63 +3,57 @@ import difflib
 import color
 
 def get_header(project_name, header_type, parts, roles=None, requires=None, version=None, old_version=None, new_version=None, dbparam=None, tables_data=None):
-	if header_type == 'config':
-		nl = "\n" # nl = new_line
-		hs = "" # hs = header_string
-	else:
-		nl = "--\n" # nl = new_line
-		hs = nl # hs = header_string
-	if header_type == 'update':
-		hs += "-- pgdist update\n"
-	else:
-		hs += "-- pgdist project\n"
+	hs = "--\n" # hs = header_string
+	hs += "-- pgdist %s\n" % (header_type)
 	hs += "-- name: %s\n" % (project_name)
-	hs += nl
+	hs += "--\n"
 	if version:
 		hs += "-- version: %s\n" % (version)
-		hs += nl
+		hs += "--\n"
 	if old_version and new_version:
 		hs += "-- old version: %s\n" % (old_version)
 		hs += "-- new version: %s\n" % (new_version)
-		hs += nl
+		hs += "--\n"
 	if dbparam:
 		hs += "-- dbparam: %s\n" % (dbparam)
-		hs += nl
+		hs += "--\n"
 	if roles:
 		for role in roles:
 			hs += "-- role: %s\n" % (role)
-		hs += nl
+		hs += "--\n"
 	if requires:
 		for require in requires:
 			hs += "-- require: %s\n" % (require)
-		hs += nl
+		hs += "--\n"
 	if tables_data:
 		for table_data in tables_data:
 			hs += "-- table_data: %s\n" % (table_data)
-		hs += nl
+		hs += "--\n"
 	ps = "" # ps = part_string
+	get_parts(parts, header_type)
+	if header_type == 'config':
+		hs += "-- end header_data\n"
+		hs += "--\n"
+		hs += ps
+	else:
+		hs += ps
+		hs += "--\n"
+		hs += "-- end header_data\n"
+		hs += "--\n"
+	return hs
+
+def get_parts(parts, header_type):
+	ps = ""
 	for part in parts:
-		if header_type == 'config':
-			ps += "-- part\n"
-		else:
-			ps += "-- part: %s\n" % (part["number"])
+		ps += "-- part: %s\n" % (part["number"])
 		if part["single_transaction"]:
 			ps += "-- single_transaction\n"
 		else:
 			ps += "-- not single_transaction\n"
 		if part.get("data") and header_type == 'config':
-			ps += nl
+			ps += "\n"
 			ps += "%s\n" % (part["data"])
-	if header_type == 'config':
-		hs += "-- end header_data\n"
-		hs += nl
-		hs += ps
-	else:
-		hs += ps
-		hs += nl
-		hs += "-- end header_data\n"
-		hs += nl
-	return hs
+	return ps
 
 def get_command(command, name, element_name="sqldist file"):
 	cs = "\n" # cs = command_string
