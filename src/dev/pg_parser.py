@@ -417,9 +417,14 @@ def parse(dump_stream):
 				project.sequences[schema(set_schema, x.group('name'))] = Sequence(command, schema(set_schema, x.group('name')))
 				continue
 
-			x = re.match(r"ALTER SEQUENCE (?P<name>\S+) OWNED BY (?P<new_owner>\S+);$", command)
+			x = re.match(r"ALTER SEQUENCE (?P<name>\S+) OWNER TO (?P<new_owner>\S+);$", command)
 			if x:
 				project.sequences[schema(set_schema, x.group('name'))].owner = x.group('new_owner')
+				continue
+
+			x = re.match(r"ALTER SEQUENCE (?P<name>\S+) OWNED BY (?P<table_column>\S+);$", command)
+			if x:
+				project.sequences[schema(set_schema, x.group('name'))].owned_by = x.group('table_column')
 				continue
 
 			# VIEW
@@ -433,55 +438,55 @@ def parse(dump_stream):
 
 			x = re.match(r"REVOKE .* ON SCHEMA (?P<schema_name>\S+) FROM (?P<role>\S+);$", command)
 			if x:
-				project.schemas[x.group('schema_name')].revoke.append(command)
+				project.schemas[x.group('schema_name')].revoke.append(command.strip())
 				continue
 
 			x = re.match(r"GRANT .* ON SCHEMA (?P<schema_name>\S+) TO (?P<role>\S+);$", command)
 			if x:
-				project.schemas[x.group('schema_name')].grant.append(command)
+				project.schemas[x.group('schema_name')].grant.append(command.strip())
 				continue
 
 			x = re.match(r"REVOKE .* ON TABLE (?P<table_name>\S+) FROM (?P<role>\S+);$", command)
 			if x:
 				if schema(set_schema, x.group('table_name')) in project.tables:
-					project.tables[schema(set_schema, x.group('table_name'))].revoke.append(command)
+					project.tables[schema(set_schema, x.group('table_name'))].revoke.append(command.strip())
 				else:
-					project.views[schema(set_schema, x.group('table_name'))].revoke.append(command)
+					project.views[schema(set_schema, x.group('table_name'))].revoke.append(command.strip())
 				continue
 
 			x = re.match(r"GRANT .* ON TABLE (?P<table_name>\S+) TO (?P<role>\S+);$", command)
 			if x:
 				if schema(set_schema, x.group('table_name')) in project.tables:
-					project.tables[schema(set_schema, x.group('table_name'))].grant.append(command)
+					project.tables[schema(set_schema, x.group('table_name'))].grant.append(command.strip())
 				else:
-					project.views[schema(set_schema, x.group('table_name'))].grant.append(command)
+					project.views[schema(set_schema, x.group('table_name'))].grant.append(command.strip())
 				continue
 
 			x = re.match(r"REVOKE .* ON SEQUENCE (?P<table_name>\S+) FROM (?P<role>\S+);$", command)
 			if x:
-				project.sequences[schema(set_schema, x.group('table_name'))].revoke.append(command)
+				project.sequences[schema(set_schema, x.group('table_name'))].revoke.append(command.strip())
 				continue
 
 			x = re.match(r"GRANT .* ON SEQUENCE (?P<table_name>\S+) TO (?P<role>\S+);$", command)
 			if x:
-				project.sequences[schema(set_schema, x.group('table_name'))].grant.append(command)
+				project.sequences[schema(set_schema, x.group('table_name'))].grant.append(command.strip())
 				continue
 
 			x = re.match(r"REVOKE .* ON FUNCTION (?P<name>[^()]+)(?P<args>\(.*\)) FROM (?P<role>\S+);$", command)
 			if x:
 				args = remove_default(x.group('args'))
-				project.functions[schema(set_schema, x.group('name')) + str(args)].revoke.append(command)
+				project.functions[schema(set_schema, x.group('name')) + str(args)].revoke.append(command.strip())
 				continue
 
 			x = re.match(r"GRANT .* ON FUNCTION (?P<name>[^()]+)(?P<args>\(.*\)) TO (?P<role>\S+);$", command)
 			if x:
 				args = remove_default(x.group('args'))
-				project.functions[schema(set_schema, x.group('name')) + str(args)].grant.append(command)
+				project.functions[schema(set_schema, x.group('name')) + str(args)].grant.append(command.strip())
 				continue
 
 			x = re.match(r"ALTER .* PRIVILEGES FOR ROLE \S+ IN SCHEMA (?P<schema_name>\S+) .*;$", command)
 			if x:
-				project.schemas[x.group('schema_name')].grant.append(command)
+				project.schemas[x.group('schema_name')].grant.append(command.strip())
 				continue
 
 #			x = re.match(r"GRANT \S+ TO \S+ GRANTED BY \S+;$", command)
@@ -659,9 +664,9 @@ def parse(dump_stream):
 			x = re.match(r"CREATE RULE \S+ AS\s+ON \S+ TO (?P<table_name>\S+)\s+DO.*", command, re.DOTALL)
 			if x:
 				if schema(set_schema, x.group('table_name')) in project.tables:
-					project.tables[schema(set_schema, x.group('table_name'))].rule.append(command)
+					project.tables[schema(set_schema, x.group('table_name'))].rule.append(command.strip())
 				else:
-					project.views[schema(set_schema, x.group('table_name'))].rule.append(command)
+					project.views[schema(set_schema, x.group('table_name'))].rule.append(command.strip())
 				continue
 
 			# EVENT TRIGGER

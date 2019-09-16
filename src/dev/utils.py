@@ -64,12 +64,12 @@ def get_part_header(parts, header_type):
 def get_command(command, name, element_name="sqldist file"):
 	cs = "\n" # cs = command_string
 	cs += "--\n"
-	cs += "-- %s: %s\n" % (element_name, name)
+	cs += "-- %s %s\n" % (element_name.lower(), name)
 	cs += "--\n"
 	cs += "\n"
 	cs += command.strip() + "\n"
 	cs += "\n"
-	cs += ";-- end %s: %s\n" % (element_name, name)
+	cs += ";-- end %s %s\n\n" % (element_name.lower(), name)
 	return cs
 
 def diff(source, target, start_string="-- ", colored=False, from_file="removeline542358", to_file="removeline542358"):

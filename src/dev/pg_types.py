@@ -141,18 +141,18 @@ class Element:
 				file.write("-- OWNER -%s\n" % (self.owner))
 			if element2.owner:
 				file.write("-- OWNER +%s\n" % (element2.owner))
-		file.write("-- end %s: %s\n" % (element2.element_name, element2.name))
+		file.write("-- end %s: %s\n\n" % (element2.element_name, element2.name))
 
 	def get_whole_command(self):
 		whole_command = self.command
 		if self.owner:
 			whole_command += "ALTER %s %s OWNER TO %s;\n" % (self.element_name.upper(), self.name, self.owner)
 		if self.grant:
-			whole_command += "".join(self.grant) + "\n"
+			whole_command += "\n".join(self.grant) + "\n"
 		if self.revoke:
-			whole_command += "".join(self.revoke) + "\n"
+			whole_command += "\n".join(self.revoke) + "\n"
 		if self.rule:
-			whole_command += "".join(self.rule) + "\n"
+			whole_command += "\n".join(self.rule) + "\n"
 		return whole_command
 
 class Project:
@@ -276,7 +276,7 @@ class Project:
 	def update_elements(self, file, elements_name, elements1, elements2):
 		for name in elements1:
 			if name not in elements2:
-				file.write(elements1[name].drop_info())
+				file.write(utils.get_command(elements1[name].drop_info(), elements1[name].name, elements1[name].element_name))
 
 		for name in elements2:
 			if name not in elements1:
@@ -389,9 +389,11 @@ class Table(Element):
 		if self.command == table2.command and self.owner == table2.owner:
 			return
 
+		file.write("--\n")
+		file.write("-- %s: %s\n" % (self.element_name.lower(), self.name))
+		file.write("--\n")
 		file.write("\n")
-		file.write("-- TODO: ALTER TABLE?\n")
-		file.write("-- %s: %s\n" % (table2.element_name, table2.name))
+		file.write("-- TODO: ALTER TABLE %s\n" % (self.name,))
 		file.write("\n")
 
 		columns1 = sorted(self.columns)
@@ -422,24 +424,30 @@ class Table(Element):
 		if self.owner != table2.owner:
 			file.write(utils.diff([self.owner or ""], [table2.owner or ""], "-- OWNER "))
 
-		file.write("-- end %s: %s\n" % (table2.element_name, table2.name))
+		file.write("-- end %s: %s\n\n" % (table2.element_name.lower(), table2.name))
 
 	def get_whole_command(self):
 		whole_command = self.command
 		if self.constraints:
-			whole_command += "ALTER TABLE %s ADD " % (self.name) + ("ALTER TABLE %s ADD " % (self.name)).join(self.constraints) + ";\n"
+			for constraint in self.constraints:
+				whole_command += "ALTER TABLE %s ADD %s;\n" % (self.name, constraint)
+			whole_command += "\n"
 		if self.indexes:
-			whole_command += "CREATE " + "; CREATE ".join(self.indexes) + ";\n"
+			for index in self.indexes:
+				whole_command += "CREATE %s;\n" % (index,)
+			whole_command += "\n"
 		if self.triggers:
-			whole_command += "CREATE " + ";$ CREATE ".join(self.triggers) + ";$\n"
+			for trigger in self.triggers:
+				whole_command += "CREATE %s;\n" % (trigger,)
+			whole_command += "\n"
 		if self.owner:
 			whole_command += "ALTER TABLE %s OWNER TO %s;\n" % (self.name, self.owner)
 		if self.grant:
-			whole_command += "\n".join(self.grant)
+			whole_command += "\n".join(self.grant) + "\n"
 		if self.revoke:
-			whole_command += "\n".join(self.revoke)
+			whole_command += "\n".join(self.revoke) + "\n"
 		if self.rule:
-			whole_command += "\n".join(self.rule)
+			whole_command += "\n".join(self.rule) + "\n"
 		return whole_command
 
 class Range(Element):
@@ -476,6 +484,13 @@ class Function(Element):
 class Sequence(Element):
 	def __init__(self, command, name):
 		Element.__init__(self, "Sequence", command, name)
+		self.owned_by = None
+
+	def get_whole_command(self):
+		whole_command = Element.get_whole_command(self)
+		if self.owned_by:
+			whole_command += "ALTER SEQUENCE %s OWNED BY %s;\n\n" % (self.name, self.owned_by)
+		return whole_command
 
 class View(Element):
 	def __init__(self, command, name):
