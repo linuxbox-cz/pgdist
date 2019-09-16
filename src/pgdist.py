@@ -221,9 +221,9 @@ def main():
 		if not args.dbname:
 			args.dbname = config.get_pgdatabase()
 		if not args.host:
-			args.dbname = config.get_pghost()
+			args.host = config.get_pghost()
 		if not args.port:
-			args.dbname = config.get_pgport()
+			args.port = config.get_pgport()
 
 	if args.pg_extractor:
 		pg_extractor = pg_extractor_m.PG_extractor(args.pg_extractor_basedir)

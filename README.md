@@ -106,9 +106,9 @@ Configuration file is located at `/etc/pgdist.conf`.
 installation_path = /usr/share/pgdist/install
 password_path = /etc/lbox/postgresql/roles
 pguser = postgres
-pgdatabase = pg_database
+pgdatabase = postgres
 pghost = localhost
-pgport = 5042
+pgport = 5432
 ```
 
 - `installation_path` - path to version/updates scripts  
