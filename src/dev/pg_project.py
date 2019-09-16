@@ -407,16 +407,17 @@ class Version:
 def to_fname(fname):
 	return re.sub(r"[^-a-zA-Z0-9.]", "_", fname)
 
-def find_directory():
+def find_directory(whole_path=False):
 	d = os.getcwd()
 	dd = 0
 	while d:
 		logging.debug("Search base directory in: %s" % (d, ))
 		if os.path.isdir(os.path.join(d, "sql")) and os.path.isfile(os.path.join(d, "sql", "pg_project.sql")):
+			if whole_path:
+				return os.path.join(d, 'sql')
 			if dd == 0:
 				return ''
-			else:
-				return os.path.join(*([".."]*dd))
+			return os.path.join(*([".."]*dd))
 		d1, x = os.path.split(d)
 		if d1 == d:
 			break
@@ -425,16 +426,13 @@ def find_directory():
 	logging.error("Base directory not found.")
 	sys.exit(1)
 
-def load_files(directory):
+def load_files():
 	files = []
-	for schema_dir in os.listdir(os.path.join(directory, "sql")):
-		if os.path.isdir(os.path.join(directory, "sql", schema_dir)):
-			logging.debug("schema_dir: %s" % (schema_dir,))
-			for type_dir in os.listdir(os.path.join(directory, "sql", schema_dir)):
-				if os.path.isdir(os.path.join(directory, "sql", schema_dir, type_dir)):
-					logging.debug("type_dir: %s" % (type_dir,))
-					for file in os.listdir(os.path.join(directory, "sql", schema_dir, type_dir)):
-						files.append(os.path.join(schema_dir, type_dir, file))
+	directory = find_directory(True)
+	for root, x, files_paths in os.walk(directory):
+		for file_name in files_paths:
+			if os.path.isfile(os.path.join(root, file_name)) and file_name != 'pg_project.sql':
+				files.append(os.path.relpath(os.path.join(root, file_name), directory))
 	files.sort()
 	return files
 
@@ -465,35 +463,36 @@ def create_schema(schema_name):
 	print("Schema %s created." % (schema_name,))
 
 def status():
-	directory = find_directory()
-	project = ProjectFs(directory)
-	files = load_files(directory)
+	absolute_path = find_directory(True)
+	project = ProjectFs(find_directory())
+	files = load_files()
 	logging.debug("Files in project: %s" % (files, ))
 	print("PROJECT: %s" % (project.name))
 	change = False
 	for file in files:
 		if not project.is_file(file):
 			change = True
-			print("NEW FILE: %s" % (file))
+			print("NEW FILE: %s" % (os.path.relpath(os.path.join(absolute_path, file), os.getcwd())))
+
 	for part in project.parts:
 		for file in part.files:
 			if not file in files:
 				change = True
-				print("REMOVED FILE: %s" % (file))
+				print("REMOVED FILE: %s" % (os.path.relpath(os.path.join(absolute_path, file), os.getcwd())))
 	if not change:
 		print("Not found new or removed files")
 
 def add(files, all):
 	directory = find_directory()
 	project = ProjectFs(directory)
-	loaded_files = load_files(directory)
+	loaded_files = load_files()
 	if all:
 		files = list(filter(project.is_not_file, loaded_files))
 	else:
 		files_ok = []
 		for file in files:
 			if project.is_file(file):
-				logging.error("File yet in project: %s" % (file,))
+				logging.error("File already in project: %s" % (file,))
 				continue
 			if file in loaded_files:
 				logging.debug("File %s is ok" % (file,))
@@ -502,7 +501,7 @@ def add(files, all):
 			if os.path.isfile(file):
 				nname = get_normal_fname(file)
 				if project.is_file(nname):
-					logging.error("File yet in project: %s as %s" % (file, nname))
+					logging.error("File already in project: %s as %s" % (file, nname))
 					continue
 				logging.debug("File %s prepare to add as %s" % (file, nname))
 				files_ok.append(get_normal_fname(file))
@@ -524,7 +523,7 @@ def rm(files, all):
 	directory = find_directory()
 	project = ProjectFs(directory)
 	if all:
-		loaded_files = load_files(directory)
+		loaded_files = load_files()
 		files = [f for f in project.get_files() if f not in loaded_files]
 	else:
 		files_ok = []
@@ -532,8 +531,11 @@ def rm(files, all):
 			if os.path.isfile(file):
 				file = get_normal_fname(file)
 			if not project.is_file(file):
-				logging.error("File not in project: %s" % (file,))
-				continue
+				file = os.path.relpath(os.path.join(os.getcwd(), file), os.path.join(directory, 'sql'))
+
+				if not project.is_file(file):
+					logging.error("File not in project: %s" % (file,))
+					continue
 			files_ok.append(file)
 		files = files_ok
 	for file in files:
