@@ -22,12 +22,17 @@ PGdist Devel - develop PostgreSQL project
     status - show new files and removed files compared to pg_project.sql
     add FILE1 [FILE2 ...] - add files to pg_project.sql
     rm FILE1 [FILE2 ...] - removed files from pg_project.sql
+    part-add [not-single-transaction] - add new part with single or not single (if specified) transaction to pg_project.sql
+    part-rm PART_NUMBER - remove part from pg_project.sql, part files are added to previous part, use -f to remove files from pg_project.sql too
 
     test-load - load project to testing postgres
     create-version VERSION [GIT_TAG] - create version files
-    create-update GIT_TAG NEW_VERSION - create update files with differencies
+    create-update GIT_TAG NEW_VERSION [PARTS] - create update files with differencies
                                           - GIT_TAG - old version tag
                                           - NEW_VERSION - new version
+                                          - PARTS - number of parts you want to create
+    part-update-add OLD_VERSION NEW_VERSION [not-single-transaction] - add update part file
+    part-update-rm OLD_VERSION NEW_VERSION PART_NUMBER - delete update part file
     test-update GIT_TAG NEW_VERSION - load old and new version and compare it
                                           - GIT_TAG - old version tag
                                           - NEW_VERSION - new version
@@ -156,7 +161,8 @@ def main():
 		logging.getLogger().addHandler(handler)
 
 	if args.cmd in ("init", "create-schema", "status", "test-load", "create-version", "add", "rm",
-		"create-update", "test-update",
+		"part-add", "part-rm", "create-update", "test-update",
+		"part-update-add", "part-update-rm",
 		"diff-db", "diff-db-file", "diff-file-db",
 		"role-list", "role-add", "role-change", "role-rm",
 		"require-add", "require-rm", "dbparam-set", "dbparam-get",
@@ -232,6 +238,14 @@ def main():
 	elif args.cmd ==  "rm":
 		pg_project.rm(args.args, args.all)
 
+	elif args.cmd == "part-add" and len(args.args) in (0,1):
+		(transaction_type,) = args_parse(args.args, 1)
+		pg_project.part_add(transaction_type)
+
+	elif args.cmd == "part-rm" and len(args.args) in (1,):
+		(number,) = args_parse(args.args, 1)
+		pg_project.part_rm(int(number), args.force)
+
 	elif args.cmd == "test-load" and len(args.args) in (0,):
 		pg_project.test_load(not args.no_clean, args.pre_load, args.post_load, pg_extractor=pg_extractor, no_owner=args.no_owner)
 
@@ -239,10 +253,19 @@ def main():
 		(version, git_tag) = args_parse(args.args, 2)
 		pg_project.create_version(version, git_tag, args.force)
 
-	elif args.cmd == "create-update" and len(args.args) in (2,):
-		(git_tag, new_version) = args_parse(args.args, 2)
+	elif args.cmd == "create-update" and len(args.args) in (2, 3):
+		(git_tag, new_version, part_count) = args_parse(args.args, 3)
 		pg_project.create_update(git_tag, new_version, args.force, args.gitversion, clean=not args.no_clean, pre_load=args.pre_load, post_load=args.post_load,
-			pre_load_old=args.pre_load_old, pre_load_new=args.pre_load_new, post_load_old=args.post_load_old, post_load_new=args.post_load_new)
+			pre_load_old=args.pre_load_old, pre_load_new=args.pre_load_new, post_load_old=args.post_load_old, post_load_new=args.post_load_new,
+			part_count=int(part_count) or 1)
+
+	elif args.cmd == "part-update-add" and len(args.args) in (2, 3):
+		(old_version, new_version, transaction_type) = args_parse(args.args, 3)
+		pg_project.part_update_add(old_version, new_version, transaction_type)
+
+	elif args.cmd == "part-update-rm" and len(args.args) in (3,):
+		(old_version, new_version, number) = args_parse(args.args, 3)
+		pg_project.part_update_rm(old_version, new_version, int(number))
 
 	elif args.cmd == "test-update" and len(args.args) in (2,):
 		(git_tag, new_version) = args_parse(args.args, 1)
