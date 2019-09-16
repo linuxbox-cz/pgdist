@@ -269,7 +269,7 @@ def main():
 		(git_tag, new_version, part_count) = args_parse(args.args, 3)
 		pg_project.create_update(git_tag, new_version, args.force, args.gitversion, clean=not args.no_clean, pre_load=args.pre_load, post_load=args.post_load,
 			pre_load_old=args.pre_load_old, pre_load_new=args.pre_load_new, post_load_old=args.post_load_old, post_load_new=args.post_load_new,
-			part_count=int(part_count) or 1)
+			part_count=part_count or 1)
 
 	elif args.cmd == "part-update-add" and len(args.args) in (2, 3):
 		(old_version, new_version, transaction_type) = args_parse(args.args, 3)

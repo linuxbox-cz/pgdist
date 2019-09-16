@@ -6,6 +6,7 @@ import sys
 import difflib
 
 import color
+import utils
 import config
 import table_print
 
@@ -113,24 +114,34 @@ class Element:
 			print("")
 
 	def drop_info(self):
-		return "-- TODO DROP?\n" + re.sub(r"^", "--", self.command, flags=re.MULTILINE)
+		return "-- TODO: DROP?\n" + re.sub(r"^", "--", self.command, flags=re.MULTILINE)
 
 	def update_element(self, file, element2):
 		change_command = self.command != element2.command
 
+		if not change_command and self.owner == element2.owner:
+			return
+
 		if change_command:
-			file.write("\n-- TODO ALTER OR DROP?\n")
+			file.write("\n")
+			file.write("-- TODO: ALTER OR DROP?\n")
+			file.write("-- %s: %s\n" % (element2.element_name, element2.name))
+			file.write("\n")
 			file.write(re.sub(r"^", "--", self.command, flags=re.MULTILINE))
-			file.write("\n\n")
-			file.write(element2.command)
+			file.write("\n")
+			file.write("\n")
+			file.write(element2.command.strip())
+			file.write("\n")
 			file.write("\n")
 		if self.owner != element2.owner:
 			if not change_command:
-				file.write("\n-- %s: %s\n" % (element2.element_name, element2.name))
+				file.write("\n")
+				file.write("-- %s: %s\n" % (element2.element_name, element2.name))
 			if self.owner:
 				file.write("-- OWNER -%s\n" % (self.owner))
 			if element2.owner:
 				file.write("-- OWNER +%s\n" % (element2.owner))
+		file.write("-- end %s: %s\n" % (element2.element_name, element2.name))
 
 	def get_whole_command(self):
 		whole_command = self.command
@@ -269,14 +280,7 @@ class Project:
 
 		for name in elements2:
 			if name not in elements1:
-				file.write("\n")
-				file.write("--\n")
-				file.write("-- %s\n" % (elements2[name]))
-				file.write("--\n")
-				file.write("\n")
-				file.write(elements2[name].get_whole_command())
-				file.write("\n")
-				file.write(";-- end %s\n" % (elements2[name]))
+				file.write(utils.get_command(elements2[name].get_whole_command(), elements2[name].name, elements2[name].element_name))
 
 		for name in elements1:
 			if name in elements2:
@@ -343,181 +347,82 @@ class Table(Element):
 		columns2 = sorted(table2.columns)
 		if columns1 != columns2:
 			print("%s %s is different:" % (self.element_name, self.name))
-			diff_c = difflib.unified_diff(columns1, columns2, fromfile="removeline542358", tofile="removeline542358")
-			for d in diff_c:
-				if "removeline542358" in d:
-					pass
-				elif d.startswith("-"):
-					print("\t"+color.red(d))
-				elif d.startswith("+"):
-					print("\t"+color.green(d))
-			print("")
+			print(utils.diff(columnes1, columns2, "\t", True))
 
 		self.constraints.sort()
 		table2.constraints.sort()
 		if self.constraints != table2.constraints:
 			print("%s %s have different constraints:" % (self.element_name, self.name))
-			diff_c = difflib.unified_diff(self.constraints, table2.constraints, fromfile="removeline542358", tofile="removeline542358")
-			for d in diff_c:
-				if "removeline542358" in d:
-					pass
-				elif d.startswith("-"):
-					print("\t"+color.red(d))
-				elif d.startswith("+"):
-					print("\t"+color.green(d))
-			print("")
+			print(utils.diff(self.constraints, table2.constraints, "\t", True))
 
 		self.defaults.sort()
 		table2.defaults.sort()
 		if self.defaults != table2.defaults:
 			print("%s %s have different defaults:" % (self.element_name, self.name))
-			diff_c = difflib.unified_diff(self.defaults, table2.defaults, fromfile="removeline542358", tofile="removeline542358")
-			for d in diff_c:
-				if "removeline542358" in d:
-					pass
-				elif d.startswith("-"):
-					print("\t"+color.red(d))
-				elif d.startswith("+"):
-					print("\t"+color.green(d))
-			print("")
+			print(utils.diff(self.defaults, table2.defaults, "\t", True))
 
 		self.indexes.sort()
 		table2.indexes.sort()
 		if self.indexes != table2.indexes:
 			print("%s %s have different indexes:" % (self.element_name, self.name))
-			diff_c = difflib.unified_diff(self.indexes, table2.indexes, fromfile="removeline542358", tofile="removeline542358")
-			for d in diff_c:
-				if "removeline542358" in d:
-					pass
-				elif d.startswith("-"):
-					print("\t"+color.red(d))
-				elif d.startswith("+"):
-					print("\t"+color.green(d))
-			print("")
+			print(utils.diff(self.indexes, table2.indexes, "\t", True))
 
 		self.triggers.sort()
 		table2.triggers.sort()
 		if self.triggers != table2.triggers:
 			print("%s %s have different triggers:" % (self.element_name, self.name))
-			diff_c = difflib.unified_diff(self.triggers, table2.triggers, fromfile="removeline542358", tofile="removeline542358")
-			for d in diff_c:
-				if "removeline542358" in d:
-					pass
-				elif d.startswith("-"):
-					print("\t"+color.red(d))
-				elif d.startswith("+"):
-					print("\t"+color.green(d))
-			print("")
-
+			print(utils.diff(self.triggers, table2.triggers, "\t", True))
 
 		self.columns_comment.sort()
 		table2.columns_comment.sort()
 		if self.columns_comment != table2.columns_comment:
 			print("%s %s have different columns comment:" % (self.element_name, self.name))
-			diff_c = difflib.unified_diff(self.columns_comment, table2.columns_comment, fromfile="removeline542358", tofile="removeline542358")
-			for d in diff_c:
-				if "removeline542358" in d:
-					pass
-				elif d.startswith("-"):
-					print("\t"+color.red(d))
-				elif d.startswith("+"):
-					print("\t"+color.green(d))
-			print("")
+			print(utils.diff(self.columns_comment, table2.columns_comment, "\t", True))
 
 		self.columns_conf.sort()
 		table2.columns_conf.sort()
 		if self.columns_conf != table2.columns_conf:
 			print("%s %s have different columns conf:" % (self.element_name, self.name))
-			diff_c = difflib.unified_diff(self.columns_conf, table2.columns_conf, fromfile="removeline542358", tofile="removeline542358")
-			for d in diff_c:
-				if "removeline542358" in d:
-					pass
-				elif d.startswith("-"):
-					print("\t"+color.red(d))
-				elif d.startswith("+"):
-					print("\t"+color.green(d))
-			print("")
+			print(utils.diff(self.columns_conf, table2.columns_conf, "\t", True))
 
 	def update_element(self, file, table2):
 		if self.command == table2.command and self.owner == table2.owner:
 			return
-		file.write("\n-- TODO ALTER TABLE %s\n" % (self.name,))
+
+		file.write("\n")
+		file.write("-- TODO: ALTER TABLE?\n")
+		file.write("-- %s: %s\n" % (table2.element_name, table2.name))
+		file.write("\n")
+
 		columns1 = sorted(self.columns)
 		columns2 = sorted(table2.columns)
 		if columns1 != columns2:
-			diff_c = difflib.unified_diff(columns1, columns2, fromfile="removeline542358", tofile="removeline542358")
-			for d in diff_c:
-				if "removeline542358" in d:
-					pass
-				elif d.startswith("-"):
-					file.write("-- %s\n" % (d))
-				elif d.startswith("+"):
-					file.write("-- %s\n" % (d))
-			file.write("\n")
+			file.write(utils.diff(columns1, columns2))
 
 		self.constraints.sort()
 		table2.constraints.sort()
 		if self.constraints != table2.constraints:
-			diff_c = difflib.unified_diff(self.constraints, table2.constraints, fromfile="removeline542358", tofile="removeline542358")
-			for d in diff_c:
-				if "removeline542358" in d:
-					pass
-				elif d.startswith("-"):
-					file.write("-- %s\n" % (d))
-				elif d.startswith("+"):
-					file.write("-- %s\n" % (d))
-			file.write("\n")
+			file.write(utils.diff(self.constraints, table2.constraints))
 
 		self.defaults.sort()
 		table2.defaults.sort()
 		if self.defaults != table2.defaults:
-			diff_c = difflib.unified_diff(self.defaults, table2.defaults, fromfile="removeline542358", tofile="removeline542358")
-			for d in diff_c:
-				if "removeline542358" in d:
-					pass
-				elif d.startswith("-"):
-					file.write("-- %s\n" % (d))
-				elif d.startswith("+"):
-					file.write("-- %s\n" % (d))
-			file.write("\n")
+			file.write(utils.diff(self.defaults, table2.defaults))
 
 		self.indexes.sort()
 		table2.indexes.sort()
 		if self.indexes != table2.indexes:
-			diff_c = difflib.unified_diff(self.indexes, table2.indexes, fromfile="removeline542358", tofile="removeline542358")
-			for d in diff_c:
-				if "removeline542358" in d:
-					pass
-				elif d.startswith("-"):
-					file.write("-- %s\n" % (d))
-				elif d.startswith("+"):
-					file.write("-- %s\n" % (d))
-			file.write("\n")
+			file.write(utils.diff(self.indexes, table2.indexes))
 
 		self.triggers.sort()
 		table2.triggers.sort()
 		if self.triggers != table2.triggers:
-			diff_c = difflib.unified_diff(self.triggers, table2.triggers, fromfile="removeline542358", tofile="removeline542358")
-			for d in diff_c:
-				if "removeline542358" in d:
-					pass
-				elif d.startswith("-"):
-					file.write("-- %s\n" % (d))
-				elif d.startswith("+"):
-					file.write("-- %s\n" % (d))
-			file.write("\n")
+			file.write(utils.diff(self.triggers, table2.triggers))
 
 		if self.owner != table2.owner:
-			diff_c = difflib.unified_diff([self.owner or ""], [table2.owner or ""], fromfile="removeline542358", tofile="removeline542358")
-			for d in diff_c:
-				if "removeline542358" in d:
-					pass
-				elif d.startswith("-"):
-					file.write("-- OWNER %s\n" % (d))
-				elif d.startswith("+"):
-					file.write("-- OWNER %s\n" % (d))
-			file.write("\n")
-		file.write("-- end %s\n" % (self.name,))
+			file.write(utils.diff([self.owner or ""], [table2.owner or ""], "-- OWNER "))
+
+		file.write("-- end %s: %s\n" % (table2.element_name, table2.name))
 
 	def get_whole_command(self):
 		whole_command = self.command
@@ -549,39 +454,24 @@ class Function(Element):
 		self.parsed_args = parsed_args
 
 	def update_element(self, file, element2):
-		change_command = False
-		change_owner = False
+		change_command = self.command != element2.command
+		change_owner = self.owner != element2.owner
 
-		if self.command != element2.command:
-			change_command = True
-		if self.owner != element2.owner:
-			change_owner = True
-
-		if change_command or change_owner:
-			file.write("\n")
-			file.write("--\n")
-			file.write("-- %s\n" % (element2.name))
-			file.write("--\n")
-			file.write("\n")
+		if not change_command and not change_owner:
+			return
 
 		if change_command:
-			file.write("\n")
 			command = re.sub("^CREATE FUNCTION", "CREATE OR REPLACE FUNCTION", element2.command)
-			file.write(command)
-			file.write("\n")
+		else:
+			command = ""
 
 		if change_owner and element2.owner:
-			file.write("\n")
-			file.write("ALTER FUNCTION %s(%s) OWNER TO %s;" % (self.fname, ", ".join(self.parsed_args), element2.owner))
-			file.write("\n")
+			command += "ALTER FUNCTION %s(%s) OWNER TO %s;\n" % (self.fname, ", ".join(self.parsed_args), element2.owner)
 
-		if change_command or change_owner:
-			file.write("\n")
-			file.write(";-- end %s\n" % (element2.name))
-			file.write("\n")
+		file.write(utils.get_command(command, element2.name, element2.element_name))
 
 	def drop_info(self):
-		return "DROP FUNCTION %s(%s);" % (self.fname, ", ".join(self.parsed_args))
+		return "\nDROP FUNCTION %s(%s);\n" % (self.fname, ", ".join(self.parsed_args))
 
 class Sequence(Element):
 	def __init__(self, command, name):
@@ -594,4 +484,3 @@ class View(Element):
 class Operator(Element):
 	def __init__(self, command, name, leftarg, rightarg):
 		Element.__init__(self, "Operator", command, name+"("+leftarg+","+rightarg+")")
-
