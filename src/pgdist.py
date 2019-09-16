@@ -199,7 +199,13 @@ def main():
 		config.load(args.config)
 
 		if not args.user:
-			args.user = config.get_db_user()
+			args.user = config.get_pguser()
+		if not args.dbname:
+			args.dbname = config.get_pgdatabase()
+		if not args.host:
+			args.dbname = config.get_pghost()
+		if not args.port:
+			args.dbname = config.get_pgport()
 
 	if args.pg_extractor:
 		pg_extractor = pg_extractor_m.PG_extractor(args.pg_extractor_basedir)
