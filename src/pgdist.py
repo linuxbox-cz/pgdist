@@ -398,4 +398,8 @@ def close_less(pager):
 def args_parse(args, n):
 	return args + [None] * (n - len(args))
 
-main()
+if __name__ == "__main__":
+	try:
+		main()
+	except KeyboardInterrupt, e:
+		pass
