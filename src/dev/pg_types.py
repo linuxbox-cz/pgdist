@@ -347,7 +347,7 @@ class Table(Element):
 		columns2 = sorted(table2.columns)
 		if columns1 != columns2:
 			print("%s %s is different:" % (self.element_name, self.name))
-			print(utils.diff(columnes1, columns2, "\t", True))
+			print(utils.diff(columns1, columns2, "\t", True))
 
 		self.constraints.sort()
 		table2.constraints.sort()

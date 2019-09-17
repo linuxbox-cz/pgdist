@@ -181,12 +181,19 @@ class PG:
 			logging.verbose("load file: %s" % (filename,))
 			self.psql(single_transaction=True, file=filename, change_db=True)
 
-	def load_data(self, table_data):
-		for table in table_data:
+	def load_data(self, project, table_data):
+		for table in project.table_data:
 			csv_data = io.BytesIO()
 			writer = csv.writer(csv_data, delimiter=";".encode("utf8"))
-			writer.writerows(table_data[table][1:])
-			self.psql(cmd="COPY %s FROM STDIN WITH(FORMAT CSV, DELIMITER E';', NULL 'NULL@15#7&679');\n%s" % (table, csv_data.getvalue()), change_db=True)
+			for row in table_data[table.table_name][1:]:
+				r = []
+				for v in row:
+					if v is None:
+						r.append("NULL@15#7&679")
+					else:
+						r.append(v)
+				writer.writerow(r)
+			self.psql(cmd="COPY %s FROM STDIN WITH(FORMAT CSV, DELIMITER E';', NULL 'NULL@15#7&679');\n%s" % (table.table_name, csv_data.getvalue()), change_db=True)
 
 	def dump_data(self, project, cache=False):
 		if cache and self.test_cache_file("data"):

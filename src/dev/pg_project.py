@@ -143,7 +143,6 @@ class ProjectBase:
 					self.table_data.append(TableData(x.group("table_name"), x.group("columns").split(",")))
 				else:
 					self.table_data.append(TableData(x.group("table_name")))
-				self.table_data.sort()
 				continue
 			# part data
 			# import file
@@ -653,7 +652,8 @@ def load_dump_and_dump(dump_remote, project, table_data=None, clean=True, no_own
 		pg.load_file(pre_load)
 		print("load dump to test pg", file=sys.stderr)
 		pg.load_dump(dump_remote)
-		pg.load_data(table_data)
+		if project:
+			pg.load_data(project, table_data)
 		pg.load_file(post_load)
 		print("dump structure and data from test pg", file=sys.stderr)
 		dump = pg.dump(no_owner, no_acl)
@@ -942,7 +942,7 @@ def diff_pg_file(addr, fname, diff_raw, clean, no_owner, no_acl, pre_load=None, 
 	roles_remote = get_roles(addr, cache)
 	sql_remote = dump_remote(addr, no_owner, no_acl, cache)
 	create_roles(roles_remote)
-	dump_r, x = load_dump_and_dump(sql_remote, None, clean, no_owner, no_acl, pre_load=pre_remoted_load, post_load=post_remoted_load, dbs="remote", pg_extractor=pg_extractor, project_name="project")
+	dump_r, x = load_dump_and_dump(sql_remote, None, None, clean, no_owner, no_acl, pre_load=pre_remoted_load, post_load=post_remoted_load, dbs="remote", pg_extractor=pg_extractor, project_name="project")
 
 	dump_file = load_file_and_dump(fname, "project", clean, no_owner, no_acl, pre_load=pre_load, post_load=post_load, dbs="file", pg_extractor=pg_extractor)
 
