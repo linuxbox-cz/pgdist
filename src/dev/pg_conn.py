@@ -194,7 +194,11 @@ class PG:
 					else:
 						r.append(v)
 				writer.writerow(r)
-			self.psql(cmd="COPY %s (%s) FROM STDIN WITH(FORMAT CSV, DELIMITER E';', NULL 'NULL@15#7&679');\n%s" % (table.table_name, ", ".join(table_data[table.table_name][0]), csv_data.getvalue()), change_db=True)
+			if table_data[table.table_name][0]:
+				columns = ", ".join(table_data[table.table_name][0])
+			else:
+				columns = ""
+			self.psql(cmd="COPY %s (%s) FROM STDIN WITH(FORMAT CSV, DELIMITER E';', NULL 'NULL@15#7&679');\n%s" % (table.table_name, columns, csv_data.getvalue()), change_db=True)
 
 	def dump_data(self, project, cache=False):
 		if cache and self.test_cache_file("data"):
