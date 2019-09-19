@@ -169,16 +169,19 @@ def get_history(conninfo, project_name, dbname):
 	history = []
 	conn = connect(conninfo, dbname)
 	cursor = conn.cursor()
-	pgdist_install(None, conn)
-	logging.verbose("getting history from db: %s" % (dbname))
+	history = []
 
-	if project_name:
-		cursor.execute("SELECT project, ts::TEXT, version, part::TEXT, comment FROM pgdist.history WHERE project = %s ORDER BY ts ASC;", (project_name,))
-	else:
-		cursor.execute("SELECT project, ts::TEXT, version, part::TEXT, comment FROM pgdist.history ORDER BY ts ASC;")
+	if check_pgdist_installed(conn):
+		logging.verbose("getting history from db: %s" % (dbname))
 
-	for row in cursor.fetchall():
-		history.append([dbname] + row)
+		if project_name:
+			cursor.execute("SELECT project, ts::TEXT, version, part::TEXT, comment FROM pgdist.history WHERE project = %s ORDER BY ts ASC;", (project_name,))
+		else:
+			cursor.execute("SELECT project, ts::TEXT, version, part::TEXT, comment FROM pgdist.history ORDER BY ts ASC;")
+
+		for row in cursor.fetchall():
+			history.append([dbname] + row)
+	conn.close()
 	return history
 
 def installed_history(project_name, dbname, conninfo):
@@ -229,8 +232,7 @@ def pgdist_update(dbname, conninfo):
 	for db in dbs:
 		conn = connect(conninfo, db)
 		cursor = conn.cursor()
-		if check_pgdist_installed(conn):
-			pgdist_install(db, conn)
+		pgdist_install(db, conn)
 		conn.close()
 
 def update_password(role_name, cursor):
@@ -321,7 +323,7 @@ def update(dbname, project, update, conninfo, directory):
 				pg_project.install(require, dbname, None, conninfo, directory, False, True)
 	for part in update.parts:
 		for role in part.roles:
-			create_role(conn, role, project.name, update.version, part.part)
+			create_role(conn, role, project.name, update.version_new, part.part)
 	for part in update.parts:
 		if len(update.parts) == 1:
 			print("Update %s in %s %s > %s" % (project.name, dbname, str(update.version_old), str(update.version_new)))

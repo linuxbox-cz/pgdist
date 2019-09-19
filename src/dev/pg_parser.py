@@ -388,7 +388,13 @@ def parse(dump_stream):
 
 			x = re.match(r"CREATE (?P<index>(UNIQUE)?\s?INDEX (?P<name>\S+)?\s?ON (?P<table_name>\S+).*);$", command)
 			if x:
-				project.tables[schema(set_schema, x.group('table_name'))].indexes.append(x.group('index'))
+				table_name = schema(set_schema, x.group('table_name'))
+				index = x.group('index')
+
+				if table_name not in index:
+					index = re.sub(r"ON\s+" + x.group('table_name'), "ON " + table_name, index, 1)
+
+				project.tables[table_name].indexes.append(index)
 				continue
 
 			x = re.match(r"CREATE (?P<trigger>TRIGGER (?P<name>\S+) .* ON (?P<table_name>\S+) .*);$", command)

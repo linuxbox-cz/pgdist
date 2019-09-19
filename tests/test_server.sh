@@ -19,8 +19,9 @@ psql -U postgres -d pgdist_test_database -c "SELECT * FROM pgdist_test_schema.te
 log_pgdist "list"
 python "${PATH_PGDIST_SRC}/pgdist.py" list -c $PATH_CONFIG_MNG
 
-log_pgdist "diff-db ${PGCONN}pgdist_test_database"
-python "${PATH_PGDIST_SRC}/pgdist.py" diff-db "${PGCONN}pgdist_test_database" -c $PATH_CONFIG_DEV
+PGCONN="postgres@/pgdist_test_database"
+log_pgdist "diff-db ${PGCONN}"
+python "${PATH_PGDIST_SRC}/pgdist.py" diff-db $PGCONN -c $PATH_CONFIG_DEV
 
 #update db project
 log_pgdist "check-update pgdist_test_project pgdist_test_database"
@@ -38,7 +39,6 @@ if [ "$GIT_RUN" = true ]; then
 fi
 
 #test diff-db/db-file/file-db
-PGCONN="root@v3a//postgres@/lbadmin"
 log_pgdist "diff-db ${PGCONN}"
 python "${PATH_PGDIST_SRC}/pgdist.py" diff-db $PGCONN -c $PATH_CONFIG_DEV
 

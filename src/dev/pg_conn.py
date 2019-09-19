@@ -56,6 +56,7 @@ class PG:
 			args.append(file)
 		if c == "pg_dump":
 			args.append("--schema-only")
+			args.append("--exclude-schema=pgdist")
 		if no_owner:
 			args.append("--no-owner")
 		if no_acl:
@@ -193,7 +194,7 @@ class PG:
 					else:
 						r.append(v)
 				writer.writerow(r)
-			self.psql(cmd="COPY %s FROM STDIN WITH(FORMAT CSV, DELIMITER E';', NULL 'NULL@15#7&679');\n%s" % (table.table_name, csv_data.getvalue()), change_db=True)
+			self.psql(cmd="COPY %s (%s) FROM STDIN WITH(FORMAT CSV, DELIMITER E';', NULL 'NULL@15#7&679');\n%s" % (table.table_name, ", ".join(table_data[table.table_name][0]), csv_data.getvalue()), change_db=True)
 
 	def dump_data(self, project, cache=False):
 		if cache and self.test_cache_file("data"):
