@@ -390,10 +390,8 @@ def parse(dump_stream):
 			if x:
 				table_name = schema(set_schema, x.group('table_name'))
 				index = x.group('index')
-
 				if table_name not in index:
 					index = re.sub(r"ON\s+" + x.group('table_name'), "ON " + table_name, index, 1)
-
 				project.tables[table_name].indexes.append(index)
 				continue
 
@@ -431,7 +429,11 @@ def parse(dump_stream):
 
 			x = re.match(r"ALTER SEQUENCE (?P<name>\S+) OWNED BY (?P<table_column>\S+);$", command)
 			if x:
-				project.sequences[schema(set_schema, x.group('name'))].owned_by = x.group('table_column')
+				table_column = x.group('table_column')
+				y = re.match(r"\w+\.\w+\.", table_column)
+				if not y:
+					table_column = "%s.%s" % (set_schema, x.group('table_column'))
+				project.sequences[schema(set_schema, x.group('name'))].owned_by = table_column
 				continue
 
 			# VIEW

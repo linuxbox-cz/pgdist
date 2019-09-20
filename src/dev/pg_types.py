@@ -490,7 +490,7 @@ class Sequence(Element):
 	def get_whole_command(self):
 		whole_command = Element.get_whole_command(self)
 		if self.owned_by:
-			whole_command += "ALTER SEQUENCE %s OWNED BY %s.%s;\n\n" % (self.name, self.schema, self.owned_by)
+			whole_command += "ALTER SEQUENCE %s OWNED BY %s;\n\n" % (self.name, self.owned_by)
 		return whole_command
 
 class View(Element):

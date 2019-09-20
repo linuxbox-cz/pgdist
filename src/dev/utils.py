@@ -50,7 +50,7 @@ def get_part_header(parts, header_type):
 				part_string += "-- not single_transaction\n"
 			if part.data:
 				part_string += "\n"
-				part_string += "%s\n" % (part.data.strip())
+				part_string += "%s" % (part.data)
 	else:
 		for part in parts:
 			part_string += "-- part: %s\n" % (part.number)
