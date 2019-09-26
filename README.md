@@ -28,7 +28,7 @@
 
 	* [Compare projects](#compare-projects)
 
-## <a id="description"></a> Description [▲](#content)
+## <a name="description"></a> Description [▲](#content)
 Let me introduce our project PGdist, used for postgres projects management from development to production.
 URL: https://github.com/linuxbox-cz/pgdist
 
