@@ -2,7 +2,7 @@
 
 ## Content
 
-* [Description](README.md#description)
+* [Description](#description)
 
 	* [Develop config file](#develop-config-file)
 
