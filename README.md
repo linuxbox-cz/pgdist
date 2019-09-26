@@ -2,34 +2,33 @@
 
 ## Content
 
-* [Description](#description-▲)
+* [Description](#description)
 
-	* [Develop config file](#develop-config-file-▲)
+	* [Develop config file](#develop-config-file)
 
-		* [PGCONN](#pgconn-▲)
+		* [PGCONN](#pgconn)
 
-	* [Distribution config file](#distribution-config-file-▲)
+	* [Distribution config file](#distribution-config-file)
 
-* [Tutorial](#tutorial-▲)
+* [Tutorial](#tutorial)
 
-	* [Create project](#create-project-▲)
+	* [Create project](#create-project)
 
-	* [Roles](#roles-▲)
+	* [Roles](#roles)
 
-	* [File management](#file-management-▲)
+	* [File management](#file-management)
 
-	* [Requires](#requires-▲)
+	* [Requires](#requires)
 
-	* [DB parameters](#db-parameters-▲)
+	* [DB parameters](#db-parameters)
 
-	* [Versions](#versions-▲)
+	* [Versions](#versions)
 
-	* [Project distribution](#project-distribution-▲)
+	* [Project distribution](#project-distribution)
 
-	* [Compare projects](#compare-projects-▲)
+	* [Compare projects](#compare-projects)
 
-## Description [▲](#content)
-
+## <a name="description"></a> Description [▲](#content)
 Let me introduce our project PGdist, used for postgres projects management from development to production.
 URL: https://github.com/linuxbox-cz/pgdist
 
@@ -59,7 +58,7 @@ PGdist also requires a little bit of **DIY - do it yourself**.
 
 **Distribution part** - It is for usage on production server.
 
-### Develop config file [▲](#content)
+### <a name="develop-config-file"></a> Develop config file [▲](#content)
 
 Configuration file is located at `~/.pgdist`.
 
@@ -70,7 +69,7 @@ test_db: pgdist@sqltest/postgres
 
 - `test_db` - PG connection to testing postgres database.
 
-#### PGCONN [▲](#content)
+#### <a name="pgconn"></a> PGCONN [▲](#content)
 
 It defines ssh connection (**not required**) + connection URI.  
 Please use connection URI **without** `postgresql://` string.  
@@ -97,7 +96,7 @@ Below PGCONN will define ssh connection to *my_server* with user *root*, then op
 root@my_server//postgres:PASSWORD@localhost:5042/test_database?connection_timetout=10
 ```
 
-### Distribution config file [▲](#content)
+### <a name="distribution-config-file"></a> Distribution config file [▲](#content)
 
 Configuration file is located at `/etc/pgdist.conf`.
 
@@ -125,9 +124,9 @@ pgport = 5432
 
 
 
-## Tutorial [▲](#content)
+## <a name="tutorial"></a> Tutorial [▲](#content)
 
-### Create project [▲](#content)
+### <a name="create-project"></a> Create project [▲](#content)
 
 #### Init your project with:
 
@@ -215,7 +214,7 @@ Source SQL files are in `sql/your_schema` folder.
 
 
 
-### Roles [▲](#content)
+### <a name="roles"></a> Roles [▲](#content)
 
 #### Add role to project:
 
@@ -275,7 +274,7 @@ Before PGdist installs project into the databse, it will check if roles defined 
 
 
 
-### File management [▲](#content)
+### <a name="file-management"></a> File management [▲](#content)
 
 #### Add file to project:
 
@@ -363,7 +362,7 @@ pgdist part-rm 2
 
 
 
-### Requires [▲](#content)
+### <a name="requires"></a> Requires [▲](#content)
 
 #### Add require to project:
 
@@ -398,7 +397,7 @@ pgdist require-rm My_Other_Project
 
 
 
-### DB parameters [▲](#content)
+### <a name="db-parameters"></a> DB parameters [▲](#content)
 
 #### Set DB-parameters:
 
@@ -422,7 +421,7 @@ pgdist dbparam-get
 
 
 
-### Versions [▲](#content)
+### <a name="versions"></a> Versions [▲](#content)
 
 #### Test load:
 
@@ -635,7 +634,7 @@ pgdist test-update v1.0.0 1.0.1
 
 
 
-### Project distribution [▲](#content)
+### <a name="project-distribution"></a> Project distribution [▲](#content)
 
 **NOTICE** - Do not forget to correctly set up [distribution configuration file](#distribution-config-file-▲).
 
@@ -829,7 +828,7 @@ pgdist clean My_Project [pg_database]
 
 
 
-### Compare projects [▲](#content)
+### <a name="compare-projects"></a> Compare projects [▲](#content)
 
 Let´s say you´ve installed some version of your project to your servers. Now you made a lot of changes in your project and you want to see the difference.  
 
