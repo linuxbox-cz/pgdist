@@ -70,6 +70,8 @@ class PG:
 			for arg in args:
 				ssh_args.append("'%s'" % (arg.replace("\\", "\\\\").replace("'", "\\'"),))
 			args = ["ssh"]
+			if self.address.ssh_port:
+				args += ["-p", self.address.ssh_port]
 			args.append(self.address.ssh)
 			args.append(" ".join(ssh_args))
 		logging.verbose("run: %s" % (" ".join(args),))
@@ -160,7 +162,7 @@ class PG:
 
 	def load_update(self, update):
 		for part in update.parts:
-			logging.verbose("load update %s" % (part,))
+			logging.verbose("load update %s" % (part.fname,))
 			self.psql(single_transaction=part.single_transaction, file=part.fname, change_db=True)
 
 	def load_dump(self, dump):

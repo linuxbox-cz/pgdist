@@ -651,7 +651,7 @@ def load_dump_and_dump(dump_remote, project, table_data=None, clean=True, no_own
 		pg.load_file(pre_load)
 		print("load dump to test pg", file=sys.stderr)
 		pg.load_dump(dump_remote)
-		if project:
+		if project and table_data:
 			pg.load_data(project, table_data)
 		pg.load_file(post_load)
 		print("dump structure and data from test pg", file=sys.stderr)

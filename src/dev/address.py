@@ -8,9 +8,13 @@ class Address:
 	def __init__(self, addr):
 		self.addr = addr
 		self.ssh = None
+		self.ssh_port = None
 		self.pg = None
 		if '//' in addr:
 			self.ssh, self.pg = addr.split("//",1)
+
+			if ":" in self.ssh:
+				self.ssh, self.ssh_port = self.ssh.split(":")
 		else:
 			self.pg = addr
 
