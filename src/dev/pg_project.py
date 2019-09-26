@@ -37,7 +37,6 @@ class Part:
 	def rm_file(self, fname):
 		self.files.remove(fname)
 		self.data = "\n".join(filter(lambda x: not re.match(r"\\ir\s+%s($|\s)" % (fname,), x), self.data.splitlines()))
-		self.data = self.data.strip() + "\n"
 
 class Role:
 	def __init__(self, name, param=None):

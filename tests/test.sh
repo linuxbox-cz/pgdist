@@ -76,6 +76,7 @@ clean_up() {
     rm -fv --preserve-root --one-file-system $PATH_CONFIG_DEV
     rm -fv --preserve-root --one-file-system $PATH_CONFIG_MNG
     psql -U postgres -c "DROP DATABASE IF EXISTS pgdist_test_database;"
+    psql -U postgres -c "DROP DATABASE IF EXISTS pgdist_test;"
     psql -U postgres -c "DROP ROLE IF EXISTS pgdist_test_role_1;"
     psql -U postgres -c "DROP ROLE IF EXISTS pgdist_test_role_2;"
     log "cleaning up finished"
@@ -124,8 +125,8 @@ cd $PATH_TEST
 log "echo '[pgdist]' >> ${CONFIG_FILE_DEV}"
 echo "[pgdist]" >> $CONFIG_FILE_DEV
 
-log "echo 'test_db: postgres@/pgdist' >> ${CONFIG_FILE_DEV}"
-echo "test_db: postgres@/pgdist" >> $CONFIG_FILE_DEV
+log "echo 'test_db: postgres@/pgdist_test' >> ${CONFIG_FILE_DEV}"
+echo "test_db: postgres@/pgdist_test" >> $CONFIG_FILE_DEV
 
 #config 2
 log "echo '[pgdist]' >> ${CONFIG_FILE_MNG}"
@@ -135,7 +136,13 @@ log "echo 'install_path: ${PATH_TEST}/install' >> ${CONFIG_FILE_MNG}"
 echo "install_path: ${PATH_PGDIST_INSTALL}" >> $CONFIG_FILE_MNG
 
 log "echo 'db_user: postgres' >> ${CONFIG_FILE_MNG}"
-echo "db_user: postgres" >> $CONFIG_FILE_MNG
+echo "pguser: postgres" >> $CONFIG_FILE_MNG
+
+DB_TEST=$(psql -U postgres -tA -c "SELECT datname FROM pg_database WHERE datname = 'pgdist_test'")
+
+if [ "$DB_TEST" != "pgdist_test" ]; then
+	psql -U postgres -c "CREATE DATABASE pgdist_test"
+fi
 
 #create pgdist schema if not exists
 log "psql -c 'CREATE SCHEMA IF NOT EXISTS pgdist' -U postgres"

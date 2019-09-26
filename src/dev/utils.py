@@ -51,8 +51,6 @@ def get_part_header(parts, header_type):
 			if part.data:
 				part_string += "\n"
 				part_string += "%s" % (part.data)
-				#if i != len(parts) - 1:
-				#	part_string += "\n"
 	else:
 		for part in parts:
 			part_string += "-- part: %s\n" % (part.number)
