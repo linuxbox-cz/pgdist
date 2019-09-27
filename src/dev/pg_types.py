@@ -29,7 +29,7 @@ class Element:
 				self.schema, ws_name = splitted
 			else:
 				self.schema = splitted[0]
-			if config.get_pg_version() < 10 and not config.git_diff and ws_name:
+			if config.can_add_schema() and not config.git_diff and ws_name:
 				self.command = re.sub(re.escape(ws_name), name, command, 1)
 			else:
 				self.command = command
