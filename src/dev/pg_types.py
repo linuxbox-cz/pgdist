@@ -19,7 +19,7 @@ def rmln(s):
 	return s
 
 class Element:
-	def __init__(self, element_name, command=None, name=None, c_sub=True):
+	def __init__(self, element_name, command=None, name=None):
 		self.element_name = element_name
 		self.name = name
 		if "." in self.name:
@@ -29,7 +29,7 @@ class Element:
 				self.schema, ws_name = splitted
 			else:
 				self.schema = splitted[0]
-			if config.get_pg_version() < 10 and not config.git_diff and ws_name and c_sub:
+			if config.can_add_schema() and not config.git_diff and ws_name:
 				self.command = re.sub(re.escape(ws_name), name, command, 1)
 			else:
 				self.command = command
@@ -333,8 +333,8 @@ class Type(Element):
 		self.attributes = attributes
 
 class Table(Element):
-	def __init__(self, command, name, columns, c_sub=True):
-		Element.__init__(self, "Table", command, name, c_sub=c_sub)
+	def __init__(self, command, name, columns):
+		Element.__init__(self, "Table", command, name)
 		self.columns = columns
 		self.defaults = []
 		self.indexes = []
@@ -483,8 +483,8 @@ class Function(Element):
 		return "\nDROP FUNCTION %s(%s);\n" % (self.fname, ", ".join(self.parsed_args))
 
 class Sequence(Element):
-	def __init__(self, command, name, c_sub=True):
-		Element.__init__(self, "Sequence", command, name, c_sub=c_sub)
+	def __init__(self, command, name):
+		Element.__init__(self, "Sequence", command, name)
 		self.owned_by = None
 
 	def get_whole_command(self):

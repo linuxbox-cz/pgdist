@@ -353,7 +353,7 @@ def parse(dump_stream):
 						columns.append(y.group('column'))
 						continue
 					print('ERROR: ' + command)
-				project.tables[schema(set_schema, x.group('name'))] = Table(command, schema(set_schema, x.group('name')), columns, c_sub="." not in x.group('name'))
+				project.tables[schema(set_schema, x.group('name'))] = Table(command, schema(set_schema, x.group('name')), columns)
 				continue
 
 			x = re.match(r"ALTER( FOREIGN)? TABLE (?P<name>\S+) OWNER TO (?P<new_owner>\S+);$", command)
@@ -419,7 +419,7 @@ def parse(dump_stream):
 
 			x = re.match(r"CREATE SEQUENCE (?P<name>\S+)", command)
 			if x:
-				project.sequences[schema(set_schema, x.group('name'))] = Sequence(command, schema(set_schema, x.group('name')), c_sub="." not in x.group('name'))
+				project.sequences[schema(set_schema, x.group('name'))] = Sequence(command, schema(set_schema, x.group('name')))
 				continue
 
 			x = re.match(r"ALTER SEQUENCE (?P<name>\S+) OWNER TO (?P<new_owner>\S+);$", command)
