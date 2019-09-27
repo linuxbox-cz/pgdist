@@ -7,6 +7,7 @@ class ConnInfo:
 		self.host = args.host
 		self.port = args.port
 		self.user = args.user
+		self.password = args.password
 
 	def dsn(self, dbname=None):
 		d = ""
@@ -23,5 +24,8 @@ class ConnInfo:
 
 		if self.user:
 			d += "user=%s " % (self.user,)
+
+		if self.password:
+			d += "password=%s " % (self.password)
 
 		return d

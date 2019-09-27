@@ -139,6 +139,7 @@ def main():
 	parser.add_argument("-h", "--host", dest="host", help="Specifies the host name of the machine on which the server is running.")
 	parser.add_argument("-p", "--port", dest="port", help="Specifies the TCP port or the local Unix-domain socket file.")
 	parser.add_argument("-U", "--username", dest="user", help="Connect to the database as the user username.")
+	parser.add_argument("-P", "--password", dest="password", help="Specifies the password of the user for pg connection")
 	parser.add_argument("-C", "--create", dest="create", help="Create the database.", action="store_true")
 	parser.add_argument("--directory", help="directory contains script install and update")
 	parser.add_argument("--syslog-facility", dest="syslog_facility", help="syslog facility")
@@ -224,6 +225,9 @@ def main():
 			args.host = config.get_pghost()
 		if not args.port:
 			args.port = config.get_pgport()
+		if args.password:
+			os.putenv("PGPASSWORD", args.password)
+			os.environ["PGPASSWORD"] = args.password
 
 	if args.pg_extractor:
 		pg_extractor = pg_extractor_m.PG_extractor(args.pg_extractor_basedir)
