@@ -359,15 +359,15 @@ def main():
 
 	elif args.cmd == "check-update" and len(args.args) in (0, 1, 2, 3,):
 		(project_name, dbname, version) = args_parse(args.args, 3)
-		pg_project.check_update(project_name, dbname, version, conninfo.ConnInfo(args), args.directory or config.get_install_path())
+		pg_project.check_update(project_name, dbname or args.dbname, version, conninfo.ConnInfo(args), args.directory or config.get_install_path())
 
 	elif args.cmd == "update" and len(args.args) in (0, 1, 2, 3,):
 		(project_name, dbname, version) = args_parse(args.args, 3)
-		pg_project.update(project_name, dbname, version, conninfo.ConnInfo(args), args.directory or config.get_install_path())
+		pg_project.update(project_name, dbname or args.dbname, version, conninfo.ConnInfo(args), args.directory or config.get_install_path())
 
 	elif args.cmd == "clean" and len(args.args) in (1, 2,):
 		(project_name, dbname) = args_parse(args.args, 2)
-		pg_project.clean(project_name, dbname, conninfo.ConnInfo(args))
+		pg_project.clean(project_name, dbname or args.dbname, conninfo.ConnInfo(args))
 
 	elif args.cmd == "set-version" and len(args.args) in (3,):
 		(project_name, dbname, version) = args_parse(args.args, 3)
@@ -383,7 +383,7 @@ def main():
 
 	elif args.cmd == "log" and len(args.args) in (0, 1, 2,):
 		(project_name, dbname) = args_parse(args.args, 2)
-		pg_project.history(project_name, dbname, conninfo.ConnInfo(args))
+		pg_project.history(project_name, dbname or args.dbname, conninfo.ConnInfo(args))
 
 	else:
 		parser.print_help()

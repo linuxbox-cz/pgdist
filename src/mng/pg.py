@@ -175,12 +175,11 @@ def get_history(conninfo, project_name, dbname):
 		logging.verbose("getting history from db: %s" % (dbname))
 
 		if project_name:
-			cursor.execute("SELECT project, ts::TEXT, version, part::TEXT, comment FROM pgdist.history WHERE project = %s ORDER BY ts ASC;", (project_name,))
+			cursor.execute("SELECT EXTRACT(EPOCH FROM ts) t, to_char(ts, 'YYYY-MM-DD HH:MM:SS') ts, current_database() AS dbname, project, version, comment FROM pgdist.history WHERE project = %s ORDER BY ts ASC;", (project_name,))
 		else:
-			cursor.execute("SELECT project, ts::TEXT, version, part::TEXT, comment FROM pgdist.history ORDER BY ts ASC;")
+			cursor.execute("SELECT EXTRACT(EPOCH FROM ts) t, to_char(ts, 'YYYY-MM-DD HH:MM:SS') ts, current_database() AS dbname, project, version, comment FROM pgdist.history ORDER BY ts ASC;")
 
-		for row in cursor.fetchall():
-			history.append([dbname] + row)
+		history = cursor.fetchall()
 	conn.close()
 	return history
 
@@ -191,9 +190,13 @@ def installed_history(project_name, dbname, conninfo):
 		history = get_history(conninfo, project_name, dbname)
 	else:
 		for database in list_database(conninfo):
-			history += get_history(conninfo, project_name, database)
+			h = get_history(conninfo, project_name, database)
+			if h:
+				history += get_history(conninfo, project_name, database)
 
-	headers = ["database", "project", "ts", "version", "part", "comment"]
+	history.sort()
+
+	headers = ["TIME", "DBNAME", "PROJECT", "VERSION", "COMMENT"]
 	col_max_len = []
 
 	for header in headers:
@@ -201,27 +204,20 @@ def installed_history(project_name, dbname, conninfo):
 
 	for row in history:
 		for i, col in enumerate(col_max_len):
-			if len(row[i]) > col:
-				col_max_len[i] = len(row[i])
+			l = len("%s" % (row[i+1],))
+			if l > col:
+				col_max_len[i] = l
 
-	total_length = -1 #last space
-
-	for i in col_max_len:
-		total_length += i
-
-	print
+	total_length = sum(col_max_len)
 
 	for i, col in enumerate(headers):
-		print("%s%s" % (col, " " * (col_max_len[i] - len(col)))),
-	print
-
-	print("=" * (total_length + len(headers)))
+		print("%%-%ds" % (col_max_len[i],) % (col,)),
+	print("")
 
 	for row in history:
-		for i, col in enumerate(row):
-			print("%s%s" % (col, " " * (col_max_len[i] - len(col)))),
-		print
-	print("=" * (total_length + len(headers)))
+		for i, l in enumerate(col_max_len):
+			print("%%-%ds" % (l,) % (row[i+1],)),
+		print("")
 
 def pgdist_update(dbname, conninfo):
 	if dbname:
@@ -232,7 +228,8 @@ def pgdist_update(dbname, conninfo):
 	for db in dbs:
 		conn = connect(conninfo, db)
 		cursor = conn.cursor()
-		pgdist_install(db, conn)
+		if check_pgdist_installed(conn):
+			pgdist_install(db, conn)
 		conn.close()
 
 def update_password(role_name, cursor):
@@ -315,6 +312,9 @@ def install(dbname, project, ver, conninfo, directory, create_db, is_require):
 def update(dbname, project, update, conninfo, directory):
 	conn = connect(conninfo, dbname)
 	cursor = conn.cursor()
+	if not check_pgdist_installed(conn):
+		conn.close()
+		return
 	pgdist_install(dbname, conn)
 	for part in update.parts:
 		for require in part.requires:
@@ -337,10 +337,14 @@ def update(dbname, project, update, conninfo, directory):
 		if not cursor.fetchone():
 			cursor.execute("INSERT INTO pgdist.installed (project, version, part, parts) VALUES (%s, %s, %s, %s);",
 				(project.name, str(update.version), part.part, len(update.parts)))
+	conn.close()
 
 def clean(project_name, dbname, conninfo):
 	conn = connect(conninfo, dbname)
 	cursor = conn.cursor()
+	if not check_pgdist_installed(conn):
+		conn.close()
+		return
 	pgdist_install(dbname, conn)
 	logging.info("clean %s from %s" % (project_name, dbname))
 	cursor.execute("DELETE FROM pgdist.installed WHERE project = %s RETURNING *", (project_name,))
@@ -366,6 +370,9 @@ def set_version(project_name, dbname, version, conninfo):
 def get_version(project_name, dbname, conninfo):
 	conn = connect(conninfo, dbname)
 	cursor = conn.cursor()
+	if not check_pgdist_installed(conn):
+		conn.close()
+		return None
 	pgdist_install(dbname, conn)
 	logging.debug("get version %s in %s" % (project_name, dbname))
 	cursor.execute("SELECT version FROM pgdist.installed WHERE project=%s;",
@@ -375,22 +382,3 @@ def get_version(project_name, dbname, conninfo):
 		conn.close()
 	conn.close()
 	return None
-
-def check_installed(dbname, project_name, conninfo):
-	conn = connect(conninfo, dbname)
-	if pg.check_pgdist_installed(conn):
-		pg.check_pgdist_version(db, conn)
-		cursor = conn.cursor()
-		cursor.execute("SELECT 1 FROM pgdist.installed WHERE project=%s", (project_name,))
-		for row in cursor:
-			conn.close()
-			return True
-	conn.close()
-	return False
-
-def check_installed2(cursor, project_name):
-	cursor.execute("SELECT 1 FROM pgdist.installed WHERE project=%s", (project_name,))
-	for row in cursor:
-		conn.close()
-		return True
-	return False
