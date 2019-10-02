@@ -107,7 +107,7 @@ def list_database(conninfo):
 	databases = []
 	conn = connect(conninfo)
 	cursor = conn.cursor()
-	cursor.execute("SELECT datname FROM pg_database WHERE datname NOT IN ('template0') ORDER BY datname;")
+	cursor.execute("SELECT datname FROM pg_database WHERE datallowconn ORDER BY datname;")
 	for row in cursor:
 		databases.append(row["datname"])
 	cursor.close()
