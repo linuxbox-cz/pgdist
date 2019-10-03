@@ -21,21 +21,12 @@ def rmln(s):
 class Element:
 	def __init__(self, element_name, command=None, name=None):
 		self.element_name = element_name
+		self.command = command
 		self.name = name
 		if "." in self.name:
-			ws_name = None
-			splitted = name.split(".")
-			if len(splitted) == 2:
-				self.schema, ws_name = splitted
-			else:
-				self.schema = splitted[0]
-			if config.can_add_schema() and not config.git_diff and ws_name:
-				self.command = re.sub(re.escape(ws_name), name, command, 1)
-			else:
-				self.command = command
+			self.schema = name.split(".")[0]
 		else:
 			self.schema = None
-			self.command = command
 		self.owner = None
 		self.comment = None
 		self.grant = []

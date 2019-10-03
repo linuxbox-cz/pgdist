@@ -65,21 +65,3 @@ def check_set_test_db():
 	if not test_db:
 		logging.error("Error not set test_db connection")
 		sys.exit(1)
-
-def can_add_schema():
-	args = ['psql', '--version']
-	process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
-	return_code = process.wait()
-	stdout, stderr = process.communicate()
-
-	if return_code != 0:
-		logging.error("Get version failed, return code: %s, error: %s" % (return_code, stderr))
-		sys.exit(1)
-
-	re_version = re.search(r"(?P<version>\d+(\.\d+(\.\d+)?)?)$", stdout)
-
-	if re_version:
-		return LooseVersion(re_version.group("version")) < LooseVersion("9.6.13")
-	else:
-		logging.error("Get version failed, can not parse version from: %s" % (stdout))
-		sys.exit(1)
