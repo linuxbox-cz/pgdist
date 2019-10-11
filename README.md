@@ -90,10 +90,10 @@ postgres@/test_database
 localhost//postgres@/
 ```
 
-Below PGCONN will define ssh connection to *my_server* with user *root*, then open postgres connection with PG user *postgres*, password *PASSWORD*, PG host *localhost*, listening port *5042*, database *test_database* and connection timeout *10 seconds*.  
+Below PGCONN will define ssh connection to *my_server* with user *root* on port *8089*, then open postgres connection with PG user *postgres*, password *PASSWORD*, PG host *localhost*, listening port *5042*, database *test_database* and connection timeout *10 seconds*.  
 
 ```
-root@my_server//postgres:PASSWORD@localhost:5042/test_database?connection_timetout=10
+root@my_server:8089//postgres:PASSWORD@localhost:5042/test_database?connection_timetout=10
 ```
 
 ### <a name="distribution-config-file"></a> Distribution config file [▲](#content)
@@ -873,7 +873,7 @@ pgdist data-list
 Show difference between your current project and installed project:
 
 ```
-pgdist diff-db root:password@my_server//pg_user:pg_password@/pg_database [v1.0.0]
+pgdist diff-db root@my_server:port//pg_user:pg_password@/pg_database [v1.0.0]
 ```
 
 **args - required**:
