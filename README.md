@@ -28,7 +28,7 @@
 
 	* [Compare projects](#compare-projects)
 
-## <a name="description"></a> Description [▲](#content)
+## Description
 Let me introduce our project PGdist, used for postgres projects management from development to production.
 URL: https://github.com/linuxbox-cz/pgdist
 
@@ -58,7 +58,7 @@ PGdist also requires a little bit of **DIY - do it yourself**.
 
 **Distribution part** - It is for usage on production server.
 
-### <a name="develop-config-file"></a> Develop config file [▲](#content)
+### Develop config file
 
 Configuration file is located at `~/.pgdist`.
 
@@ -69,7 +69,7 @@ test_db: pgdist@sqltest/postgres
 
 - `test_db` - PG connection to testing postgres database.
 
-#### <a name="pgconn"></a> PGCONN [▲](#content)
+#### PGCONN
 
 It defines ssh connection (**not required**) + connection URI.  
 Please use connection URI **without** `postgresql://` string.  
@@ -96,7 +96,7 @@ Below PGCONN will define ssh connection to *my_server* with user *root*, then op
 root@my_server//postgres:PASSWORD@localhost:5042/test_database?connection_timetout=10
 ```
 
-### <a name="distribution-config-file"></a> Distribution config file [▲](#content)
+### Distribution config file
 
 Configuration file is located at `/etc/pgdist.conf`.
 
@@ -124,9 +124,9 @@ pgport = 5432
 
 
 
-## <a name="tutorial"></a> Tutorial [▲](#content)
+## Tutorial
 
-### <a name="create-project"></a> Create project [▲](#content)
+### Create project
 
 #### Init your project with:
 
@@ -214,7 +214,7 @@ Source SQL files are in `sql/your_schema` folder.
 
 
 
-### <a name="roles"></a> Roles [▲](#content)
+### Roles
 
 #### Add role to project:
 
@@ -274,7 +274,7 @@ Before PGdist installs project into the databse, it will check if roles defined 
 
 
 
-### <a name="file-management"></a> File management [▲](#content)
+### File management
 
 #### Add file to project:
 
@@ -362,7 +362,7 @@ pgdist part-rm 2
 
 
 
-### <a name="requires"></a> Requires [▲](#content)
+### Requires
 
 #### Add require to project:
 
@@ -397,7 +397,7 @@ pgdist require-rm My_Other_Project
 
 
 
-### <a name="db-parameters"></a> DB parameters [▲](#content)
+### DB parameters
 
 #### Set DB-parameters:
 
@@ -421,7 +421,7 @@ pgdist dbparam-get
 
 
 
-### <a name="versions"></a> Versions [▲](#content)
+### Versions
 
 #### Test load:
 
@@ -634,7 +634,7 @@ pgdist test-update v1.0.0 1.0.1
 
 
 
-### <a name="project-distribution"></a> Project distribution [▲](#content)
+### Project distribution
 
 **NOTICE** - Do not forget to correctly set up [distribution configuration file](#distribution-config-file-▲).
 
@@ -828,7 +828,7 @@ pgdist clean My_Project [pg_database]
 
 
 
-### <a name="compare-projects"></a> Compare projects [▲](#content)
+### Compare projects
 
 Let´s say you´ve installed some version of your project to your servers. Now you made a lot of changes in your project and you want to see the difference.  
 
