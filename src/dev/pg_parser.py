@@ -742,8 +742,8 @@ def parse(dump_stream):
 
 		# ######################################
 
-
-			logging.warning("Parser warning, unknown command: %s" % (command,))
+			logging.warning("Parser warning, unknown command: %s added to 'others'" % (command,))
+			project.others.append(Other(command))
 
 		except KeyError:
 			logging.error("Parser warning, KeyError on command: %s" % (command, ))
