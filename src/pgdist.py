@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 import os
 import sys
 import atexit
+import cStringIO
 import argparse
 import subprocess
 import logging
@@ -196,9 +197,12 @@ def main():
 			less = sys.stdout.isatty()
 
 		if less:
-			pager = subprocess.Popen(["less", "-FKSMIR"], bufsize=1, stdin=subprocess.PIPE, stdout=sys.stdout)
-			sys.stdout = pager.stdin
-			atexit.register(close_less, pager)
+			file = cStringIO.StringIO()
+			stdout = sys.stdout
+			stderr = sys.stderr
+			sys.stdout = file
+			sys.stderr = file
+			atexit.register(stdout_to_less, file, stdout, stderr)
 
 		config.load(args.config)
 		if less and args.color == "auto":
@@ -391,7 +395,10 @@ def main():
 
 	sys.exit(0)
 
-def close_less(pager):
+def stdout_to_less(file, stdout, stderr):
+	file.seek(0)
+	pager = subprocess.Popen(["less", "-FKSMIR"], bufsize=1, stdin=subprocess.PIPE, stdout=stdout, stderr=stderr)
+	pager.stdin.write(file.read())
 	pager.stdin.close()
 	pager.wait()
 
