@@ -452,7 +452,7 @@ def project_init(name, directory):
 
 def create_schema(schema_name):
 	directory = find_directory()
-	for d in ("extensions", "functions", "schema", "tables", "triggers", "types", "views", "grants", "constraints", "data", "indexes", "others"):
+	for d in ("extensions", "functions", "schema", "tables", "triggers", "types", "views", "grants", "constraints", "data", "indexes"):
 		logging.verbose("mkdir %s" % (d, ))
 		os.makedirs(os.path.join(directory, "sql", schema_name, d))
 	print("Schema %s created." % (schema_name,))

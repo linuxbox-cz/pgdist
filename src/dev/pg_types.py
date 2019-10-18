@@ -177,39 +177,34 @@ class Project:
 		self.diff_elements(exclude_schemas, "views", self.views, project2.views, no_owner, no_acl)
 		self.diff_elements(exclude_schemas, "operators", self.operators, project2.operators, no_owner, no_acl)
 		self.diff_elements(exclude_schemas, "functions", self.functions, project2.functions, no_owner, no_acl, ignore_space)
+		self.diff_others(exclude_schemas, project2.others)
 		self.diff_data(project2)
-		self.diff_others(exclude_schemas, project2.others, ignore_space)
 
-	def diff_others(self, exclude_schemas, others2, ignore_space=False):
+	def diff_others(self, exclude_schemas, others2):
 		others_c1 = [other1.get_whole_command() for other1 in self.others]
 		others_c2 = [other2.get_whole_command() for other2 in others2]
-		difference = []
 		new_elements = []
+		removed_elements = []
 
-		for other in sorted(others2):
-			if ((other.schema and other.schema not in exclude_schemas) or not other.schema) and other.get_whole_command() not in others_c1:
-				difference.append(other.get_whole_command())
+		for other in others2:
+			if other.get_whole_command() not in others_c1:
 				new_elements.append(other)
 		if new_elements:
-			for element in new_elements:
-				print("New unknown")
-				for line in element.get_whole_command().splitlines():
-					print(color.green(line))
+			print("New unknown:")
+		for other in new_elements:
+			for line in other.get_whole_command().splitlines():
+				print(color.green(line))
 			print("")
 
-		removed_elements = []
-		for other in sorted(self.others):
-			if ((other.schema and other.schema not in exclude_schemas) or not other.schema) and other.get_whole_command() not in others_c2:
-				difference.append(other.get_whole_command())
+		for other in self.others:
+			if other.get_whole_command() not in others_c2:
 				removed_elements.append(other)
 		if removed_elements:
-			for element in removed_elements:
-				print("Removed unknown")
-				for line in element.get_whole_command().splitlines():
-					print(color.red(line))
+			print("Removed unknown:")
+		for other in removed_elements:
+			for line in other.get_whole_command().splitlines():
+				print(color.red(line))
 			print("")
-
-		return difference
 
 	def diff_data(self, project2):
 		for table in sorted(self.table_data.keys()):
