@@ -49,6 +49,8 @@ class PG:
 			args.append(self.address.get_pg(self.dbname))
 		else:
 			args.append(self.address.get_pg())
+		if not self.address.get_password():
+			args.append("-w")
 		if single_transaction:
 			args.append("--single-transaction")
 		if file:

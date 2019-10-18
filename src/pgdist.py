@@ -135,10 +135,12 @@ def main():
 
 	# install projects
 	parser.add_argument("--showall", help="show all versions", action="store_true")
+	parser.add_argument("-D", "--dbfilter", dest="dbfilter", help="Specify the name of database to filter by.")
 	parser.add_argument("-d", "--dbname", dest="dbname", help="Specifies the name of the database to connect to.")
 	parser.add_argument("-h", "--host", dest="host", help="Specifies the host name of the machine on which the server is running.")
 	parser.add_argument("-p", "--port", dest="port", help="Specifies the TCP port or the local Unix-domain socket file.")
 	parser.add_argument("-U", "--username", dest="user", help="Connect to the database as the user username.")
+	parser.add_argument("-P", "--password", dest="password", help="Specifies the password of the user for pg connection")
 	parser.add_argument("-C", "--create", dest="create", help="Create the database.", action="store_true")
 	parser.add_argument("--directory", help="directory contains script install and update")
 	parser.add_argument("--syslog-facility", dest="syslog_facility", help="syslog facility")
@@ -224,6 +226,9 @@ def main():
 			args.host = config.get_pghost()
 		if not args.port:
 			args.port = config.get_pgport()
+		if args.password:
+			os.putenv("PGPASSWORD", args.password)
+			os.environ["PGPASSWORD"] = args.password
 
 	if args.pg_extractor:
 		pg_extractor = pg_extractor_m.PG_extractor(args.pg_extractor_basedir)
@@ -351,7 +356,7 @@ def main():
 	# install projects
 	elif args.cmd == "list" and len(args.args) in (0, 1, 2,):
 		(project_name, dbname) = args_parse(args.args, 2)
-		pg_project.prlist(project_name, dbname or args.dbname, conninfo.ConnInfo(args), args.directory or config.get_install_path(), args.showall)
+		pg_project.prlist(project_name, dbname or args.dbfilter, conninfo.ConnInfo(args), args.directory or config.get_install_path(), args.showall)
 
 	elif args.cmd == "install" and len(args.args) in (2, 3,):
 		(project_name, dbname, version) = args_parse(args.args, 3)
@@ -359,15 +364,15 @@ def main():
 
 	elif args.cmd == "check-update" and len(args.args) in (0, 1, 2, 3,):
 		(project_name, dbname, version) = args_parse(args.args, 3)
-		pg_project.check_update(project_name, dbname or args.dbname, version, conninfo.ConnInfo(args), args.directory or config.get_install_path())
+		pg_project.check_update(project_name, dbname or args.dbfilter, version, conninfo.ConnInfo(args), args.directory or config.get_install_path())
 
 	elif args.cmd == "update" and len(args.args) in (0, 1, 2, 3,):
 		(project_name, dbname, version) = args_parse(args.args, 3)
-		pg_project.update(project_name, dbname or args.dbname, version, conninfo.ConnInfo(args), args.directory or config.get_install_path())
+		pg_project.update(project_name, dbname or args.dbfilter, version, conninfo.ConnInfo(args), args.directory or config.get_install_path())
 
 	elif args.cmd == "clean" and len(args.args) in (1, 2,):
 		(project_name, dbname) = args_parse(args.args, 2)
-		pg_project.clean(project_name, dbname or args.dbname, conninfo.ConnInfo(args))
+		pg_project.clean(project_name, dbname, conninfo.ConnInfo(args))
 
 	elif args.cmd == "set-version" and len(args.args) in (3,):
 		(project_name, dbname, version) = args_parse(args.args, 3)
@@ -383,7 +388,7 @@ def main():
 
 	elif args.cmd == "log" and len(args.args) in (0, 1, 2,):
 		(project_name, dbname) = args_parse(args.args, 2)
-		pg_project.history(project_name, dbname or args.dbname, conninfo.ConnInfo(args))
+		pg_project.history(project_name, dbname or args.dbfilter, conninfo.ConnInfo(args))
 
 	else:
 		parser.print_help()

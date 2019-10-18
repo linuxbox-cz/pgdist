@@ -94,21 +94,39 @@ while [ "$1" != "" ]; do
         -p | --pgconn )
             shift
             PGCONN=$1;;
+        -U | --pguser )
+            shift
+            PGUSER=$1;;
+        -d | --pgdatabase )
+            shift
+            PGDATABASE=$1;;
+        -P | --pgpassword )
+            shift
+            PGPASSWORD=$1;;
         --no-clean )
             NO_CLEAN=true;;
         -h | --help )
             echo "Optional parameters:"
-            echo "    -u --user     git user name"
-            echo "    -e --email    git user email"
-            echo "    -p --pgconn   pg connection"
-            echo "    --no-clean    wont clean files and database after test"
-            echo "    -h --help     prints this help"
+            echo "    -u --user        git user name"
+            echo "    -e --email       git user email"
+            echo "    -p --pgconn      pg connection"
+            echo "    -P --pguser      pg user"
+            echo "    -d --pgdatabase  pg database"
+            echo "    -U --pgpassword  pg password"
+            echo "    --no-clean       wont clean files and database after test"
+            echo "    -h --help        prints this help"
             exit 0;;
         *)
     esac
     shift
 done
 
+if [ ! "$PGUSER" ]; then
+    PGUSER="postgres"
+fi
+if [ ! "$PGDATABASE" ]; then
+    PGDATABASE=$PGUSER
+fi
 if [ ! "$PGCONN" ]; then
     PGCONN="postgres@/"
 fi
@@ -135,8 +153,14 @@ echo "[pgdist]" >> $CONFIG_FILE_MNG
 log "echo 'install_path: ${PATH_TEST}/install' >> ${CONFIG_FILE_MNG}"
 echo "install_path: ${PATH_PGDIST_INSTALL}" >> $CONFIG_FILE_MNG
 
-log "echo 'db_user: postgres' >> ${CONFIG_FILE_MNG}"
-echo "pguser: postgres" >> $CONFIG_FILE_MNG
+log "echo 'pguser: ${PGUSER}' >> ${CONFIG_FILE_MNG}"
+echo "pguser: ${PGUSER}" >> $CONFIG_FILE_MNG
+
+if [ -n "$PGPASSWORD" ]; then
+    PGCONN_2="-P ${PGPASSWORD} -d ${PGDATABASE}"
+else
+    PGCONN_2=""
+fi
 
 DB_TEST=$(psql -U postgres -tA -c "SELECT datname FROM pg_database WHERE datname = 'pgdist_test'")
 
@@ -159,7 +183,7 @@ source "${PATH_TEST}/test_server.sh"
 
 if [ "$NO_CLEAN" = false ]; then
     log_pgdist "clean pgdist_test_project pgdist_test_database"
-    python "${PATH_PGDIST_SRC}/pgdist.py" clean pgdist_test_project pgdist_test_database -c $PATH_CONFIG_MNG
+    python "${PATH_PGDIST_SRC}/pgdist.py" clean pgdist_test_project pgdist_test_database -c $PATH_CONFIG_MNG $PGCONN_2
 fi
 
 TEST_PART=""

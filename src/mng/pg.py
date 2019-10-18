@@ -61,6 +61,8 @@ class PgError(Exception):
 def run(c, conninfo, cmd=None, single_transaction=True, dbname=None, file=None):
 	args = [c]
 	if c == "psql":
+		if not conninfo.password:
+			args.append("-w")
 		args.append("--no-psqlrc")
 		args.append("--echo-queries")
 		args.append("--set")
@@ -94,25 +96,37 @@ def run(c, conninfo, cmd=None, single_transaction=True, dbname=None, file=None):
 		sys.exit(1)
 	return (retcode, output)
 
-def connect(conninfo, dbname=None):
+def connect(conninfo, dbname=None, hard=True):
 	try:
 		conn = psycopg2.extras.DictConnection(conninfo.dsn(dbname))
 	except Exception as e:
-		logging.error("Error connect: %s" % (e,))
-		sys.exit(1)
+		if hard:
+			logging.error("Error connect: %s" % (e,))
+			sys.exit(1)
+		raise Exception(e)
 	conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
 	return conn
 
 def list_database(conninfo):
+	check_databases = config.get_databases()
 	databases = []
 	conn = connect(conninfo)
-	cursor = conn.cursor()
-	cursor.execute("SELECT datname FROM pg_database WHERE datallowconn ORDER BY datname;")
-	for row in cursor:
-		databases.append(row["datname"])
-	cursor.close()
+
+	if not check_databases:
+		cursor = conn.cursor()
+		cursor.execute("SELECT datname FROM pg_database WHERE datallowconn ORDER BY datname;")
+		for row in cursor:
+			check_databases.append(row["datname"])
+		cursor.close()
+
 	conn.close()
 
+	for i, database in enumerate(check_databases):
+		try:
+			conn = connect(conninfo, database, False)
+			databases.append(database)
+		except Exception as err:
+			logging.warning("Failed to connect to database: %s" % (database))
 	return databases
 
 def check_pgdist_installed(conn):
@@ -226,7 +240,7 @@ def pgdist_update(dbname, conninfo):
 		dbs = list_database(conninfo)
 	
 	for db in dbs:
-		conn = connect(conninfo, db)
+		conn = connect(conninfo, db, hard=(dbname is not None))
 		cursor = conn.cursor()
 		if check_pgdist_installed(conn):
 			pgdist_install(db, conn)

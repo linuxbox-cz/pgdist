@@ -652,6 +652,8 @@ pgdist list [My_Project [pg_database]]
 
 - `dbname` - show info about project in database
 
+- `-D` `--dbfilter` - show projects only from specified database
+
 - `--directory` - path to directory which contains install/update sql scripts
 
 - `--showall` - *enable* - show all versions of projects
@@ -663,8 +665,6 @@ pgdist list [My_Project [pg_database]]
 - `-H` `--host` - PG host
 
 - `-p` `--port` - port that PG listens to
-
-If you want to show list of projects in some database without specifying project, use `-d` or `--dbname`.
 
 #### Install project:
 
@@ -712,6 +712,8 @@ pgdist check-update [My_Project [pg_database [1.0.0]]]
 
 - `dbname` - search updates in specified database
 
+- `-D` `--dbfilter` - show updates only for projects from specified database
+
 - `version` - search for updates until version of project
 
 - `--directory` - path to directory which contains install/update sql scripts
@@ -738,6 +740,8 @@ pgdist update [My_Project [pg_database [1.0.1]]]
 
 - `dbname` - update project in database
 
+- `-D` `--dbfilter` - update projects only from specified database
+
 - `version` - try to update project to most recent specified version of project
 
 - `--directory` - path to directory which contains install/update sql scripts
@@ -753,6 +757,30 @@ pgdist update [My_Project [pg_database [1.0.1]]]
 Takes `My_Project--1.0.0--1.0.1.sql` and loads it to *pg_database*.
 
 If you don´t specify any parameter, PGdist will try to update each of your installed project.
+
+#### Show log:
+
+After making lot of updates and installations, you may want to see how has things changed.
+
+```
+pgdist log [My_Project [pg_database]]
+```
+
+**args - optional**:
+
+- `project` - shows only changes of specified project
+
+- `dbname` - shows only projects from specified database
+
+- `-D` `--dbfilter` - shows projects changes only from specified database
+
+- `-U` `--username` - PG username to connect with
+
+- `-d` `--dbname` - name of database to connect to
+
+- `-H` `--host` - PG host
+
+- `-p` `--port` - port that PG listens to
 
 #### Set version:
 
