@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 
 import os
 import sys
-import cStringIO
+import io
 import argparse
 import subprocess
 import logging
@@ -197,7 +197,7 @@ def main():
 			less = sys.stdout.isatty()
 
 		if less:
-			buffer = cStringIO.StringIO()
+			buffer = io.StringIO()
 			stdout = sys.stdout
 			sys.stdout = buffer
 
@@ -391,9 +391,8 @@ def main():
 		sys.exit(1)
 
 	if less:
-		buffer.seek(0)
 		pager = subprocess.Popen(["less", "-FKSMIR"], bufsize=1, stdin=subprocess.PIPE, stdout=stdout)
-		pager.stdin.write(buffer.read())
+		pager.stdin.write(buffer.getvalue())
 		pager.stdin.close()
 		pager.wait()
 
