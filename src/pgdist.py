@@ -135,8 +135,8 @@ def main():
 
 	# install projects
 	parser.add_argument("--showall", help="show all versions", action="store_true")
-	parser.add_argument("-D", "--dbfilter", dest="dbfilter", help="Specify the name of database to filter by.")
-	parser.add_argument("-d", "--dbname", dest="dbname", help="Specifies the name of the database to connect to.")
+	parser.add_argument("-l", "--database", dest="database", help="Specifies the name of the database to connect to, to get info about other databases.")
+	parser.add_argument("-d", "--dbname", dest="dbname", help="Specify the name of database to filter by.")
 	parser.add_argument("-h", "--host", dest="host", help="Specifies the host name of the machine on which the server is running.")
 	parser.add_argument("-p", "--port", dest="port", help="Specifies the TCP port or the local Unix-domain socket file.")
 	parser.add_argument("-U", "--username", dest="user", help="Connect to the database as the user username.")
@@ -220,8 +220,8 @@ def main():
 
 		if not args.user:
 			args.user = config.get_pguser()
-		if not args.dbname:
-			args.dbname = config.get_pgdatabase()
+		if not args.database:
+			args.database = config.get_pgdatabase()
 		if not args.host:
 			args.host = config.get_pghost()
 		if not args.port:
@@ -356,7 +356,7 @@ def main():
 	# install projects
 	elif args.cmd == "list" and len(args.args) in (0, 1, 2,):
 		(project_name, dbname) = args_parse(args.args, 2)
-		pg_project.prlist(project_name, dbname or args.dbfilter, conninfo.ConnInfo(args), args.directory or config.get_install_path(), args.showall)
+		pg_project.prlist(project_name, dbname or args.dbname, conninfo.ConnInfo(args), args.directory or config.get_install_path(), args.showall)
 
 	elif args.cmd == "install" and len(args.args) in (2, 3,):
 		(project_name, dbname, version) = args_parse(args.args, 3)
@@ -364,11 +364,11 @@ def main():
 
 	elif args.cmd == "check-update" and len(args.args) in (0, 1, 2, 3,):
 		(project_name, dbname, version) = args_parse(args.args, 3)
-		pg_project.check_update(project_name, dbname or args.dbfilter, version, conninfo.ConnInfo(args), args.directory or config.get_install_path())
+		pg_project.check_update(project_name, dbname or args.dbname, version, conninfo.ConnInfo(args), args.directory or config.get_install_path())
 
 	elif args.cmd == "update" and len(args.args) in (0, 1, 2, 3,):
 		(project_name, dbname, version) = args_parse(args.args, 3)
-		pg_project.update(project_name, dbname or args.dbfilter, version, conninfo.ConnInfo(args), args.directory or config.get_install_path())
+		pg_project.update(project_name, dbname or args.dbname, version, conninfo.ConnInfo(args), args.directory or config.get_install_path())
 
 	elif args.cmd == "clean" and len(args.args) in (1, 2,):
 		(project_name, dbname) = args_parse(args.args, 2)
@@ -388,7 +388,7 @@ def main():
 
 	elif args.cmd == "log" and len(args.args) in (0, 1, 2,):
 		(project_name, dbname) = args_parse(args.args, 2)
-		pg_project.history(project_name, dbname or args.dbfilter, conninfo.ConnInfo(args))
+		pg_project.history(project_name, dbname or args.dbname, conninfo.ConnInfo(args))
 
 	else:
 		parser.print_help()

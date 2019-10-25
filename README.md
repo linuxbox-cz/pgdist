@@ -652,7 +652,7 @@ pgdist list [My_Project [pg_database]]
 
 - `dbname` - show info about project in database
 
-- `-D` `--dbfilter` - show projects only from specified database
+- `-d` `--dbname` - show projects only from specified database
 
 - `--directory` - path to directory which contains install/update sql scripts
 
@@ -660,7 +660,7 @@ pgdist list [My_Project [pg_database]]
 
 - `-U` `--username` - PG username to connect with
 
-- `-d` `--dbname` - name of database to connect to
+- `-l` `--database` - name of database to connect to
 
 - `-H` `--host` - PG host
 
@@ -690,7 +690,7 @@ pgdist install My_Project pg_database [1.0.0]
 
 - `-U` `--username` - PG username to connect with
 
-- `-d` `--dbname` - name of database to connect to
+- `-l` `--database` - name of database to connect to
 
 - `-H` `--host` - PG host
 
@@ -712,7 +712,7 @@ pgdist check-update [My_Project [pg_database [1.0.0]]]
 
 - `dbname` - search updates in specified database
 
-- `-D` `--dbfilter` - show updates only for projects from specified database
+- `-d` `--dbname` - show updates only for projects from specified database
 
 - `version` - search for updates until version of project
 
@@ -720,7 +720,7 @@ pgdist check-update [My_Project [pg_database [1.0.0]]]
 
 - `-U` `--username` - PG username to connect with
 
-- `-d` `--dbname` - name of database to connect to
+- `-l` `--database` - name of database to connect to
 
 - `-H` `--host` - PG host
 
@@ -740,7 +740,7 @@ pgdist update [My_Project [pg_database [1.0.1]]]
 
 - `dbname` - update project in database
 
-- `-D` `--dbfilter` - update projects only from specified database
+- `-d` `--dbname` - update projects only from specified database
 
 - `version` - try to update project to most recent specified version of project
 
@@ -748,7 +748,7 @@ pgdist update [My_Project [pg_database [1.0.1]]]
 
 - `-U` `--username` - PG username to connect with
 
-- `-d` `--dbname` - name of database to connect to
+- `-l` `--database` - name of database to connect to
 
 - `-H` `--host` - PG host
 
@@ -772,11 +772,11 @@ pgdist log [My_Project [pg_database]]
 
 - `dbname` - shows only projects from specified database
 
-- `-D` `--dbfilter` - shows projects changes only from specified database
+- `-d` `--dbname` - shows projects changes only from specified database
 
 - `-U` `--username` - PG username to connect with
 
-- `-d` `--dbname` - name of database to connect to
+- `-l` `--database` - name of database to connect to
 
 - `-H` `--host` - PG host
 
@@ -802,7 +802,7 @@ pgdist set-version My_Project pg_database 1.0.2
 
 - `-U` `--username` - PG username to connect with
 
-- `-d` `--dbname` - name of database to connect to
+- `-l` `--database` - name of database to connect to
 
 - `-H` `--host` - PG host
 
@@ -824,7 +824,7 @@ pgdist get-version My_Project pg_database
 
 - `-U` `--username` - PG username to connect with
 
-- `-d` `--dbname` - name of database to connect to
+- `-l` `--database` - name of database to connect to
 
 - `-H` `--host` - PG host
 
@@ -848,7 +848,7 @@ pgdist clean My_Project [pg_database]
 
 - `-U` `--username` - PG username to connect with
 
-- `-d` `--dbname` - name of database to connect to
+- `-l` `--database` - name of database to connect to
 
 - `-H` `--host` - PG host
 

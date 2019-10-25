@@ -97,7 +97,7 @@ while [ "$1" != "" ]; do
         -U | --pguser )
             shift
             PGUSER=$1;;
-        -d | --pgdatabase )
+        -l | --pgdatabase )
             shift
             PGDATABASE=$1;;
         -P | --pgpassword )
@@ -110,9 +110,9 @@ while [ "$1" != "" ]; do
             echo "    -u --user        git user name"
             echo "    -e --email       git user email"
             echo "    -p --pgconn      pg connection"
-            echo "    -P --pguser      pg user"
-            echo "    -d --pgdatabase  pg database"
-            echo "    -U --pgpassword  pg password"
+            echo "    -U --pguser      pg user"
+            echo "    -l --pgdatabase  pg database"
+            echo "    -P --pgpassword  pg password"
             echo "    --no-clean       wont clean files and database after test"
             echo "    -h --help        prints this help"
             exit 0;;
@@ -121,13 +121,13 @@ while [ "$1" != "" ]; do
     shift
 done
 
-if [ ! "$PGUSER" ]; then
+if [ -z "$PGUSER" ]; then
     PGUSER="postgres"
 fi
-if [ ! "$PGDATABASE" ]; then
+if [ -z "$PGDATABASE" ]; then
     PGDATABASE=$PGUSER
 fi
-if [ ! "$PGCONN" ]; then
+if [ -z "$PGCONN" ]; then
     PGCONN="postgres@/"
 fi
 if [ ! "$NO_CLEAN" ]; then
@@ -157,7 +157,7 @@ log "echo 'pguser: ${PGUSER}' >> ${CONFIG_FILE_MNG}"
 echo "pguser: ${PGUSER}" >> $CONFIG_FILE_MNG
 
 if [ -n "$PGPASSWORD" ]; then
-    PGCONN_2="-P ${PGPASSWORD} -d ${PGDATABASE}"
+    PGCONN_2="-P ${PGPASSWORD} -l ${PGDATABASE}"
 else
     PGCONN_2=""
 fi

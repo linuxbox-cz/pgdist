@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 class ConnInfo:
 	def __init__(self, args):
-		self.dbname = args.dbname
+		self.dbname = args.database
 		self.host = args.host
 		self.port = args.port
 		self.user = args.user
