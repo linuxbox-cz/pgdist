@@ -1,0 +1,380 @@
+.TH man 1 "31 October 2010" "1.0" "PGdist manual"
+
+.SH NAME
+PGdist - create, develop and manage your PostgreSQL projects
+
+.SH SYNOPSIS
+.TP
+.B pgdist
+[-v|--verbose]
+[-?|--help]
+[--git-diff]
+[--less]
+[--noless]
+[--all]
+[-f|--force]
+[-c|--config <\fIfile\fR>]
+[--color <[\fIauto\fR, \fInever\fR, \fIalways\fR]>
+[--swap]
+[--gitversion]
+[--no-owner]
+[--no-acl]
+[--diff-raw]
+[-w|--ignore-all-space]
+[--no-clean]
+[--cache]
+[--pg_extractor]
+[--pg_extractor_basedir <\fIdirectory\fR>]
+[--pre-load <\fIfile\fR>]
+[--post-load <\fIfile\fR>]
+[--pre-remoted-load <\fIfile\fR>]
+[--post-remoted-load <\fIfile\fR>]
+[--pre-load-old <\fIfile\fR>]
+[--post-load-old <\fIfile\fR>]
+[--pre-load-new <\fIfile\fR>]
+[--post-load-new <\fIfile\fR>]
+[--showall]
+[-d|--dbname <\fIdbname\fR>]
+[-h|--host <\fIhost\fR>]
+[-p|--port <\fIport\fR>]
+[-U|--username <\fIusername\fR>]
+[-C|--create]
+[--directory <\fIpath\fR>]
+[--syslog-facility <\fIfacility\fR>]
+[--syslog-ident <\fIident\fR>]
+<\fIcommand\fR> [<\fIargs\fR>]
+
+.SH DESCRIPTION
+PGdist is program for PostgreSQL projects management from development to production.
+
+PGdist commands are divided to two sections, develop and management.
+.TP
+PGdist can:
+- manage source files, collaborating with Git
+
+- test project installation in postgres
+
+- help to create update scripts and test it for mistakes
+
+- display project‘s diff and existing database structure
+
+- watch for proper role creation in database
+
+- allow dependency settings
+
+- compare data in tables
+
+- make installations and updates on production server (inc. roles, dependencies)
+
+- allow to split install and update scripts to parts, intended to be or not to be done in particular transaction
+
+- show diffs in structured and colored mode
+.TP
+PGdist requires:
+- Postgres
+
+- Git
+
+.SH OPTIONS
+.TP
+\fB-v\fR, \fB--verbose\fR
+Increase output verbosity (more detailed print).
+.TP
+\fB-?\fR, \fB--help\fR
+Shows PGdist help with all commands and options.
+.TP
+\fB--git-diff\fR
+Generates update from old projects from diff between files not pg_dump. This means that actual files are compared, not data from pg_dump.
+.TP
+\fB--less\fR
+Prints output in less.
+
+Warning: if used and PGdist will fail, you will loose error output.
+.TP
+\fB--noless\fR
+Will not print output in less.
+.TP
+\fB--all\fR
+Use all files. Used with command \fBadd\fR and \fBrm\fR.
+.TP
+\fB-f\fR, \fB--force\fR
+Overwrite and remove files.
+.TP
+\fB-c\fR, \fB--config\fR \fI<file>\fR
+Path to configuration file which will be used instead of standard configuration file.
+.TP
+\fB--color\fR <[\fIauto\fR, \fInever\fR, \fIalways\fR]>
+Set when should be used colorred output (useful for diff commands).
+.TP
+\fB--swap\fR
+Swap compare data.
+.TP
+\fB--gitversion\fR <\fIversion\fR>
+Used as version for git tag.
+.TP
+\fB--no-owner\fR
+Do not dump and compare owners.
+.TP
+\fB--no-acl\fR
+Do not dump and compare access privileges (grant/revoke commands).
+.TP
+\fB--diff-raw\fR
+Compare raw SQL dumps -> PGdist will not try to parse dumps.
+.TP
+\fB-w\fR, \fB--ignore-all-space\fR
+When comparing, ignore all space diffrences.
+.TP
+\fB--no-clean\fR
+Will not clean test database after load or update test.
+.TP
+\fB--cache\fR
+Will cache remote dump for 4 hours.
+.TP
+\fB--pg_extractor\fR
+PGdist will dump by pg_extractor, compare by diff -r.
+.TP
+\fB--pg_extractor_basedir\fR <\fIdirectory\fR>
+PGdist will dump by pg_extractor do directory PG_EXTRACTOR_BASE_DIR.
+.TP
+\fB--pre-load\fR <\fIfile\fR>
+SQL file to load before project.
+
+Useful for cases where you are missing for example schema in your project, but have some tables in mentioned schema, so you will just preload file with that schema.
+.TP
+\fB--post-load\fR <\fIfile\fR>
+SQL file to load after project.
+.TP
+\fB--pre-remoted-load\fR <\fIfile\fR>
+SQL file to load before old version of project.
+.TP
+\fB--post-remoted-load\fR <\fIfile\fR>
+SQL file to load after old version of project.
+.TP
+\fB--pre-load-new\fR <\fIfile\fR>
+SQL file to load before new version of project.
+.TP
+\fB--post-load-new\fR <\fIfile\fR>
+SQL file to load after new version of project.
+.TP
+\fB--showall\fR
+Show all versions. Used with \fBlist\fR command.
+.TP
+\fB-d\fR, \fB--dbname\fR <\fIdbname\fR>
+Specifies the name fo the database to connect to.
+.TP
+\fB-h\fR, \fB--host\fR <\fIhost\fR>
+Specifies the host name of the machine on which the server is running.
+.TP
+\fB-p\fR, \fB--post\fR <\fIport\fR>
+Specifies the TCP port or the local Unix-domain socket file.
+.TP
+\fB-U\fR, \fB--username\fR <\fIusername\fR>
+Connect to the database with username.
+.TP
+\fB-C\fR, \fB--create\fR
+Create database if it does not exist. Used with \fBinstall\fR command.
+.TP
+\fB--directory\fR <\fIdirectory\fR>
+Directory containing scripts for install and update.
+.TP
+\fB--syslog-facility\fR <\fIfacility\fR>
+Syslog facility.
+.TP
+\fB--syslog-ident\fR <\fIident\fR>
+Syslog ident.
+
+.SH DEVELOP COMMANDS
+.TP
+\fBpgdist init\fR <\fIPROJECT\fR> [\fIPATH\fR]
+initialize pgdist \fIPROJECT\fR in \fIPATH\fR
+.TP
+\fBpgdist create-schema\fR <\fISCHEMA\fR>
+create new \fISCHEMA\fR directory structure
+.TP
+\fBpgdist status\fR
+show new files and removed files compared to pg_project.sql
+.TP
+\fBpgdist add\fR [\fIFILE\fR ...]
+add files to pg_project.sql
+.TP
+\fBpgdist rm\fR [\fIFILE\fR ...]
+remove deleted files from pg_project.sql
+.TP
+\fBpgdist part-add\fR [\fBnot-single-transaction\fR]
+add new part with single or not single (if specified) transaction to pg_project.sql
+.TP
+\fBpgdist part-rm\fR <\fIPART_NUMBER\fR>
+remove part from pg_project.sql, part files are added to previous part, use -f to remove files from pg_project.sql too
+.TP
+\fBpgdist test-load\fR
+load project to testing postgres
+.TP
+\fBpgdist create-version\fR <\fIVERSION\fR> [\fIGIT_TAG\fR]
+create version files
+.TP
+\fBpgdist create-update\fR <\fIGIT_TAG NEW_VERSION\fR> [\fIPARTS\fR]
+create update files with differencies
+
+\fIGIT_TAG\fR - old version tag
+
+\fINEW_VERSION\fR - new version
+
+\fIPARTS\fR - number of parts you want to create
+.TP
+\fBpgdist part-update-add\fR <\fIOLD_VERSION\fR> <\fINEW_VERSION\fR> [\fBnot-single-transaction\fR]
+add update part file
+.TP
+\fBpgdist part-update-rm\fR <\fIOLD_VERSION\fR> <\fINEW_VERSION\fR> <\fIPART_NUMBER\fR>
+delete update part file
+.TP
+\fBpgdist test-update\fR <\fIGIT_TAG NEW_VERSION\fR>
+load old and new version and compare it
+
+\fIGIT_TAG\fR - old version tag
+
+\fINEW_VERSION\fR - new version
+.TP
+\fBpgdist diff-db\fR <\fIPGCONN\fR> [\fIGIT_TAG\fR]
+diff project and database
+.TP
+\fBpgdist diff-db-file\fR <\fIPGCONN\fR> <\fIFILE\fR>
+diff file and database
+.TP
+\fBpgdist diff-file-db\fR <\fIFILE\fR> <\fIPGCONN\fR>
+diff database and file
+.TP
+\fBpgdist role-list\fR
+print roles in project
+.TP
+\fBpgdist role-add\fR <\fINAME\fR> [\fBlogin\fR|\fBnologin\fR] [\fBpassword\fR]
+add role to project
+.TP
+\fBpgdist role-change\fR <\fINAME\fR> [\fBlogin\fR|\fBnologin\fR] [\fBpassword\fR]
+change role
+.TP
+\fBpgdist role-rm\fR <\fINAME\fR>
+remove role from project, not remove from databases
+.TP
+\fBpgdist require-add\fR <\fIPROJECT\fR> <\fIGIT\fR> <\fIGIT_TREE_ISH\fR>
+add require to another project
+
+\fI<GIT_TREE_ISH>\fR - indicates a tree, commit or tag object name of required project
+.TP
+\fBpgdist require-rm\fR <\fIPROJECT\fR>
+remove require to another project
+.TP
+\fBpgdist dbparam-set\fR [\fIPARAM\fR ...]
+parameters with create a database (e.g.: OWNER lbadmin ...)
+.TP
+\fBpgdist dbparam-get\fR
+print parameters to create a database
+.TP
+\fBpgdist data-add\fR <\fITABLE\fR> [\fICOLUMN1\fR ...]
+add table to compare data
+.TP
+\fBpgdist data-rm\fR <\fITABLE\fR>
+remove table to compare data
+.TP
+\fBpgdist data-list\fR
+list table of data compare
+.RE
+
+.SH MANAGEMENT COMMANDS
+.TP
+\fBpgdist list\fR [\fIPROJECT\fR [\fIDBNAME\fR]]
+show list of installed projects in databases
+.TP
+\fBpgdist install\fR <\fIPROJECT\fR> <\fIDBNAME\fR> [\fIVERSION\fR]
+install project to database
+.TP
+\fBpgdist check-update [\fIPROJECT\fR [\fIDBNAME\fR [\fIVERSION\fR]]]
+check update project
+.TP
+\fBpgdist update [\fIPROJECT\fR [\fIDBNAME\fR [\fIVERSION\fR]]]
+update project
+.TP
+\fBpgdist clean\fR <\fIPROJECT\fR> [\fIDBNAME\fR]
+remove all info about project
+.TP
+\fBpgdist set-version\fR <\fIPROJECT\fR> <\fIDBNAME\fR> <\fIVERSION\fR>
+force change version without run scripts
+.TP
+\fBpgdist get-version\fR <\fIPROJECT\fR> <\fIDBNAME\fR>
+print installed version of project
+.TP
+\fBpgdist pgdist-update [\fIDBNAME\fR]
+update pgdist version in database
+.TP
+\fBpgdist log [\fIPROJECT\fR [\fIDBNAME\fR]]
+print history of installed projects
+
+.SH DEVELOP CONFIG FILE
+Configuration file is located at `~/.pgdist`.
+.TP
+It looks like this:
+[pgdist]
+test_db: pgdist@sqltest/postgres
+
+\fBtest_db\fR - PG connection to testing postgres database.
+
+.SS PGCONN
+It defines ssh connection (\fBnot required\fR) + connection URI.
+
+Please use connection URI \fBwithout\fR \fIpostgresql://\fR string.
+
+If you choose to use ssh connection, it is highly recommended to set up \fBssh-key\fR.
+
+See more about connection URI: \fIhttps://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING\fR.
+.TP
+Examples:
+localhost/test_database
+
+postgres@/test_database
+
+localhost//postgres@/
+.TP
+Below PGCONN will define ssh connection to \fBmy_server\fR with user \fBroot\fR, then open postgres connection with PG user \fBpostgres\fR, password \fBPASSWORD\fR, PG host \fBlocalhost\fR, listening port \fB5042\fR, database \fBtest_database\fR and connection timeout \fB10 seconds\fR.
+
+root@my_server//postgres:PASSWORD@localhost:5042/test_database?connection_timetout=10
+
+.SH DISTRIBUTION CONFIG FILE
+Configuration file is located at `/etc/pgdist.conf`.
+.TP
+It looks like this:
+[pgdist]
+
+installation_path = /usr/share/pgdist/install
+
+password_path = /etc/lbox/postgresql/roles
+
+pguser = postgres
+
+pgdatabase = postgres
+
+pghost = localhost
+
+pgport = 5432
+
+.TP
+\fBinstallation_path\fR - path to version/updates scripts
+.TP
+\fBpassword_path\fR - path to roles passwords
+.TP
+\fBpguser\fR - default PG user to connect with
+.TP
+\fBpgdatabase\fR - optional - name of database to connect to
+.TP
+\fBpghost\fR - optional - PG host
+.TP
+\fBpgport\fR - optional - port that PG listens to
+
+.SH SEE ALSO
+\fIhttps://github.com/linuxbox-cz/pgdist\fR
+
+.SH BUGS
+No known bugs.
+
+.SH AUTHOR
+Marian Krucina \fIhttps://www.LinuxBox.cz/\fR
+
+Tadeáš Popov \fIhttps://github.com/TadeasPopov\fR
