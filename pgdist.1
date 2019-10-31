@@ -52,7 +52,7 @@ PGdist commands are divided to two sections, develop and management.
 PGdist can:
 - manage source files, collaborating with Git
 
-- test project installation in postgres
+- test project installation in PostgreSQL
 
 - help to create update scripts and test it for mistakes
 
@@ -71,7 +71,7 @@ PGdist can:
 - show diffs in structured and colored mode
 .TP
 PGdist requires:
-- Postgres
+- PostgreSQL
 
 - Git
 
@@ -89,7 +89,7 @@ Generates update from old projects from diff between files not pg_dump. This mea
 \fB--less\fR
 Prints output in less.
 
-Warning: if used and PGdist will fail, you will loose error output.
+Warning: if used and PGdist will fail, you will lose error output.
 .TP
 \fB--noless\fR
 Will not print output in less.
@@ -122,7 +122,7 @@ Do not dump and compare access privileges (grant/revoke commands).
 Compare raw SQL dumps -> PGdist will not try to parse dumps.
 .TP
 \fB-w\fR, \fB--ignore-all-space\fR
-When comparing, ignore all space diffrences.
+When comparing, ignore all space differences.
 .TP
 \fB--no-clean\fR
 Will not clean test database after load or update test.
@@ -207,7 +207,7 @@ add new part with single or not single (if specified) transaction to pg_project.
 remove part from pg_project.sql, part files are added to previous part, use -f to remove files from pg_project.sql too
 .TP
 \fBpgdist test-load\fR
-load project to testing postgres
+load project to testing Postgresql
 .TP
 \fBpgdist create-version\fR <\fIVERSION\fR> [\fIGIT_TAG\fR]
 create version files
@@ -315,7 +315,7 @@ It looks like this:
 [pgdist]
 test_db: pgdist@sqltest/postgres
 
-\fBtest_db\fR - PG connection to testing postgres database.
+\fBtest_db\fR - PG connection to testing PostgreSQL database.
 
 .SS PGCONN
 It defines ssh connection (\fBnot required\fR) + connection URI.
@@ -333,7 +333,7 @@ postgres@/test_database
 
 localhost//postgres@/
 .TP
-Below PGCONN will define ssh connection to \fBmy_server\fR with user \fBroot\fR, then open postgres connection with PG user \fBpostgres\fR, password \fBPASSWORD\fR, PG host \fBlocalhost\fR, listening port \fB5042\fR, database \fBtest_database\fR and connection timeout \fB10 seconds\fR.
+Below PGCONN will define ssh connection to \fBmy_server\fR with user \fBroot\fR, then open PostgreSQL connection with PG user \fBpostgres\fR, password \fBPASSWORD\fR, PG host \fBlocalhost\fR, listening port \fB5042\fR, database \fBtest_database\fR and connection timeout \fB10 seconds\fR.
 
 root@my_server//postgres:PASSWORD@localhost:5042/test_database?connection_timetout=10
 
