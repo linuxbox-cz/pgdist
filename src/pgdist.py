@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 
 import os
 import sys
-import atexit
+import io
 import argparse
 import subprocess
 import logging
@@ -145,6 +145,7 @@ def main():
 	parser.add_argument("--syslog-ident", dest="syslog_ident", help="syslog ident")
 
 	args = parser.parse_args()
+	less = None
 
 	if args.help:
 		parser.print_help()
@@ -196,9 +197,9 @@ def main():
 			less = sys.stdout.isatty()
 
 		if less:
-			pager = subprocess.Popen(["less", "-FKSMIR"], bufsize=1, stdin=subprocess.PIPE, stdout=sys.stdout)
-			sys.stdout = pager.stdin
-			atexit.register(close_less, pager)
+			buffer = io.StringIO()
+			stdout = sys.stdout
+			sys.stdout = buffer
 
 		config.load(args.config)
 		if less and args.color == "auto":
@@ -389,11 +390,13 @@ def main():
 		parser.print_help()
 		sys.exit(1)
 
-	sys.exit(0)
+	if less:
+		pager = subprocess.Popen(["less", "-FKSMIR"], bufsize=1, stdin=subprocess.PIPE, stdout=stdout)
+		pager.stdin.write(buffer.getvalue())
+		pager.stdin.close()
+		pager.wait()
 
-def close_less(pager):
-	pager.stdin.close()
-	pager.wait()
+	sys.exit(0)
 
 def args_parse(args, n):
 	return args + [None] * (n - len(args))
