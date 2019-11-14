@@ -323,6 +323,32 @@ class Type(Element):
 		Element.__init__(self, "Type", command, name)
 		self.attributes = attributes
 
+	def update_element(self, file, element2):
+		change_command = self.command != element2.command
+		change_owner = self.owner != element2.owner
+
+		if not change_command and not change_owner:
+			return
+
+		if change_command:
+			file.write("\n")
+			file.write("-- TODO: ALTER OR DROP?\n")
+			file.write("-- %s: %s\n" % (element2.element_name, element2.name))
+			file.write("\n")
+			file.write(re.sub(r"^", "--", self.command, flags=re.MULTILINE))
+			file.write("\n")
+			file.write("\n")
+			file.write(element2.command.strip())
+			file.write("\n")
+			file.write("\n")
+		if change_owner:
+			if not change_command:
+				file.write("\n")
+				file.write("-- %s: %s\n" % (element2.element_name, element2.name))
+			if element2.owner:
+				file.write("ALTER TYPE %s OWNER TO %s;\n\n" % (element2.name, element2.owner))
+		file.write("-- end %s: %s\n\n" % (element2.element_name, element2.name))
+
 class Table(Element):
 	def __init__(self, command, name, columns):
 		Element.__init__(self, "Table", command, name)
