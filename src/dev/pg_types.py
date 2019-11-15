@@ -110,8 +110,9 @@ class Element:
 
 	def update_element(self, file, element2):
 		change_command = self.command != element2.command
+		change_owner = self.owner != element2.owner
 
-		if not change_command and self.owner == element2.owner:
+		if not change_command and not change_owner:
 			return
 
 		if change_command:
@@ -125,14 +126,12 @@ class Element:
 			file.write(element2.command.strip())
 			file.write("\n")
 			file.write("\n")
-		if self.owner != element2.owner:
+		if change_owner:
 			if not change_command:
 				file.write("\n")
 				file.write("-- %s: %s\n" % (element2.element_name, element2.name))
-			if self.owner:
-				file.write("-- OWNER -%s\n" % (self.owner))
 			if element2.owner:
-				file.write("-- OWNER +%s\n" % (element2.owner))
+				file.write("ALTER %s %s OWNER TO %s;\n\n" % (element2.element_name.upper(),  element2.name, element2.owner))
 		file.write("-- end %s: %s\n\n" % (element2.element_name, element2.name))
 
 	def get_whole_command(self):
@@ -413,8 +412,8 @@ class Table(Element):
 		if self.triggers != table2.triggers:
 			file.write(utils.diff(self.triggers, table2.triggers))
 
-		if self.owner != table2.owner:
-			file.write(utils.diff([self.owner or ""], [table2.owner or ""], "-- OWNER "))
+		if self.owner != table2.owner and table2.owner:
+			file.write("ALTER TABLE %s OWNER TO %s;\n" % (table2.name, table2.owner))
 
 		file.write("-- end %s: %s\n\n" % (table2.element_name.lower(), table2.name))
 
