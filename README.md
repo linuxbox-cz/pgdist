@@ -20,9 +20,11 @@
 
 	* [Create update (and test it)](#create-update)
 
-	* [Project distribution](#project-distribution)
+	* [Install project (and diff it)](#install-project)
 
-	* [Compare projects](#compare-projects)
+	* [Update project](#update-project)
+
+	* [List log check](#list-log-check)
 
 ## Description
 Let me introduce our project PGdist, used for postgres projects management from development to production.
@@ -121,6 +123,8 @@ pgport = 5432
 
 
 ## Tutorial
+
+**NOTICE** - This is only tutorial of some basic commands you will probably use, you will find more information in doc.md.
 
 ### Create project
 
@@ -381,9 +385,9 @@ This command will try to take our project and load it into test database. Now we
 
 ```
 $ git tag v1.0.0
-$ pgdist create-version v1.0.0
-Created file: my_project--v1.0.0--p01.sql
-Created file: my_project--v1.0.0--p02.sql
+$ pgdist create-version 1.0.0
+Created file: my_project--1.0.0--p01.sql
+Created file: my_project--1.0.0--p02.sql
 ```
 
 If you use git-tag to create version, PGdist will take data from specified git-tag and from it it will try to create version, otherwise current state is taken instead. Notice that PGdist created two version files as part 1 and part 2, cool right? Yeah I know.
@@ -485,7 +489,7 @@ It will try to load and compare current state of project with updated state whic
 Like `create-version` might need parts, update might need parts too.
 
 ```
-$ pgdist part-update-add v1.0.0 1.0.1 not-single-transaction
+$ pgdist part-update-add 1.0.0 1.0.1 not-single-transaction
 ```
 
 Notice that PGdist will only create update part with header so you have to put SQL into it yourself.
@@ -500,283 +504,112 @@ Last parameter is part number. It will delete update part file and data in it wi
 
 
 
+### Install project
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-### Project distribution
-
-**NOTICE** - Do not forget to correctly set up [distribution configuration file](#distribution-config-file).
-
-#### List projects:
-
-To show list of installed and available projects and their updates:
+So we are in phase where our project is beautiful and well-arranged and we want to install it.
 
 ```
-pgdist list [My_Project [pg_database]]
+$ pgdist install my_project project_pgdb 1.0.0 -C --directory ./sql_dist
+CREATE DATABASE project_pgdb 
+CREATE ROLE my_role NOLOGIN
+Install my_project 1.0.0 part 1/2 to project_pgdb
+Install my_project 1.0.0 part 2/2 to project_pgdb
+Complete!
 ```
 
-**args - optional**:
-
-- `project` - show info about project
-
-- `dbname` - show info about project in database
-
-- `--directory` - path to directory which contains install/update sql scripts
-
-- `--showall` - *enable* - show all versions of projects
-
-- `-U` `--username` - PG username to connect with
-
-- `-d` `--dbname` - name of database to connect to
-
-- `-H` `--host` - PG host
-
-- `-p` `--port` - port that PG listens to
-
-If you want to show list of projects in some database without specifying project, use `-d` or `--dbname`.
-
-#### Install project:
-
-So once you have prepared version of your project, you can try to install it.
+Yaaay! We got it, we installed version v1.0.0. Now we can show diff between our current project (version 1.0.1) and database.
 
 ```
-pgdist install My_Project pg_database [1.0.0]
+$ pgdist diff-db postgres@/project_pgdb
+dump remote
+load dump to test pg
+dump structure and data from test pg
+load project my_project to test pg
+dump structure and data from test pg
+New tables:
+		my_schema.customers
+
+Table my_schema.products is different:
+		+price integer
 ```
 
-**args - required**:
-
-- `project` - name of project you want to install
-
-- `dbname` - name of database to install to
-
-**args - optional**:
-
-- `version` - version of project to install, if not specified, latest is taken instead
-
-- `--directory` - path to directory which contains install/update sql scripts
-
-- `-C` `--create` - *enable* - if database does not exist, create it
+Now we can see that in our current project state we added new table and changed the old one which is absolutely correct.
 
 
+
+### Update project
+
+You will need to specify which project, to which database and what version, if version is not specified, latest is taken instead.
 
 ```
-pgdist check-update [My_Project [pg_database [1.0.0]]]
+$ pgdist update my_project project_pgdb 1.0.1 --directory ./sql_dist
+
+Project updates:
+============================================================================
+ project             dbname              update
+ my_project          project_pgdb        1.0.0 -> 1.0.1
+============================================================================
+
+Update my_project in project_pgdb 1.0.0 > 1.0.1
+Complete!
 ```
 
-**args - optional**:
 
-- `project` - search updates for project name
 
-- `dbname` - search updates in specified database
+### List log check
 
-- `version` - search for updates until version of project
-
-- `--directory` - path to directory which contains install/update sql scripts
+Well after time you will probably do many installations and updates so you can list installed projects and their updates and also a PGdist log.
 
 ```
-pgdist update [My_Project [pg_database [1.0.1]]]
+$ pgdist list --directory ./sql_dist --showall
+
+Available projects:
+============================================================================
+ project             version   all versions
+ my_project          1.0.0     1.0.0
+                               update: 1.0.0 -> 1.0.1
+============================================================================
+
+Installed projects:
+============================================================================
+ project             dbname              version   from      part parts
+ my_project          project_pgdb        1.0.0     -         2    2
+============================================================================
 ```
 
-**args - optional**:
-
-- `project` - update project
-
-- `dbname` - update project in database
-
-- `version` - try to update project to most recent specified version of project
-
-- `--directory` - path to directory which contains install/update sql scripts
-
-If you don´t specify any parameter, PGdist will try to update each of your installed project.
+Above is list before update, below after update.
 
 ```
-pgdist set-version My_Project pg_database 1.0.2
+Installed projects:
+============================================================================
+ project             dbname              version   from      part parts
+ my_project          project_pgdb        1.0.1     1.0.0     1    1   
+============================================================================
 ```
 
-**args - required**:
-
-- `project` - change info about project
-
-- `dbname` - change info about project in database
-
-- `version` - change info about project´s version
+Now we can see that we have installed my_project, in which database it is and also project version. It will also list available projects but you have to put install/update scripts into `install_path` or specify `--directory`. If you want to list only available updates for your projects use command below.
 
 ```
-pgdist get-version My_Project pg_database
+$ pgdist check-update my_project --directory ./sql_dist
+
+Project updates:
+============================================================================
+ project             dbname              update
+ my_project          project_pgdb        1.0.0 -> 1.0.1
+============================================================================
 ```
 
-**args - required**:
-
-- `project` - get version of project
-
-- `dbname` - get version of project in database
-
-#### Clean info:
-
-If you want to remove info (showed by `list`) about your project:
+From PGdist log you can see when was what created etc.
 
 ```
-pgdist clean My_Project [pg_database]
+$ pgdist log
+TIME                DBNAME                     PROJECT           VERSION COMMENT
+2019-11-29 01:11:15 project_pgdb               my_project        v1.0.0  CREATE ROLE my_role nologin
+2019-11-29 01:11:15 project_pgdb               my_project        v1.0.0  installed new version v1.0.0, part 1/2
+2019-11-29 01:11:15 project_pgdb               my_project        v1.0.0  installed new version v1.0.0, part 2/2
 ```
 
-**args - required**:
-
-- `project` - clean info about project
-
-**args - optional**:
-
-- `dbname` - clean project from database
-
-### Compare projects
-
-Let´s say you´ve installed some version of your project to your servers. Now you made a lot of changes in your project and you want to see the difference.  
-
-#### Compare table data:
-
-If you´ve added some table data to your project and you want to compare them with installed project table data, use command below to add them to comparison.
-
-```
-pgdist data-add some_table [table_column_1 [table_column_2]]
-```
-
-**args - required**:
-
-- `table` - table you want to add to comparison
-
-**args - optional**:
-
-- `column` - *multiple* - columns you want to add to comparsion
-
-#### Remove table data from comparison:
-
-You don´t want to compare some table data anymore.
-
-```
-pgdist data-rm some_table
-```
-
-**args - required**:
-
-- `table` - table you want to remove from comparison
-
-#### List table data from comparison:
-
-To see what table data you have added/removed:
-
-```
-pgdist data-list
-```
-
-#### Compare project:
-
-Show difference between your current project and installed project:
-
-```
-pgdist diff-db root@my_server:port//pg_user:pg_password@/pg_database [v1.0.0]
-```
-
-**args - required**:
-
-- `PGCONN` - connection to PG
-
-**args - optional**:
-
-- `git_tag` - compare project git tag with database (if not specified, current file system version is taken instead)
-
-- `--diff-raw` - *enable* - compare raw SQL dumps
-
-- `--no-clean` - *enable* - after loading project to database (parse purpose), it won´t clean it
-
-- `--no-owner` - *enable* - don´t compare owners
-
-- `--no-acl` - *enable* - don´t compare access privileges (grant/revoke commands)
-
-- `--swap` - *enable* - swap data to compare
-
-- `-w` `--ignore-all-space` - *enable* - ignore different whitespacing
-
-- `--cache` - *enable* - cache remote dump for 4 hours
-
-- `--pre-load` - path to file you want to load, load **before** current project
-
-- `--post-load` - path to file you want to load, load **after** current project
-
-- `--pre-remoted-load` - path to file you want to load, load **before** installed project
-
-- `--post-remoted-load` - path to file you want to load, load **after** installed project
-
-- `--pg_extractor` - *enable* - use PG extractor for PG dump, see more: https://github.com/omniti-labs/pg_extractor
-
-- `--pg_extractor_basedir` - PG extractor dumps PG to this directory
-
-Argument `--post-remoted-load` is very useful in case you create some hand-patch to unify versions.
-
-#### Compare project and file:
-
-Show difference between installed project and selected file:
-
-```
-pgdist diff-db-file root:password@my_server//pg_user:pg_password@/pg_database /path/to/your/SQL/file
-```
-
-Show difference between selected file and installed project:
-
-```
-pgdist diff-file-db /path/to/your/SQL/file root:password@my_server//pg_user:pg_password@/pg_database
-```
-
-**args - required**:
-
-- `PGCONN` - connection to PG
-
-- `file` - compare database with path to file
-
-**args - optional**:
-
-- `--diff-raw` - *enable* - compare raw SQL dumps
-
-- `--no-clean` - *enable* - after loading project to database (parse purpose), it won´t clean it
-
-- `--no-owner` - *enable* - don´t compare owners
-
-- `--no-acl` - *enable* - don´t compare access privileges (grant/revoke commands)
-
-- `--swap` - *enable* - swap data to compare
-
-- `-w` `--ignore-all-space` - *enable* - ignore different whitespacing
-
-- `--cache` - *enable* - cache remote dump for 4 hours
-
-- `--pre-load` - path to file you want to load, load **before** current project
-
-- `--post-load` - path to file you want to load, load **after** current project
-
-- `--pre-remoted-load` - path to file you want to load, load **before** installed project
-
-- `--post-remoted-load` - path to file you want to load, load **after** installed project
-
-- `--pg_extractor` - *enable* - use PG extractor for PG dump, see more: https://github.com/omniti-labs/pg_extractor
-
-- `--pg_extractor_basedir` - PG extractor dumps PG to this directory
+###### You really did read it all? Lol.
 
 
 
@@ -785,6 +618,8 @@ pgdist diff-file-db /path/to/your/SQL/file root:password@my_server//pg_user:pg_p
 * Marian Krucina LinuxBox.cz
 
 * Tadeáš Popov https://github.com/TadeasPopov
+
+
 
 ## License
 
