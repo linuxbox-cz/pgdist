@@ -126,23 +126,24 @@ pgport = 5432
 
 ## Tutorial
 
-### Create project
+### Lets get started
 
-#### Init your project with:
+First you want to do is make some directory where you want to initialize your project.
 
 ```
-pgdist init My_Project [/path/to/my/project]
+$ mkdir ProjectPG
 ```
 
-**args - required**:
+Now that you have made your project folder lets enter it, and initialize pgdist project.
 
-- `project` - name of your desired project
+```
+$ cd ProjectPG
+$ pgdist init MyProject
+Init project: MyProject in ProjectPG
+PGdist project inited in ProjectPG
+```
 
-**args - optional**:
-
-- `path` - path to folder to create project in
-
-That creates directory structure as follows:
+Above command should create directory structure as follows:
 
 ```
 ├── sql
@@ -150,50 +151,18 @@ That creates directory structure as follows:
 └── sql_dist
 ```
 
-Version and update scripts are in `sql_dist` folder.
-
-#### Project configuration file
-
-File `sql/pg_project.sql` is project configuration file. It contains header with some info and settings (project name, roles, table_data, parts, etc.) for command `create-version/update`. It also contains paths to source files.  
+After that, you can either create your directory structure under `sql` folder or use our recommended structure.
 
 ```
--- pgdist project
--- name: My_Project
-
--- table_data: my_schema.table
-
--- end header_data
-
--- part
--- single_transaction
-
-\ir my_schema/schema/schema.sql
-
--- part
--- not single_transaction
-
-\ir my_schema/tables/some_table.sql
-
+$ pgdist create-schema MySchema
 ```
-
-**NOTICE** - Each part has its own header defining which transaction to use, parts in `pg_project.sql` are only used with `create-version` command. See more about parts in section [Versions](#versions-▲)).
-
-#### Init schema directory:
-
-```
-pgdist create-schema my_schema
-```
-
-**args - required**:
-
-- `schema` - name of your desired schema
 
 That creates schema directory to your project:
 
 ```
 ├── sql
 │   ├── pg_project.sql
-│   └── my_schema
+│   └── MySchema
 │       ├── constraints
 │       ├── data
 │       ├── extensions
@@ -208,15 +177,14 @@ That creates schema directory to your project:
 └── sql_dist
 ```
 
-Source SQL files are in `sql/your_schema` folder.  
+Source SQL files are in `sql/MySchema` folder.  
 
-**NOTICE** - This will NOT create any *my_schema.sql* in my_schema folder. If this directory structure does not fit your demands, you can use any other, this structure is only recommended.
+**NOTICE** - This will NOT create any *my_schema.sql* in my_schema folder.
 
 
 
-### Roles
 
-#### Add role to project:
+
 
 ```
 pgdist role-add My_beautiful_role [login | nologin] [password]
