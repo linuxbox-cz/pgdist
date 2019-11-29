@@ -36,7 +36,7 @@
 
 		* [How to update project](#how-to-update-project)
 
-		* [List, log, check](#list-log-check)
+		* [How to get project info](#how-to-get-project-info)
 
 ## Description
 Let me introduce our project PGdist, used for PostgreSQL projects management from development to production.
@@ -712,7 +712,7 @@ Complete!
 
 
 
-#### List, check, log
+#### How to get project info
 
 **List installed/available projects**
 
