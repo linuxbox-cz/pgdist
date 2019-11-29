@@ -2,7 +2,7 @@
 
 ## Content
 
-* [Files](#files)
+* [Configuration](#configuration)
 
 	* [Develop config](#develop-config-file)
 
