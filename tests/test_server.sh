@@ -60,4 +60,7 @@ python "${PATH_PGDIST_SRC}/pgdist.py" set-version pgdist_test_project pgdist_tes
 log_pgdist "list"
 python "${PATH_PGDIST_SRC}/pgdist.py" list -c $PATH_CONFIG_MNG
 
+log_pgdist "log"
+python "${PATH_PGDIST_SRC}/pgdist.py" log -c $PATH_CONFIG_MNG
+
 log "test 3/3 finished"
