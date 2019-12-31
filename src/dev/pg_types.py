@@ -157,6 +157,7 @@ class Project:
 		self.operators = {}
 		self.tables = {}
 		self.table_data = {}
+		self.others = []
 
 	def print_info(self):
 		for schema in sorted(self.schemas):
@@ -175,7 +176,34 @@ class Project:
 		self.diff_elements(exclude_schemas, "views", self.views, project2.views, no_owner, no_acl)
 		self.diff_elements(exclude_schemas, "operators", self.operators, project2.operators, no_owner, no_acl)
 		self.diff_elements(exclude_schemas, "functions", self.functions, project2.functions, no_owner, no_acl, ignore_space)
+		self.diff_others(exclude_schemas, project2.others)
 		self.diff_data(project2)
+
+	def diff_others(self, exclude_schemas, others2):
+		others_c1 = [other1.get_whole_command() for other1 in self.others]
+		others_c2 = [other2.get_whole_command() for other2 in others2]
+		new_elements = []
+		removed_elements = []
+
+		for other in others2:
+			if other.get_whole_command() not in others_c1:
+				new_elements.append(other)
+		if new_elements:
+			print("New unknown:")
+		for other in new_elements:
+			for line in other.get_whole_command().splitlines():
+				print(color.green(line))
+			print("")
+
+		for other in self.others:
+			if other.get_whole_command() not in others_c2:
+				removed_elements.append(other)
+		if removed_elements:
+			print("Removed unknown:")
+		for other in removed_elements:
+			for line in other.get_whole_command().splitlines():
+				print(color.red(line))
+			print("")
 
 	def diff_data(self, project2):
 		for table in sorted(self.table_data.keys()):
@@ -263,6 +291,19 @@ class Project:
 		self.update_elements(file, "views", self.views, project2.views)
 		self.update_elements(file, "operators", self.operators, project2.operators)
 		self.update_elements(file, "functions", self.functions, project2.functions)
+		self.update_others(file, project2.others)
+
+	def update_others(self, file, others2):
+		others_c1 = [other.get_whole_command() for other in self.others]
+		others_c2 = [other.get_whole_command() for other in others2]
+
+		for other in self.others:
+			if other.get_whole_command() not in others_c2:
+				file.write(utils.get_command(other.drop_info(), "unknown", "Other"))
+
+		for other in others2:
+			if other.get_whole_command() not in others_c1:
+				file.write(utils.get_command(other.get_whole_command(), "unknown", "Other"))
 
 	def update_elements(self, file, elements_name, elements1, elements2):
 		for name in elements1:
@@ -490,3 +531,7 @@ class View(Element):
 class Operator(Element):
 	def __init__(self, command, name, leftarg, rightarg):
 		Element.__init__(self, "Operator", command, name+"("+leftarg+","+rightarg+")")
+
+class Other(Element):
+	def __init__(self, command):
+		Element.__init__(self, "Other", command, "unknown")
