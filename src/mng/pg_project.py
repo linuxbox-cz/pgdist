@@ -345,7 +345,7 @@ def prlist(project_name, dbname, conninfo, directory, show_all):
 
 	print("============================================================================")
 	if show_all:
-		print(" %-20s%-20s%-10s%-10s%-5s%-4s" % ("project", "dbname", "version", "from", "part", "parts"))
+		print(" %-20s%-20s%-10s%-10s%-5s" % ("project", "dbname", "version", "from", "part"))
 	else:
 		print(" %-20s%-20s%s" % ("project", "dbname", "version"))
 	for db in dbs:
@@ -357,7 +357,7 @@ def prlist(project_name, dbname, conninfo, directory, show_all):
 						fromv = str(ins.from_version)
 					else:
 						fromv = "-"
-					print(" %-20s%-20s%-10s%-10s%-5s%-4s" % (project.name, ins.dbname, str(ins.version), fromv, ins.part, ins.parts))
+					print(" %-20s%-20s%-10s%-10s%-5s" % (project.name, ins.dbname, str(ins.version), fromv, "%s/%s" % (ins.part, ins.parts)))
 				else:
 					print(" %-20s%-20s%s" % (project.name, ins.dbname, ins.version))
 	if not find_projects:
