@@ -273,6 +273,9 @@ def install(dbname, project, ver, conninfo, directory, create_db, is_require):
 	if ver.parts and create_db:
 		if not dbname in list_database(conninfo):
 			conn = connect(conninfo)
+			for part in ver.parts:
+				for role in part.roles:
+					create_role(conn, role, project.name, ver.version, part.part)
 			cursor = conn.cursor()
 			cmd = "CREATE DATABASE %s %s" % (dbname, ver.parts[0].dbparam)
 			print(cmd)
