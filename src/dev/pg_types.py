@@ -189,7 +189,7 @@ class Project:
 			if other.get_whole_command() not in others_c1:
 				new_elements.append(other)
 		if new_elements:
-			print("New unknown:")
+			print("New element:")
 		for other in new_elements:
 			for line in other.get_whole_command().splitlines():
 				print(color.green(line))
@@ -199,7 +199,7 @@ class Project:
 			if other.get_whole_command() not in others_c2:
 				removed_elements.append(other)
 		if removed_elements:
-			print("Removed unknown:")
+			print("Removed element:")
 		for other in removed_elements:
 			for line in other.get_whole_command().splitlines():
 				print(color.red(line))
