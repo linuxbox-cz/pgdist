@@ -26,6 +26,7 @@ Requires: python-argparse
 [ "$RPM_BUILD_ROOT" != "/" ] && rm -rf $RPM_BUILD_ROOT
 
 mkdir -p -m 755 ${RPM_BUILD_ROOT}/usr/share/pgdist/install
+mkdir -p -m 755 ${RPM_BUILD_ROOT}/usr/share/man/man1
 mkdir -p -m 755 ${RPM_BUILD_ROOT}/usr/libexec/pgdist/
 mkdir -p -m 755 ${RPM_BUILD_ROOT}/usr/libexec/pgdist/dev
 mkdir -p -m 755 ${RPM_BUILD_ROOT}/usr/libexec/pgdist/mng
@@ -36,10 +37,13 @@ install -m 755 src/pgdist.py ${RPM_BUILD_ROOT}/usr/libexec/pgdist/
 install -m 655 src/dev/* ${RPM_BUILD_ROOT}/usr/libexec/pgdist/dev/
 install -m 655 src/mng/* ${RPM_BUILD_ROOT}/usr/libexec/pgdist/mng/
 install -m 655 etc/* ${RPM_BUILD_ROOT}/etc/
+install -m 644 doc/pgdist.1 ${RPM_BUILD_ROOT}/usr/share/man/man1/
+gzip -f ${RPM_BUILD_ROOT}/usr/share/man/man1/pgdist.1
 
 ln -s /usr/libexec/pgdist/pgdist.py ${RPM_BUILD_ROOT}/usr/bin/pgdist
 
 %files
+%attr(644,root,root)                      /usr/share/man/man1/pgdist.1.gz
 %attr(755,root,root)                      /usr/bin/pgdist
 %attr(755,root,root)                      /usr/libexec/pgdist/*.p*
 %attr(644,root,root)                      /usr/libexec/pgdist/*/*.p*

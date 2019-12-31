@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from __future__ import print_function
 
 import re
+import sys
 
 class Address:
 	def __init__(self, addr):
@@ -11,10 +12,23 @@ class Address:
 		self.ssh_port = None
 		self.pg = None
 		if '//' in addr:
-			self.ssh, self.pg = addr.split("//",1)
+			ssh_str, self.pg = addr.split("//",1)
 
-			if ":" in self.ssh:
-				self.ssh, self.ssh_port = self.ssh.split(":")
+			if ssh_str:
+				x = re.match(r"^((?P<user>\w+)(:(?P<password>\w+))?@)?(?P<host>\w+)(:(?P<port>\d+))?", ssh_str)
+
+				if x:
+					if x.group("password"):
+						print("Error: ssh connection does not support 'password' option")
+						sys.exit(1)
+					if x.group("user"):
+						self.ssh = x.group("user") + "@" + x.group("host")
+					else:
+						self.ssh = x.group("host")
+					self.ssh_port = x.group("port")
+				else:
+					print("Error: ssh connection cannot be parsed: %s" % (ssh_str))
+					sys.exit(1)
 		else:
 			self.pg = addr
 
