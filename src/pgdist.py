@@ -135,10 +135,12 @@ def main():
 
 	# install projects
 	parser.add_argument("--showall", help="show all versions", action="store_true")
-	parser.add_argument("-d", "--dbname", dest="dbname", help="Specifies the name of the database to connect to.")
+	parser.add_argument("-l", "--database", dest="database", help="Specifies the name of the database to connect to, to get info about other databases.")
+	parser.add_argument("-d", "--dbname", dest="dbname", help="Specify the name of database to filter by.")
 	parser.add_argument("-h", "--host", dest="host", help="Specifies the host name of the machine on which the server is running.")
 	parser.add_argument("-p", "--port", dest="port", help="Specifies the TCP port or the local Unix-domain socket file.")
 	parser.add_argument("-U", "--username", dest="user", help="Connect to the database as the user username.")
+	parser.add_argument("-P", "--password", dest="password", help="Specifies the password of the user for pg connection")
 	parser.add_argument("-C", "--create", dest="create", help="Create the database.", action="store_true")
 	parser.add_argument("--directory", help="directory contains script install and update")
 	parser.add_argument("--syslog-facility", dest="syslog_facility", help="syslog facility")
@@ -219,12 +221,15 @@ def main():
 
 		if not args.user:
 			args.user = config.get_pguser()
-		if not args.dbname:
-			args.dbname = config.get_pgdatabase()
+		if not args.database:
+			args.database = config.get_pgdatabase()
 		if not args.host:
 			args.host = config.get_pghost()
 		if not args.port:
 			args.port = config.get_pgport()
+		if args.password:
+			os.putenv("PGPASSWORD", args.password)
+			os.environ["PGPASSWORD"] = args.password
 
 	if args.pg_extractor:
 		pg_extractor = pg_extractor_m.PG_extractor(args.pg_extractor_basedir)
@@ -368,7 +373,7 @@ def main():
 
 	elif args.cmd == "clean" and len(args.args) in (1, 2,):
 		(project_name, dbname) = args_parse(args.args, 2)
-		pg_project.clean(project_name, dbname or args.dbname, conninfo.ConnInfo(args))
+		pg_project.clean(project_name, dbname, conninfo.ConnInfo(args))
 
 	elif args.cmd == "set-version" and len(args.args) in (3,):
 		(project_name, dbname, version) = args_parse(args.args, 3)
