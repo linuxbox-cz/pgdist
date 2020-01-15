@@ -19,7 +19,7 @@ class Address:
 
 				if x:
 					if x.group("password"):
-						print("Error: ssh connection does not support 'password' option")
+						logging.error("Error: ssh connection does not support 'password' option")
 						sys.exit(1)
 					if x.group("user"):
 						self.ssh = x.group("user") + "@" + x.group("host")
@@ -27,7 +27,7 @@ class Address:
 						self.ssh = x.group("host")
 					self.ssh_port = x.group("port")
 				else:
-					print("Error: ssh connection cannot be parsed: %s" % (ssh_str))
+					logging.error("Error: ssh connection cannot be parsed: %s" % (ssh_str))
 					sys.exit(1)
 		else:
 			self.pg = addr
