@@ -628,8 +628,7 @@ def load_and_dump(project, clean=True, no_owner=False, no_acl=False, pre_load=No
 		if pg_extractor:
 			pg.pg_extractor(pg_extractor, no_owner, no_acl)
 	except pg_conn.PgError as e:
-		logging.error("Load project fail:")
-		print(e.output)
+		logging.error("Load project fail:\n%s" % (e.output))
 		if clean:
 			pg.clean()
 		else:
@@ -661,8 +660,7 @@ def load_dump_and_dump(dump_remote, project, table_data=None, clean=True, no_own
 		if pg_extractor:
 			pg.pg_extractor(pg_extractor, no_owner, no_acl)
 	except pg_conn.PgError as e:
-		logging.error("Load dump fail:")
-		print(e.output)
+		logging.error("Load dump fail:\n%s" % (e.output))
 		if clean:
 			pg.clean()
 		else:
@@ -687,7 +685,7 @@ def load_file_and_dump(fname, project_name="undef", clean=True, no_owner=False, 
 		if pg_extractor:
 			pg.pg_extractor(pg_extractor, no_owner, no_acl)
 	except pg_conn.PgError as e:
-		logging.error("Load dump fail:")
+		logging.error("Load dump fail:\n%s" % (e.output))
 		print(e.output)
 		if clean:
 			pg.clean()
@@ -861,8 +859,7 @@ def dump_remote(addr, no_owner, no_acl, cache):
 		print("dump remote", file=sys.stderr)
 		return pg.dump(no_owner, no_acl, cache=cache)
 	except pg_conn.PgError as e:
-		logging.error("Dump fail:")
-		print(e.output)
+		logging.error("Dump fail:\n%s" % (e.output))
 		sys.exit(1)
 
 def dump_remote_data(project, addr, cache):
@@ -870,8 +867,7 @@ def dump_remote_data(project, addr, cache):
 		pg = pg_conn.PG(addr)
 		return pg.dump_data(project, cache=cache)
 	except pg_conn.PgError as e:
-		logging.error("Dump fail:")
-		print(e.output)
+		logging.error("Dump data fail:\n%s" % (e.output))
 		sys.exit(1)
 
 def get_roles(addr, cache):
@@ -879,8 +875,7 @@ def get_roles(addr, cache):
 		pg = pg_conn.PG(addr)
 		return pg.get_roles(cache)
 	except pg_conn.PgError as e:
-		logging.error("Get roles fail:")
-		print(e.output)
+		logging.error("Get roles fail:\n%s" % (e.output))
 		sys.exit(1)
 
 def create_roles(roles):
@@ -888,8 +883,7 @@ def create_roles(roles):
 		pg = pg_conn.PG(config.test_db)
 		return pg.create_roles(roles=roles)
 	except pg_conn.PgError as e:
-		logging.error("Get roles fail:")
-		print(e.output)
+		logging.error("Create roles fail:\n%s" % (e.output))
 		sys.exit(1)
 
 def read_file(fname):
