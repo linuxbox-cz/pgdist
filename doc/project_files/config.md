@@ -20,6 +20,3 @@ File `sql/pg_project.sql` is project configuration file. It contains header with
 
 \ir my_schema/tables/some_table.sql
 ```
-
-[**BACK TO DOCS**](../doc.md)  
-[**BACK TO TUTORIAL**](../tutorial.md)  

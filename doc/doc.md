@@ -1,5 +1,3 @@
-{: table th:nth-of-type(1) style="width:160px"}
-
 # PGdist - PostgreSQL projects control system
 
 

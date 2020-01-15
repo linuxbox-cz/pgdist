@@ -35,6 +35,3 @@ Below PGCONN will define ssh connection to *my_server* with user *root* on port 
 ```
 root@my_server:8089//postgres:PASSWORD@localhost:5042/test_database?connection_timetout=10
 ```
-
-[**BACK TO DOCS**](../doc.md)  
-[**BACK TO TUTORIAL**](../tutorial.md)  

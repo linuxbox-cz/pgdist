@@ -18,6 +18,3 @@ Header of simple version file might look like this:
 ```
 
 **NOTICE** - Each part has its own header defining which transaction to use, parts in [project config file](config.md) are only used with [create-version](../develop/cmd/create-version.md) command.
-
-[**BACK TO DOCS**](../doc.md)  
-[**BACK TO TUTORIAL**](../tutorial.md)  

@@ -9,6 +9,3 @@
 | `--directory` | *specify* | directory contains script install and update |
 | `--syslog-facility` | *specify* | syslog facility |
 | `--syslog-ident` | *specify* | syslog ident |
-
-[**BACK TO DOCS**](../../doc.md)  
-[**BACK TO TUTORIAL**](../../tutorial.md)  

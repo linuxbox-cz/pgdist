@@ -23,6 +23,3 @@ pgport = 5432
 - `pghost` - *optional* - PG host
 
 - `pgport` - *optional* - port that PG listens to
-
-[**BACK TO DOCS**](../doc.md)  
-[**BACK TO TUTORIAL**](../tutorial.md)  

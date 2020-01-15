@@ -28,6 +28,3 @@ As you will find out, [create-update](../develop/cmd/create-update.md) does not 
 2. Replace `-- part: 1` with number of part (`-- part: 2`, etc.).
 
 3. For each part repeat step 1 and 2.
-
-[**BACK TO DOCS**](../doc.md)  
-[**BACK TO TUTORIAL**](../tutorial.md)  

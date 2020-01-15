@@ -27,6 +27,3 @@
 | `--post-load` | *specify* | path to file you want to load, if `pre-load-old/new` is not specified, load **after both** projects |
 | `--pre-remoted-load` | *specify* | SQL file to load before load remote dump |
 | `--post-remoted-load` | *specify* | SQL file to load after project |
-
-[**BACK TO DOCS**](../../doc.md)  
-[**BACK TO TUTORIAL**](../../tutorial.md)  
