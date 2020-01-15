@@ -19,11 +19,3 @@ PGdist project inited in pgdist_project
 **args - optional**:
 
 - `path` - path to folder to create project in
-
-Mentioned directory structure:
-
-```
-├── sql
-│   └── pg_project.sql
-└── sql_dist
-```

@@ -64,18 +64,6 @@ table th:nth-of-type(1) {
 
 
 
-### Recommendations:
-
-- Add your files to your project in the order as if you would be addding them to your database directly (this will ensure, that you won´t have to adjust import file order in `pg_project.sql`).  
-
-**Example**: first you would add all your `schema.sql` into your project then everything else that depends on it.
-
-- As the above point points out to file order, try to adjust or split your SQL dependencies in the order, so you don´t have to adjust your `version.sql` file.  
-
-**NOTICE** - Table data from `sql/schema/data` will be added only in file created by `create-version`.
-
-
-
 ## Authors
 
 * Marian Krucina LinuxBox.cz

@@ -4,6 +4,14 @@ It will try to load current state of your project to testing database (defined i
 
 ```
 pgdist test-load
+
+Example:
+$ pgdist test-load
+load project my_project to test pg
+dump structure and data from test pg
+checking element owners
+
+Project my_project was loaded successfully.
 ```
 
 **args - optional**:

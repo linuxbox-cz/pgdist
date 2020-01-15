@@ -6,7 +6,13 @@ After installation of your project, you may want to check for updates (you creat
 pgdist check-update [project [dbname [version]]]
 
 Example:
-$ pgdist check-update My_Project pg_database 1.0.0
+$ pgdist check-update my_project --directory ./sql_dist
+
+Project updates:
+============================================================================
+ project             dbname              update
+ my_project          project_pgdb        1.0.0 -> 1.0.1
+============================================================================
 ```
 
 **args - optional**:

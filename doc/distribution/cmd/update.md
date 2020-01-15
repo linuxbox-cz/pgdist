@@ -9,7 +9,16 @@ If you don´t specify any parameter, PGdist will try to update each of your inst
 pgdist update [project [dbname [version]]]
 
 Example:
-pgdist update my_project pg_database 1.0.1
+pgdist update my_project project_pgdb 1.0.1 --directory ./sql_dist
+
+Project updates:
+============================================================================
+ project             dbname              update
+ my_project          project_pgdb        1.0.0 -> 1.0.1
+============================================================================
+
+Update my_project in project_pgdb 1.0.0 > 1.0.1
+Complete!
 ```
 
 **args - optional**:

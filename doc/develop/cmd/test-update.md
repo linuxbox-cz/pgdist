@@ -6,7 +6,13 @@ Loads git tag version of your project to test database (defined in [develop conf
 pgdist test-update <git_tag> <version>
 
 Example:
-pgdist test-update v1.0.0 1.0.1
+$ pgdist test-update v1.0.0 1.0.1
+load project my_project to test pg
+load update my_project 1.0.0 > 1.0.1 to test pg
+dump structure and data from test pg
+load project my_project to test pg
+dump structure and data from test pg
+checking element owners
 ```
 
 **args - required**:

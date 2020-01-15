@@ -6,7 +6,7 @@ You don´t like your role anymore? You can change it´s settings by above comman
 pgdist role-change <name> [login | nologin] [password]
 
 Example:
-$ pgdist role-change My_beautiful_role nologin
+$ pgdist role-change my_beautiful_role nologin
 ```
 
 **args - required**:

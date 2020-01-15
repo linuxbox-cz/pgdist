@@ -6,7 +6,11 @@ Command for removing files from [project config. file](../../project_files/confi
 pgdist rm [file...]
 
 Example:
-$ pgdist rm /path/to/your/SQL/file_1 /path/to/your/SQL/file_2
+$ pgdist rm my_schema/schema/schema.sql my_schema/tables/products.sql
+Removed from project:
+	my_schema/schema/schema.sql
+Removed from project:
+	my_schema/tables/products.sql
 ```
 
 **args - required**:

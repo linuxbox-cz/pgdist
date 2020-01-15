@@ -6,7 +6,11 @@ Prints PGdist history, that means when was something installed, updated or added
 pgdist log [project [dbname]]
 
 Example:
-$ pgdist log my_project postgres
+$ pgdist log TIME                DBNAME                     PROJECT           VERSION COMMENT
+2019-11-29 01:11:15 project_pgdb               my_project        1.0.0   CREATE ROLE my_beautiful_role nologin
+2019-11-29 01:11:15 project_pgdb               my_project        1.0.0   installed new version 1.0.0, part 1/2
+2019-11-29 01:11:15 project_pgdb               my_project        1.0.0   installed new version 1.0.0, part 2/2
+2019-11-29 02:11:31 project_pgdb               my_project        1.0.1   updated from version 1.0.1 to 1.0.0, part 1/1
 ```
 
 **args - optional**:

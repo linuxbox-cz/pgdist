@@ -7,7 +7,12 @@ It takes `my_project--1.0.0.sql` [install script](../../project_files/version.md
 pgdist install <project> <dbname> [version]
 
 Example:
-$ pgdist install my_project pg_database 1.0.0
+$ pgdist install my_project project_pgdb 1.0.0 -C --directory ./sql_dist
+CREATE DATABASE project_pgdb
+CREATE ROLE my_beautiful_role NOLOGIN
+Install my_project 1.0.0 part 1/2 to project_pgdb
+Install my_project 1.0.0 part 2/2 to project_pgdb
+Complete!
 ```
 
 **args - required**:

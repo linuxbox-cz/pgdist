@@ -6,7 +6,20 @@ To show list of installed and available projects and their updates. If you want 
 pgdist list [project [dbname]]
 
 Example:
-$ pgdist list My_Project pg_database
+$ pgdist list --directory ./sql_dist --showall
+
+Available projects:
+============================================================================
+ project             version   all versions
+ my_project          1.0.0     1.0.0
+                               update: 1.0.0 -> 1.0.1
+============================================================================
+
+Installed projects:
+============================================================================
+ project             dbname              version   from      part parts
+ my_project          project_pgdb        1.0.0     -         2    2
+============================================================================
 ```
 
 **args - optional**:

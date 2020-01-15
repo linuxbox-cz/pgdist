@@ -6,7 +6,13 @@ To add file to your project, move it to the `sql` directory (if you are using yo
 pgdist add [file...]
 
 Example:
-$ pgdist add /path/to/your/SQL/file_1 /path/to/your/SQL/file_2
+$ pgdist add my_schema/schema/schema.sql my_schema/tables/products.sql
+Added to project:
+	my_schema/schema/schema.sql
+Added to project:
+	my_schema/tables/products.sql
+
+If you need, change order of files in project file sql/pg_project.sql
 ```
 
 **args - required**:

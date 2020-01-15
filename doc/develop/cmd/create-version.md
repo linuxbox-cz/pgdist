@@ -10,7 +10,8 @@ pgdist create-version <version> [git_tag]
 
 Example:
 $ pgdist create-version 1.0.0 v1.0.0
-Created file: my_project--1.0.0.sql
+Created file: my_project--1.0.0--p01.sql
+Created file: my_project--1.0.0--p02.sql
 ```
 
 **args - required**:

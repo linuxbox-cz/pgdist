@@ -6,7 +6,17 @@ Show difference between your current project and installed project. Argument `--
 pgdist diff-db <PGCONN> [git_tag]
 
 Example:
-pgdist diff-db root@my_server:port//pg_user:pg_password@/pg_database v1.0.0
+$ pgdist diff-db diff-db postgres@/project_pgdb
+dump remote
+load dump to test pg
+dump structure and data from test pg
+load project my_project to test pg
+dump structure and data from test pg
+New tables:
+		my_schema.customers
+
+Table my_schema.products is different:
+		+price integer
 ```
 
 **args - required**:

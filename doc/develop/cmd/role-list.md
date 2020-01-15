@@ -4,4 +4,5 @@ Before PGdist installs project into the databse, it will check if roles defined 
 
 ```
 $ pgdist role-list
+my_role nologin
 ```

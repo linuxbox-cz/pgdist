@@ -8,7 +8,7 @@ This command will remove specified part, and put all its files to previous part.
 pgdist part-rm <part_number>
 
 Example:
-pgdist part-rm 2
+$ pgdist part-rm 2
 ```
 
 **args - required**:
@@ -17,4 +17,4 @@ pgdist part-rm 2
 
 **args - optional**:
 
-- `-f` `--force` - *enable* - if used, PGdist will also remove all files belongig to specified part
+- `-f` `--force` - *enable* - if used, PGdist will also remove all files belonging to specified part

@@ -1,6 +1,6 @@
 ### Role add
 
-Below command creates role *my_beautiful_role* with ability to **login** and when installing, PGdist will create **password** and store it to directory defined in [distribution config file](../../distribution/config.md).  
+Below command creates role *my_beautiful_role* with ability to **login** and when installing, PGdist will create **password** and store it into directory defined in [distribution config file](../../distribution/config.md).  
 
 ```
 pgdist role-add <name> [login | nologin] [password]
