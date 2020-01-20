@@ -1,4 +1,4 @@
-#### Update
+### Update
 
 Now that you have checked for updates, you might want to update it with `my_project--1.0.1.sql`.
 Takes `my_project--1.0.0--1.0.1.sql` [update script](../../project_files/update.md) and loads it to *pg_database*.  

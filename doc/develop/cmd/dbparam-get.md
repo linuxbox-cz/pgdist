@@ -1,4 +1,4 @@
-#### DB parameters get
+### DB parameters get
 
 Lists DB-parameters of your project.
 

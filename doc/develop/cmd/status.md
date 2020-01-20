@@ -1,4 +1,4 @@
-#### Status
+### Status
 
 Shows files, which are in your project directory.
 

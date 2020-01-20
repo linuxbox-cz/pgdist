@@ -1,4 +1,4 @@
-#### Install project:
+### Install project:
 
 So once you have prepared version of your project, you can try to install it.
 It takes `my_project--1.0.0.sql` [install script](../../project_files/version.md) and loads it to *pg_database*.  

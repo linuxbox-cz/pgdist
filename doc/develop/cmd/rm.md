@@ -1,4 +1,4 @@
-#### Rm
+### Rm
 
 Command for removing files from [project config. file](../../project_files/config.md). If you want to delete the file, you have to do it yourself.
 

@@ -1,4 +1,4 @@
-#### Set version
+### Set version
 
 Set version in pgdist info of your installed project by force.
 

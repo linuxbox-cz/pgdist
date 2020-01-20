@@ -1,4 +1,4 @@
-#### Check update
+### Check update
 
 After installation of your project, you may want to check for updates (you created obviously):
 

@@ -1,4 +1,4 @@
-#### Clean
+### Clean
 
 If you want to remove info (showed by `list`) about your project:
 

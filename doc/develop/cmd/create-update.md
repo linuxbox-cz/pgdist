@@ -1,4 +1,4 @@
-#### Create update
+### Create update
 
 This command creates new file `my_project--1.0.0--1.0.1.sql` in your `sql_dist` folder.  
 If `part_count` is specified, PGdist will create specified number of parts with headers and it will put all update-sql in **first part**, it is up to you to divide your sql to parts.  

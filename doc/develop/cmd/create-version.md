@@ -1,4 +1,4 @@
-#### Create version
+### Create version
 
 Below command creates new file `my_project--1.0.0.sql` in your `sql_dist` folder.  
 In case your project is made from multiple parts `create-version` will make **new** [`version file`](../../project_files/version.md) for each part.

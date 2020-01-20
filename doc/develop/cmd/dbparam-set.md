@@ -1,4 +1,4 @@
-#### DB parameters set
+### DB parameters set
 
 Before you load your project to database, you may want to set some things before creating database.
 

@@ -1,4 +1,4 @@
-#### Get version
+### Get version
 
 Shows version of specified project.
 

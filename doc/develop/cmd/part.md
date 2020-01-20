@@ -1,4 +1,21 @@
-#### Part rm
+### Part add
+
+For dividing project into parts. Adds new part to [project config. file](../../project_files/config.md).
+
+```
+pgdist part-add [transaction_type]
+
+Example:
+pgdist part-add not-single-transaction
+```
+
+**args - optional**:
+
+- `transaction_type` - adds new part with *not single transaction*, if not specified, *single transaction* is taken instead
+
+
+
+### Part rm
 
 This command will remove specified part, and put all its files to previous part.  
 

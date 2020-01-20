@@ -1,4 +1,4 @@
-#### Init
+### Init
 
 This command is used to initialize your project. It will create basic directory structure with project configuration file.  
 Version and update scripts/files are in `sql_dist` folder.

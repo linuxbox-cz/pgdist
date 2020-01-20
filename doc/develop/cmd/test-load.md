@@ -1,4 +1,4 @@
-#### Test load
+### Test load
 
 It will try to load current state of your project to testing database (defined in [develop configuration file](../develop/config.md)).
 

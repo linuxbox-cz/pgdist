@@ -1,4 +1,4 @@
-#### Add
+### Add
 
 To add file to your project, move it to the `sql` directory (if you are using your directory structure), or move it to the correct directory (`table.sql` to `tables`, `schema.sql` to `schema`, etc.) and run command below.
 

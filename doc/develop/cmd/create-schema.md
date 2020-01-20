@@ -1,4 +1,4 @@
-#### Create schema
+### Create schema
 
 Creates default directory structure. If this directory structure does not fit your demands, you can use any other, this structure is only recommended.  
 Source SQL files are located in `sql` folder.  

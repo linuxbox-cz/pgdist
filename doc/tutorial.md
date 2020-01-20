@@ -200,7 +200,7 @@ To check if we specified our roles correctly, we can list them with [role-list c
 
 
 
-#### How to create version
+### How to create version
 
 **Test load**
 
@@ -219,7 +219,7 @@ If you use git-tag to create version, PGdist will take data from specified git-t
 
 
 
-#### How to create update
+### How to create update
 
 **Preparing SQL files**
 
@@ -297,9 +297,9 @@ You also might want to remove update part with [part-update-rm command](develop/
 
 
 
-### Distribution
+## Distribution
 
-#### How to install project
+### How to install project
 
 So we are in phase where our project is beautiful and well-arranged and we want to install it with [install command](distribution/cmd/install.md).
 
@@ -308,11 +308,11 @@ So we are in phase where our project is beautiful and well-arranged and we want 
 Yaaay! We got it, we installed version v1.0.0. Now we can show diff. between our current project (version 1.0.1) and database (version 1.0.0) with [diff-db command](develop/cmd/diff-db.md).  
 Now we can see that in our current project state we added new table and changed the old one which is absolutely correct.
 
-#### How to update project
+### How to update project
 
 Now we are ready to update our project in database with [update command](distribution/cmd/update.md).
 
-#### How to get project info
+### How to get project info
 
 **List installed/available projects**
 
