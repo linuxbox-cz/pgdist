@@ -464,6 +464,10 @@ class Table(Element):
 			for constraint in self.constraints:
 				whole_command += "ALTER TABLE %s ADD %s;\n" % (self.name, constraint)
 			whole_command += "\n"
+		if self.defaults:
+			for default in self.defaults:
+				whole_command += "ALTER TABLE %s ALTER %s;\n" % (self.name, default)
+			whole_command += "\n"
 		if self.indexes:
 			for index in self.indexes:
 				whole_command += "CREATE %s;\n" % (index,)
