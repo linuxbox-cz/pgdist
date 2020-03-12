@@ -518,9 +518,10 @@ class Function(Element):
 		return "\nDROP FUNCTION %s(%s);\n" % (self.fname, ", ".join(self.parsed_args))
 
 class Sequence(Element):
-	def __init__(self, command, name):
+	def __init__(self, command, name, serial=False):
 		Element.__init__(self, "Sequence", command, name)
 		self.owned_by = None
+		self.serial = serial
 
 	def get_whole_command(self):
 		whole_command = Element.get_whole_command(self)
