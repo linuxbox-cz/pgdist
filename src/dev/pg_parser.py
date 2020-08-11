@@ -13,6 +13,23 @@ def schema(set_schema, object_name):
 		return object_name
 	return set_schema +'.'+ object_name
 
+def is_serial(sequence_command):
+	serial = r"\s*START\s+WITH\s+1\s+INCREMENT\s+BY\s+1\s+NO\s+MINVALUE\s+NO\s+MAXVALUE\s+CACHE\s+1\s*;\s*"
+
+	if re.search(serial, sequence_command, re.IGNORECASE | re.MULTILINE):
+		return True
+	else:
+		return False
+
+def get_sequence_name(command):
+	re_sequence = r"nextval\(\'(?P<name>.+)\'.+\)"
+	sequence = re.search(re_sequence, command, re.IGNORECASE | re.MULTILINE)
+
+	if sequence and sequence.group('name'):
+		return sequence.group('name')
+	else:
+		return None
+
 class Tokens:
 	def __init__(self, stream):
 		self.stream = stream
@@ -373,7 +390,15 @@ def parse(dump_stream):
 
 			x = re.match(r"ALTER TABLE( ONLY)? (?P<name>\S+) ALTER (?P<default>COLUMN (?P<column>\S+) SET DEFAULT .*);$", command)
 			if x:
-				project.tables[schema(set_schema, x.group('name'))].defaults.append(x.group('default'))
+				sequence_name = get_sequence_name(command)
+
+				if (sequence_name
+					and project.sequences.get(schema(set_schema, sequence_name))
+					and project.sequences[schema(set_schema, sequence_name)].serial
+				):
+					project.sequences.pop(schema(set_schema, sequence_name))
+				else:
+					project.tables[schema(set_schema, x.group('name'))].defaults.append(x.group('default'))
 				continue
 
 			x = re.match(r"ALTER TABLE( ONLY)? (?P<name>\S+)\s*ADD (?P<constraint>CONSTRAINT.*);", command, re.M)
@@ -419,7 +444,7 @@ def parse(dump_stream):
 
 			x = re.match(r"CREATE SEQUENCE (?P<name>\S+)", command)
 			if x:
-				project.sequences[schema(set_schema, x.group('name'))] = Sequence(command, schema(set_schema, x.group('name')))
+				project.sequences[schema(set_schema, x.group('name'))] = Sequence(command, schema(set_schema, x.group('name')), is_serial(command))
 				continue
 
 			x = re.match(r"ALTER SEQUENCE (?P<name>\S+) OWNER TO (?P<new_owner>\S+);$", command)
@@ -433,7 +458,18 @@ def parse(dump_stream):
 				y = re.match(r"\w+\.\w+\.", table_column)
 				if not y:
 					table_column = "%s.%s" % (set_schema, x.group('table_column'))
-				project.sequences[schema(set_schema, x.group('name'))].owned_by = table_column
+
+				if project.sequences[schema(set_schema, x.group('name'))].serial:
+					s, t, c = table_column.split('.')
+
+					for index, column in enumerate(project.tables[schema(s, t)].columns):
+						if re.match(r"(?P<column>" + c + r")", column):
+							r = re.compile(re.escape("integer not null"), re.IGNORECASE)
+							project.tables[schema(s, t)].columns[index] = r.sub('SERIAL', column)
+							r = re.compile(re.escape(c + " integer not null"), re.IGNORECASE)
+							project.tables[schema(s, t)].command = r.sub(c + " SERIAL", project.tables[schema(s, t)].command)
+				else:
+					project.sequences[schema(set_schema, x.group('name'))].owned_by = table_column
 				continue
 
 			# VIEW
@@ -753,7 +789,3 @@ def parse(dump_stream):
 			raise
 
 	return project
-
-
-
-
