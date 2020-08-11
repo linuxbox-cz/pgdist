@@ -279,7 +279,7 @@ def parse(dump_stream):
 					if y:
 						labels.append(y.group('label'))
 						continue
-					print('ERROR: ' + command)
+					logging.error('ERROR: ' + command)
 				project.types[schema(set_schema, x.group('name'))] = Enum(command, schema(set_schema, x.group('name')), labels)
 				continue
 
@@ -302,7 +302,7 @@ def parse(dump_stream):
 					if y:
 						attributes.append(y.group('attribute'))
 						continue
-					print('ERROR: ' + command)
+					logging.error('ERROR: ' + command)
 				project.types[schema(set_schema, x.group('name'))] = Type(command, schema(set_schema, x.group('name')), attributes)
 				continue
 
@@ -352,7 +352,7 @@ def parse(dump_stream):
 					if y:
 						columns.append(y.group('column'))
 						continue
-					print('ERROR: ' + command)
+					logging.error('ERROR: ' + command)
 				project.tables[schema(set_schema, x.group('name'))] = Table(command, schema(set_schema, x.group('name')), columns)
 				continue
 
@@ -742,8 +742,7 @@ def parse(dump_stream):
 
 		# ######################################
 
-
-			logging.warning("Parser warning, unknown command: %s" % (command,))
+			project.others.append(Other(command))
 
 		except KeyError:
 			logging.error("Parser warning, KeyError on command: %s" % (command, ))

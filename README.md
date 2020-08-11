@@ -30,8 +30,6 @@ PGdist also requires a little bit of **DIY - do it yourself**.
 
 **Distribution part** - It is for usage on production server.
 
-[**Full documentation**](doc/doc.md)
-
 [**Tutorial**](doc/tutorial.md)
 
 ## Authors

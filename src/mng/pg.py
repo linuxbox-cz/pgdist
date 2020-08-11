@@ -61,6 +61,8 @@ class PgError(Exception):
 def run(c, conninfo, cmd=None, single_transaction=True, dbname=None, file=None):
 	args = [c]
 	if c == "psql":
+		if not conninfo.password:
+			args.append("-w")
 		args.append("--no-psqlrc")
 		args.append("--echo-queries")
 		args.append("--set")
@@ -94,25 +96,37 @@ def run(c, conninfo, cmd=None, single_transaction=True, dbname=None, file=None):
 		sys.exit(1)
 	return (retcode, output)
 
-def connect(conninfo, dbname=None):
+def connect(conninfo, dbname=None, hard=True):
 	try:
 		conn = psycopg2.extras.DictConnection(conninfo.dsn(dbname))
 	except Exception as e:
-		logging.error("Error connect: %s" % (e,))
-		sys.exit(1)
+		if hard:
+			logging.error("Error connect: %s" % (e,))
+			sys.exit(1)
+		raise Exception(e)
 	conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
 	return conn
 
 def list_database(conninfo):
+	check_databases = config.get_databases()
 	databases = []
 	conn = connect(conninfo)
-	cursor = conn.cursor()
-	cursor.execute("SELECT datname FROM pg_database WHERE datallowconn ORDER BY datname;")
-	for row in cursor:
-		databases.append(row["datname"])
-	cursor.close()
+
+	if not check_databases:
+		cursor = conn.cursor()
+		cursor.execute("SELECT datname FROM pg_database WHERE datallowconn ORDER BY datname;")
+		for row in cursor:
+			check_databases.append(row["datname"])
+		cursor.close()
+
 	conn.close()
 
+	for i, database in enumerate(check_databases):
+		try:
+			conn = connect(conninfo, database, False)
+			databases.append(database)
+		except Exception as err:
+			logging.warning("Failed to connect to database: %s" % (database))
 	return databases
 
 def check_pgdist_installed(conn):
@@ -226,7 +240,7 @@ def pgdist_update(dbname, conninfo):
 		dbs = list_database(conninfo)
 	
 	for db in dbs:
-		conn = connect(conninfo, db)
+		conn = connect(conninfo, db, hard=(dbname is not None))
 		cursor = conn.cursor()
 		if check_pgdist_installed(conn):
 			pgdist_install(db, conn)
@@ -238,23 +252,27 @@ def update_password(role_name, cursor):
 	cursor.execute("ALTER ROLE %s PASSWORD %%s;" % (role_name,), (password,))
 	open(os.path.join(config.get_password_path(), role_name), 'w').write("PGPASSWORD=%s\n" % (password, ))
 
-def create_role(conn, role, project_name, version, part):
+def create_role(conn, role, project_name, version, part, new_db=False):
 	logging.debug("check role: %s" % (role,))
 	cursor = conn.cursor()
 	cursor.execute("SELECT rolname, rolcanlogin, passwd FROM pg_roles LEFT JOIN pg_shadow ON usename=rolname WHERE rolname=%s;", (role.name,))
 	row = cursor.fetchone()
+	log = []
 	if row:
 		if not row["rolcanlogin"] and role.login:
 			logging.verbose("ALTER ROLE %s LOGIN;" % (role.name,))
 			cursor.execute("ALTER ROLE %s LOGIN;" % (role.name,))
-			cursor.execute("INSERT INTO pgdist.history(project, version, part, comment) VALUES(%s, %s, %s, %s)", (project_name, str(version), part, "ALTER ROLE %s LOGIN" % (str(role.name))))
+			log.append(("INSERT INTO pgdist.history(project, version, part, comment) VALUES(%s, %s, %s, %s)",
+				(project_name, str(version), part, "ALTER ROLE %s LOGIN" % (str(role.name)))))
 		if row["rolcanlogin"] and role.nologin:
 			logging.verbose("ALTER ROLE %s NOLOGIN;" % (role.name,))
 			cursor.execute("ALTER ROLE %s NOLOGIN;" % (role.name,))
-			cursor.execute("INSERT INTO pgdist.history(project, version, part, comment) VALUES(%s, %s, %s, %s)", (project_name, str(version), part, "ALTER ROLE %s NOLOGIN" % (str(role.name))))
+			log.append(("INSERT INTO pgdist.history(project, version, part, comment) VALUES(%s, %s, %s, %s)",
+				(project_name, str(version), part, "ALTER ROLE %s NOLOGIN" % (str(role.name)))))
 		if role.login and role.password and not row["passwd"]:
 			update_password(role.name, cursor)
-			cursor.execute("INSERT INTO pgdist.history(project, version, part, comment) VALUES(%s, %s, %s, %s)", (project_name, str(version), part, "ALTER ROLE %s PASSWORD" % (str(role.name))))
+			log.append(("INSERT INTO pgdist.history(project, version, part, comment) VALUES(%s, %s, %s, %s)",
+				(project_name, str(version), part, "ALTER ROLE %s PASSWORD" % (str(role.name)))))
 	else:
 		login = ""
 		if role.login:
@@ -267,21 +285,35 @@ def create_role(conn, role, project_name, version, part):
 
 		if role.password:
 			update_password(role.name, cursor)
-		cursor.execute("INSERT INTO pgdist.history(project, version, part, comment) VALUES(%s, %s, %s, %s)", (project_name, str(version), part, "CREATE ROLE %s" % (str(role))))
+		log.append(("INSERT INTO pgdist.history(project, version, part, comment) VALUES(%s, %s, %s, %s)",
+			(project_name, str(version), part, "CREATE ROLE %s" % (str(role)))))
+	if not new_db:
+		for l in log:
+			cursor.execute(l[0], l[1])
+	else:
+		return log
 
 def install(dbname, project, ver, conninfo, directory, create_db, is_require):
+	log = []
 	if ver.parts and create_db:
 		if not dbname in list_database(conninfo):
 			conn = connect(conninfo)
+			for part in ver.parts:
+				for role in part.roles:
+					log += create_role(conn, role, project.name, ver.version, part.part, new_db=True)
 			cursor = conn.cursor()
 			cmd = "CREATE DATABASE %s %s" % (dbname, ver.parts[0].dbparam)
 			print(cmd)
 			cursor.execute(cmd)
+			log.append(("INSERT INTO pgdist.history(project, version, part, comment) VALUES(%s, %s, %s, %s)",
+				(project.name, str(ver.version), ver.parts[0].part, cmd)))
 			conn.close()
 
 	conn = connect(conninfo, dbname)
 	cursor = conn.cursor()
 	pgdist_install(dbname, conn)
+	for l in log:
+		cursor.execute(l[0], l[1])
 	for part in ver.parts:
 		for require in part.requires:
 			cursor.execute("SELECT 1 FROM pgdist.installed WHERE project=%s", (require,))
@@ -331,7 +363,7 @@ def update(dbname, project, update, conninfo, directory):
 			print("Update %s in %s %s > %s part %d/%d" % (project.name, dbname, str(update.version_old), str(update.version_new), part.part, len(update.parts)))
 		run("psql", conninfo, dbname=dbname, file=os.path.join(directory, part.fname), single_transaction=part.single_transaction)
 		cursor.execute("INSERT INTO pgdist.history (project, version, part, comment) VALUES (%s, %s, %s, %s);",
-			(project.name, str(update.version_new), part.part, "updated from version %s to %s, part %d/%d" % (str(update.version_new), str(update.version_old), part.part, len(update.parts))))
+			(project.name, str(update.version_new), part.part, "updated from version %s to %s, part %d/%d" % (str(update.version_old), str(update.version_new), part.part, len(update.parts))))
 		cursor.execute("UPDATE pgdist.installed SET version=%s, from_version=%s,  part=%s, parts=%s WHERE project=%s RETURNING *;",
 			(str(update.version_new), str(update.version_old), part.part, len(update.parts), project.name))
 		if not cursor.fetchone():

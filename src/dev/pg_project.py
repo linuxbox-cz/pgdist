@@ -609,13 +609,12 @@ def get_test_dbname(project_name, dbs=None):
 	else:
 		return "pgdist_test_%s_%s" % (getpass.getuser(), project_name)
 
-def load_and_dump(project, clean=True, no_owner=False, no_acl=False, pre_load=None, post_load=None, updates=None, dbs=None, pg_extractor=None, create_update=False):
+def load_and_dump(project, clean=True, no_owner=False, no_acl=False, pre_load=None, post_load=None, updates=None, dbs=None, pg_extractor=None):
 	try:
 		pg = pg_conn.PG(config.test_db, dbname=get_test_dbname(project.name, dbs))
 		pg.init()
 		pg.load_file(pre_load)
-		if not create_update:
-			load_requires(project, pg)
+		load_requires(project, pg)
 		print("load project %s to test pg" % (project.name,), file=sys.stderr)
 		pg.load_project(project)
 		if updates:
@@ -629,8 +628,7 @@ def load_and_dump(project, clean=True, no_owner=False, no_acl=False, pre_load=No
 		if pg_extractor:
 			pg.pg_extractor(pg_extractor, no_owner, no_acl)
 	except pg_conn.PgError as e:
-		logging.error("Load project fail:")
-		print(e.output)
+		logging.error("Load project fail:\n%s" % (e.output))
 		if clean:
 			pg.clean()
 		else:
@@ -662,8 +660,7 @@ def load_dump_and_dump(dump_remote, project, table_data=None, clean=True, no_own
 		if pg_extractor:
 			pg.pg_extractor(pg_extractor, no_owner, no_acl)
 	except pg_conn.PgError as e:
-		logging.error("Load dump fail:")
-		print(e.output)
+		logging.error("Load dump fail:\n%s" % (e.output))
 		if clean:
 			pg.clean()
 		else:
@@ -688,7 +685,7 @@ def load_file_and_dump(fname, project_name="undef", clean=True, no_owner=False, 
 		if pg_extractor:
 			pg.pg_extractor(pg_extractor, no_owner, no_acl)
 	except pg_conn.PgError as e:
-		logging.error("Load dump fail:")
+		logging.error("Load dump fail:\n%s" % (e.output))
 		print(e.output)
 		if clean:
 			pg.clean()
@@ -798,8 +795,8 @@ def create_update(git_tag, new_version, force, gitversion=None, clean=True, pre_
 					build_file.write("-- %s\n\n" % (diff_file[0]))
 					build_file.write(diff_file[1])
 			elif part == 0:
-				dump_old, x = load_and_dump(project_old, clean=clean, pre_load=pre_load_old, post_load=post_load_old, dbs="old", create_update=True)
-				dump_new, x = load_and_dump(project_new, clean=clean, pre_load=pre_load_new, post_load=post_load_new, dbs="new", create_update=True)
+				dump_old, x = load_and_dump(project_old, clean=clean, pre_load=pre_load_old, post_load=post_load_old, dbs="old")
+				dump_new, x = load_and_dump(project_new, clean=clean, pre_load=pre_load_new, post_load=post_load_new, dbs="new")
 				pr_old = pg_parser.parse(io.StringIO(dump_old))
 				pr_new = pg_parser.parse(io.StringIO(dump_new))
 				pr_old.gen_update(build_file, pr_new)
@@ -862,8 +859,7 @@ def dump_remote(addr, no_owner, no_acl, cache):
 		print("dump remote", file=sys.stderr)
 		return pg.dump(no_owner, no_acl, cache=cache)
 	except pg_conn.PgError as e:
-		logging.error("Dump fail:")
-		print(e.output)
+		logging.error("Dump fail:\n%s" % (e.output))
 		sys.exit(1)
 
 def dump_remote_data(project, addr, cache):
@@ -871,8 +867,7 @@ def dump_remote_data(project, addr, cache):
 		pg = pg_conn.PG(addr)
 		return pg.dump_data(project, cache=cache)
 	except pg_conn.PgError as e:
-		logging.error("Dump fail:")
-		print(e.output)
+		logging.error("Dump data fail:\n%s" % (e.output))
 		sys.exit(1)
 
 def get_roles(addr, cache):
@@ -880,8 +875,7 @@ def get_roles(addr, cache):
 		pg = pg_conn.PG(addr)
 		return pg.get_roles(cache)
 	except pg_conn.PgError as e:
-		logging.error("Get roles fail:")
-		print(e.output)
+		logging.error("Get roles fail:\n%s" % (e.output))
 		sys.exit(1)
 
 def create_roles(roles):
@@ -889,8 +883,7 @@ def create_roles(roles):
 		pg = pg_conn.PG(config.test_db)
 		return pg.create_roles(roles=roles)
 	except pg_conn.PgError as e:
-		logging.error("Get roles fail:")
-		print(e.output)
+		logging.error("Create roles fail:\n%s" % (e.output))
 		sys.exit(1)
 
 def read_file(fname):

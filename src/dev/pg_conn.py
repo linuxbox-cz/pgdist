@@ -49,6 +49,8 @@ class PG:
 			args.append(self.address.get_pg(self.dbname))
 		else:
 			args.append(self.address.get_pg())
+		if not self.address.get_password():
+			args.append("-w")
 		if single_transaction:
 			args.append("--single-transaction")
 		if file:
@@ -91,8 +93,7 @@ class PG:
 			logging.debug("Init test database.")
 			self.psql("CREATE DATABASE %s;" % (self.dbname,), single_transaction=False)
 		except PgError as e:
-			logging.error("Create database fail:")
-			print(e.output)
+			logging.error("Create database fail:\n%s" % (e.output))
 			sys.exit(1)
 
 
@@ -102,8 +103,7 @@ class PG:
 			try:
 				self.psql("DROP DATABASE IF EXISTS %s;" % (self.dbname,), single_transaction=False)
 			except PgError as e:
-				logging.error("Clean database fail:")
-				print(e.output)
+				logging.error("Clean database fail:\n%s" % (e.output))
 				sys.exit(1)
 		else:
 			logging.error("Error: clean only test database")

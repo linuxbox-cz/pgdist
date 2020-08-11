@@ -83,3 +83,16 @@ def get_pgport():
 	if config.has_section("pgdist") and config.has_option("pgdist", "pgport"):
 		port = config.get("pgdist", "pgport")
 	return port
+
+def get_databases():
+	global config
+	databases_string = ""
+	databases = []
+
+	if config.has_section("pgdist") and config.has_option("pgdist", "databases"):
+		databases_string = config.get("pgdist", "databases")
+
+		if databases_string:
+			databases = [database.strip() for database in databases_string.strip().split(",") if database.strip()]
+
+	return databases
