@@ -501,7 +501,7 @@ class Function(Element):
 			return
 
 		if change_command:
-			command = re.sub("^CREATE FUNCTION", "CREATE OR REPLACE FUNCTION", element2.command)
+			command = re.sub(r"CREATE FUNCTION", "CREATE OR REPLACE FUNCTION", element2.command, flags=re.IGNORECASE)
 		else:
 			command = ""
 
