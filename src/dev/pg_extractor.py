@@ -1,7 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-from __future__ import print_function
-
 import sys
 import shutil
 import logging
@@ -34,7 +31,7 @@ class PG_extractor:
 
 	def print_dump_info(self):
 		if self.basedir:
-			print("pg_extractor dumped project to: %s" % (self.basedir))
+			print(("pg_extractor dumped project to: %s" % (self.basedir)))
 
 	def print_diff(self, swap=False, ignore_space=False):
 		self.print_dump_info()

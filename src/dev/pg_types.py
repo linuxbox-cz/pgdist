@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-from __future__ import print_function
+
+
 
 import re
 import sys
@@ -215,7 +215,7 @@ class Project:
 				# Tables table have different columns!
 				continue
 			if d1[0] != d2[0]:
-				m = map(lambda x: d1[0].index(x), d2[0])
+				m = [d1[0].index(x) for x in d2[0]]
 				new_d = []
 				for row in d2:
 					new_r = []
@@ -225,10 +225,10 @@ class Project:
 				d2 = new_d
 
 			table_pr = table_print.TablePrint(d1[0])
-			for i in xrange(1, len(d1)):
+			for i in range(1, len(d1)):
 				row1 = d1[i]
 				find = False
-				for j in xrange(1, len(d2)):
+				for j in range(1, len(d2)):
 					row2 = d2[j]
 					if row1 == row2:
 						find = True
@@ -236,7 +236,7 @@ class Project:
 						break
 				if not find:
 					table_pr.add(row1, "- |")
-			for j in xrange(1, len(d2)):
+			for j in range(1, len(d2)):
 				row2 = d2[j]
 				table_pr.add(row2, "+ |")
 			table_pr.sort()

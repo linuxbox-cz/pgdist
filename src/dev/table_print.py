@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-from __future__ import print_function
+
+
 
 import io
 
@@ -14,15 +14,15 @@ class Row:
 			if v is None:
 				row2.append([None])
 				columns_size[i] = max(columns_size[i], 4)
-			elif type(v) not in (str, unicode):
+			elif type(v) not in (str, str):
 				row2.append([v])
 				columns_size[i] = max(columns_size[i], len(str(v)))
 			elif v == "":
 				row2.append([""])
 			else:
-				if type(v) != unicode:
+				if type(v) != str:
 					try:
-						v = unicode(v, "utf-8")
+						v = str(v, "utf-8")
 					except UnicodeDecodeError:
 						v = "UnicodeDecodeError"
 				r = v.splitlines()
@@ -33,7 +33,7 @@ class Row:
 		self.row = row2
 
 	def format(self, columns_size, init_len, buf):
-		for k in xrange(self.rows):
+		for k in range(self.rows):
 			buf.write(("%%-%ds" % (init_len,)) % (self.init,))
 			buf.write(" ")
 			for i, cell in enumerate(self.row):
@@ -72,7 +72,7 @@ class TablePrint:
 		self.headers.format(self.columns_size, self.init_len, buf)
 		buf.write(" " * self.init_len)
 		buf.write("-")
-		for i in xrange(len(self.columns_size)):
+		for i in range(len(self.columns_size)):
 			if i > 0: buf.write("-+-")
 			buf.write("-" * self.columns_size[i])
 		buf.write("-\n")
@@ -87,4 +87,4 @@ def table_print(data, headers, formats=None):
 	print(tp.format())
 
 def table_print_pg(cursor):
-	table_print(cursor.fetchall(), headers=map(lambda x: x.name, cursor.description))
+	table_print(cursor.fetchall(), headers=[x.name for x in cursor.description])

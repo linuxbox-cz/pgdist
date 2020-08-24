@@ -1,7 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-from __future__ import print_function
-
 import sys
 import logging
 import re
@@ -15,12 +12,12 @@ import time
 import config
 
 class PgError(Exception):
-    def __init__(self, returncode, cmd, output=None):
-        self.returncode = returncode
-        self.cmd = cmd
-        self.output = output
-    def __str__(self):
-        return "Command '%s' returned non-zero exit status %d" % (self.cmd, self.returncode)
+	def __init__(self, returncode, cmd, output=None):
+		self.returncode = returncode
+		self.cmd = cmd
+		self.output = output
+	def __str__(self):
+		return "Command '%s' returned non-zero exit status %d" % (self.cmd, self.returncode)
 
 class PG:
 	def __init__(self, addr, dbname=None):
@@ -111,7 +108,7 @@ class PG:
 
 	def create_roles(self, project=None, roles=None):
 		if project:
-			roles = map(lambda x: x.name, project.roles)
+			roles = [x.name for x in project.roles]
 		if roles:
 			creates = []
 			for role in roles:
@@ -129,6 +126,9 @@ class PG:
 			return json.load(open(self.address.cache_file("roles")))
 		cmd = """SELECT string_agg(rolname, ',') FROM pg_roles;"""
 		(retcode, output) = self.psql(cmd=cmd, tuples_only=True)
+
+		if type(output) == bytes:
+			output = output.decode('utf-8')
 		r = output.strip().split(",")
 		if cache:
 			json.dump(r, open(self.address.cache_file("roles"), "w"))
@@ -148,7 +148,7 @@ class PG:
 			cmd = io.StringIO()
 			for file in part.files:
 				for l in project.get_file(file):
-					cmd.write(unicode(l, "UTF8"))
+					cmd.write(str(l, "UTF8"))
 				cmd.write(";\n")
 			self.psql(cmd=cmd.getvalue(), single_transaction=part.single_transaction, change_db=True)
 			cmd.close()
@@ -173,7 +173,7 @@ class PG:
 			logging.verbose("load struct from cache file")
 			return open(self.address.cache_file("struct")).read()
 		(retcode, output) = self.pg_dump(change_db=True, no_owner=no_owner, no_acl=no_acl)
-		r = unicode(output, "UTF8")
+		r = str(output, "UTF8")
 		if cache:
 			open(self.address.cache_file("struct"), "w").write(r)
 		return r
@@ -186,8 +186,8 @@ class PG:
 
 	def load_data(self, project, table_data):
 		for table in project.table_data:
-			csv_data = io.BytesIO()
-			writer = csv.writer(csv_data, delimiter=";".encode("utf8"))
+			csv_data = io.StringIO()
+			writer = csv.writer(csv_data, delimiter=";")
 			for row in table_data[table.table_name][1:]:
 				r = []
 				for v in row:
@@ -207,7 +207,7 @@ class PG:
 		for tb in project.table_data:
 			c.append("COPY %s TO STDOUT WITH(FORMAT CSV, HEADER, FORCE_QUOTE *, NULL 'NULL@15#7&679');" % (tb,))
 		(retcode, output) = self.psql(cmd="\n".join(c), change_db=True, exit_on_fail=False)
-		data = io.StringIO(unicode(output, "utf8"))
+		data = io.StringIO(str(output, "utf8"))
 
 		line = data.readline()
 		while True:
@@ -232,7 +232,7 @@ class PG:
 					data_table.append(line)
 				dt = list(csv.reader(data_table))
 				for row in dt:
-					for i in xrange(len(row)):
+					for i in range(len(row)):
 						if row[i] == "NULL@15#7&679":
 							row[i] = None
 				r[table_name] = dt

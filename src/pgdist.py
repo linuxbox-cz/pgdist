@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
 import os
 import sys
 import io
@@ -9,9 +7,12 @@ import argparse
 import subprocess
 import logging
 import logging.handlers
+import importlib
 
-reload(sys)
-sys.setdefaultencoding('utf-8')
+importlib.reload(sys)
+# not used anymore
+# https://stackoverflow.com/questions/28127513/attributeerror-module-object-has-no-attribute-setdefaultencoding
+# sys.setdefaultencoding('utf-8')
 
 description = """
 PGdist - distributes PotgreSQL functions, tables, etc...
@@ -397,7 +398,7 @@ def main():
 
 	if less:
 		pager = subprocess.Popen(["less", "-FKSMIR"], bufsize=1, stdin=subprocess.PIPE, stdout=stdout)
-		pager.stdin.write(buffer.getvalue())
+		pager.stdin.write(buffer.getvalue().encode('utf-8'))
 		pager.stdin.close()
 		pager.wait()
 
@@ -409,5 +410,5 @@ def args_parse(args, n):
 if __name__ == "__main__":
 	try:
 		main()
-	except KeyboardInterrupt, e:
+	except KeyboardInterrupt as e:
 		pass

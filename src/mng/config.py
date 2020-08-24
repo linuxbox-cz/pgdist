@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
+
 
 import os
 import sys
@@ -8,7 +8,7 @@ import logging
 try:
 	import configparser
 except ImportError:
-	import ConfigParser as configparser
+	import configparser as configparser
 
 config = None
 

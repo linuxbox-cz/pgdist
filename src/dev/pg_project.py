@@ -1,7 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-from __future__ import print_function
-
 import re
 import os
 import sys
@@ -11,7 +8,7 @@ import difflib
 import tarfile
 import logging
 import io
-import cStringIO
+import io
 import subprocess
 
 import color
@@ -36,7 +33,7 @@ class Part:
 
 	def rm_file(self, fname):
 		self.files.remove(fname)
-		self.data = "\n".join(filter(lambda x: not re.match(r"\\ir\s+%s($|\s)" % (fname,), x), self.data.splitlines()))
+		self.data = "\n".join([x for x in self.data.splitlines() if not re.match(r"\\ir\s+%s($|\s)" % (fname,), x)])
 
 class Role:
 	def __init__(self, name, param=None):
@@ -68,7 +65,7 @@ class TableData:
 	def __init__(self, table_name, columns=None):
 		self.table_name = table_name
 		if columns:
-			self.columns = map(lambda x: x.strip(), columns)
+			self.columns = [x.strip() for x in columns]
 		else:
 			self.columns = None
 
@@ -98,6 +95,8 @@ class ProjectBase:
 		part = None
 		part_num = 1
 		for i, line in enumerate(file):
+			if type(line) == bytes:
+				line = line.decode('utf-8')
 			# project name
 			x = re.match(r"-- name:\s*(?P<name>.*\S)", line)
 			if x:
@@ -265,10 +264,13 @@ class ProjectGit(ProjectBase):
 		process = subprocess.Popen(args, bufsize=8192, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE, cwd=self.directory or ".")
 		output, err = process.communicate()
 		retcode = process.poll()
+
 		if retcode != 0:
 			logging.error("Fail get git version: %s" % (err))
 			sys.exit(1)
-		self.tar = tarfile.open(fileobj=cStringIO.StringIO(output), bufsize=10240)
+
+		file_object = io.BytesIO(output)
+		self.tar = tarfile.open(fileobj=file_object, bufsize=10240)
 		self.load_conf(self.tar.extractfile("sql/pg_project.sql"))
 
 	def get_file(self, fname):
@@ -770,7 +772,7 @@ def create_update(git_tag, new_version, force, gitversion=None, clean=True, pre_
 		os.mkdir(os.path.join(project_old.directory, "sql_dist"))
 
 	# first part can be without --p%02d (--p01)
-	for part in xrange(part_count):
+	for part in range(part_count):
 		if part_count == 1:
 			fname_part = ""
 		else:
@@ -889,7 +891,7 @@ def create_roles(roles):
 def read_file(fname):
 	data = io.StringIO()
 	with open(fname, "r") as f:
-		data.write(unicode(f.read(), "UTF8"))
+		data.write(str(f.read(), "UTF8"))
 	return data.getvalue()
 
 def print_diff(dump1, dump2, data1, data2, diff_raw, no_owner, no_acl, fromfile, tofile, swap=False, ignore_space=False):

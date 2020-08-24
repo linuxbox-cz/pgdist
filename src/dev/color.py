@@ -1,7 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-from __future__ import print_function
-
 import sys
 
 ATTRIBUTES = dict(list(zip(["bold", "dark", "", "underline", "blink", "", "reverse", "concealed"], list(range(1, 9)))))
@@ -65,4 +62,3 @@ def white(text):
 		return "\033["+str(COLORS["white"])+"m"+text+str(RESET)
 	else:
 		return text
-

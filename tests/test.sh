@@ -183,7 +183,7 @@ source "${PATH_TEST}/test_server.sh"
 
 if [ "$NO_CLEAN" = false ]; then
     log_pgdist "clean pgdist_test_project pgdist_test_database"
-    python "${PATH_PGDIST_SRC}/pgdist.py" clean pgdist_test_project pgdist_test_database -c $PATH_CONFIG_MNG $PGCONN_2
+    python3 "${PATH_PGDIST_SRC}/pgdist.py" clean pgdist_test_project pgdist_test_database -c $PATH_CONFIG_MNG $PGCONN_2
 fi
 
 TEST_PART=""

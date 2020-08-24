@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
+
 
 import os
 import re
@@ -317,19 +317,19 @@ def prlist(project_name, dbname, conninfo, directory, show_all):
 	print("Available projects:")
 	print("============================================================================")
 	if show_all:
-		print(" %-20s%-10s%s" % ("project", "version", "all versions"))
+		print((" %-20s%-10s%s" % ("project", "version", "all versions")))
 	else:
-		print(" %-20s%-10s" % ("project", "version"))
+		print((" %-20s%-10s" % ("project", "version")))
 	for project in projects:
 		if project.versions or project.updates:
 			find_projects = True
 			if show_all:
-				print(" %-20s%-10s%s" % (project.name, project.newest_version(), ', '.join([str(x.version) for x in project.versions])))
+				print((" %-20s%-10s%s" % (project.name, project.newest_version(), ', '.join([str(x.version) for x in project.versions]))))
 			else:
-				print(" %-20s%-10s" % (project.name, project.newest_version()))
+				print((" %-20s%-10s" % (project.name, project.newest_version())))
 			for update in project.updates:
 				if show_all or (project.installed and update.version_old >= min([x.version for x in project.installed])):
-					print("                               update: %s" % (update,))
+					print(("                               update: %s" % (update,)))
 	if not find_projects:
 		print(" No projects found")
 	print("============================================================================")
@@ -345,9 +345,9 @@ def prlist(project_name, dbname, conninfo, directory, show_all):
 
 	print("============================================================================")
 	if show_all:
-		print(" %-20s%-20s%-10s%-10s%-5s" % ("project", "dbname", "version", "from", "part"))
+		print((" %-20s%-20s%-10s%-10s%-5s" % ("project", "dbname", "version", "from", "part")))
 	else:
-		print(" %-20s%-20s%s" % ("project", "dbname", "version"))
+		print((" %-20s%-20s%s" % ("project", "dbname", "version")))
 	for db in dbs:
 		for project in projects:
 			for ins in project.get_instalated(db):
@@ -357,9 +357,9 @@ def prlist(project_name, dbname, conninfo, directory, show_all):
 						fromv = str(ins.from_version)
 					else:
 						fromv = "-"
-					print(" %-20s%-20s%-10s%-10s%-5s" % (project.name, ins.dbname, str(ins.version), fromv, "%s/%s" % (ins.part, ins.parts)))
+					print((" %-20s%-20s%-10s%-10s%-5s" % (project.name, ins.dbname, str(ins.version), fromv, "%s/%s" % (ins.part, ins.parts))))
 				else:
-					print(" %-20s%-20s%s" % (project.name, ins.dbname, ins.version))
+					print((" %-20s%-20s%s" % (project.name, ins.dbname, ins.version)))
 	if not find_projects:
 		print(" No installed projects found")
 	print("============================================================================")
@@ -424,12 +424,12 @@ def update(project_name, dbname, version, conninfo, directory, check=False):
 		print("Project updates:")
 		print("============================================================================")
 
-		print(" %-20s%-20s%s" % ("project", "dbname", "update"))
+		print((" %-20s%-20s%s" % ("project", "dbname", "update")))
 		for project in projects:
 			for ins in project.installed:
 				if ins.updates:
 					for update in ins.updates:
-						print(" %-20s%-20s%s" % (project.name, ins.dbname, update))
+						print((" %-20s%-20s%s" % (project.name, ins.dbname, update)))
 
 		print("============================================================================")
 		print("")
