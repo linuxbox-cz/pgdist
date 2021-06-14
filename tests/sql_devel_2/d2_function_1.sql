@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION pgdist_test_schema_3.test_function_1()
+CREATE FUNCTION pgdist_test_schema_3.test_function_1()
     RETURNS BOOLEAN
     LANGUAGE plpgsql
 AS $function$
