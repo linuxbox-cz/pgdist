@@ -474,6 +474,7 @@ class Table(Element):
 			whole_command += "\n"
 		if self.triggers:
 			for trigger in self.triggers:
+				trigger = re.sub(r"EXECUTE FUNCTION", "EXECUTE PROCEDURE", trigger, flags=re.IGNORECASE)
 				whole_command += "CREATE %s;\n" % (trigger,)
 			whole_command += "\n"
 		if self.owner:
@@ -497,6 +498,9 @@ class Function(Element):
 		self.args = args
 		self.parsed_args = parsed_args
 
+		if self.command:
+			self.command = re.sub(r"^\s*CREATE FUNCTION", "CREATE OR REPLACE FUNCTION", self.command, flags=re.IGNORECASE)
+
 	def update_element(self, file, element2):
 		change_command = self.command != element2.command
 		change_owner = self.owner != element2.owner
@@ -505,7 +509,7 @@ class Function(Element):
 			return
 
 		if change_command:
-			command = re.sub(r"CREATE FUNCTION", "CREATE OR REPLACE FUNCTION", element2.command, flags=re.IGNORECASE)
+			command = re.sub(r"^\s*CREATE FUNCTION", "CREATE OR REPLACE FUNCTION", element2.command, flags=re.IGNORECASE)
 		else:
 			command = ""
 

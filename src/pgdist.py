@@ -132,6 +132,7 @@ def main():
 	parser.add_argument("--post-load-old", dest="post_load_old", help="SQL file to load after load old version of the project")
 	parser.add_argument("--pre-load-new", dest="pre_load_new", help="SQL file to load before load new version of the project")
 	parser.add_argument("--post-load-new", dest="post_load_new", help="SQL file to load after load new version of the project")
+	parser.add_argument("--version-length", dest="version_length", type=int, help="Count of version numbers which should pgdist generate during create-version eg. length: 3, version: 1.2.3; length: 2, version: 1.2")
 
 	# install projects
 	parser.add_argument("--showall", help="show all versions", action="store_true")
@@ -269,7 +270,7 @@ def main():
 
 	elif args.cmd == "create-version" and len(args.args) in (1, 2,):
 		(version, git_tag) = args_parse(args.args, 2)
-		pg_project.create_version(version, git_tag, args.force)
+		pg_project.create_version(version, git_tag, args.force, version_length=args.version_length)
 
 	elif args.cmd == "create-update" and len(args.args) in (2, 3):
 		(git_tag, new_version, part_count) = args_parse(args.args, 3)
