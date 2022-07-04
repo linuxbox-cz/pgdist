@@ -393,7 +393,7 @@ def parse(dump_stream):
 					and project.sequences.get(schema(set_schema, sequence_name))
 					and project.sequences[schema(set_schema, sequence_name)].serial
 				):
-					project.sequences.pop(schema(set_schema, sequence_name))
+					project.sequences[schema(set_schema, sequence_name)].command = ''
 				else:
 					project.tables[schema(set_schema, x.group('name'))].defaults.append(x.group('default'))
 				continue
@@ -777,8 +777,8 @@ def parse(dump_stream):
 
 			project.others.append(Other(command))
 
-		except KeyError:
-			logging.error("Parser warning, KeyError on command: %s" % (command, ))
+		except KeyError as error:
+			logging.error("Parser warning, KeyError on command: %s, error: %s" % (command, error))
 			continue
 
 		except:

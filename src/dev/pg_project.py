@@ -558,7 +558,9 @@ def part_rm(number, force):
 
 	project.save_conf()
 
-def create_version(version, git_tag, force):
+def create_version(version, git_tag, force, version_length=None):
+	if version_length:
+		version = ".".join(version.split(".")[0:version_length])
 	if git_tag:
 		project = ProjectGit(git_tag)
 	else:

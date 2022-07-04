@@ -146,8 +146,9 @@ log_pgdist "require-rm pgdist_test_project_2"
 python3 "${PATH_PGDIST_SRC}/pgdist.py" require-rm pgdist_test_project_2 -c $PATH_CONFIG_DEV
 
 if [ "$GIT_USER" -a "$GIT_EMAIL" ]; then
-    log_pgdist "require-add pgdist_test_project_2 https://github.com/TadeasPopov/pgdist_test_project.git master"
-    python3 "${PATH_PGDIST_SRC}/pgdist.py" require-add pgdist_test_project_2 https://github.com/TadeasPopov/pgdist_test_project.git master -c $PATH_CONFIG_DEV
+    log_pgdist "require-add pgdist_test_project_2 git@git.linuxbox.cz:tpopov/pgdist_tester.git master"
+    python3 "${PATH_PGDIST_SRC}/pgdist.py" require-add pgdist_test_project_2 git@git.linuxbox.cz:tpopov/pgdist_tester.git master -c $PATH_CONFIG_DEV
+
 fi
 
 #add some data

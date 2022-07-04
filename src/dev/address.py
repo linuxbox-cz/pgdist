@@ -12,7 +12,7 @@ class Address:
 			ssh_str, self.pg = addr.split("//",1)
 
 			if ssh_str:
-				x = re.match(r"^((?P<user>\w+)(:(?P<password>\w+))?@)?(?P<host>\w+)(:(?P<port>\d+))?", ssh_str)
+				x = re.match(r"^((?P<user>\w+)(:(?P<password>\w+))?@)?(?P<host>[\w-]+)(:(?P<port>\d+))?", ssh_str)
 
 				if x:
 					if x.group("password"):

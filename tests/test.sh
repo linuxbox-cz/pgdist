@@ -38,6 +38,7 @@ PATH_SCHEMAS="${PATH_SQL_SCHEMA}/schema"
 PATH_FUNCTIONS="${PATH_SQL_SCHEMA}/functions"
 PATH_CONSTRAINTS="${PATH_SQL_SCHEMA}/constraints"
 PATH_TRIGGERS="${PATH_SQL_SCHEMA}/triggers"
+PATH_SEQUENCES="${PATH_SQL_SCHEMA}/sequences"
 PATH_INDEXES="${PATH_SQL_SCHEMA}/indexes"
 PATH_DATA="${PATH_SQL_SCHEMA}/data"
 PATH_VIEWS="${PATH_SQL_SCHEMA}/views"
@@ -187,7 +188,7 @@ if [ "$NO_CLEAN" = false ]; then
 fi
 
 TEST_PART=""
-log "succes!"
+log "success!"
 
 if [ "$NO_CLEAN" = false ]; then
     clean_up

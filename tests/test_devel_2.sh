@@ -3,9 +3,11 @@
 TEST_PART="devel_2 | "
 log "test begin\n"
 
+mkdir "${PATH_SEQUENCES}"
+cd $PATH_TEST
+
 #copy sql files to project directory
 log "cp ${PATH_DEVEL_1}schema_1.sql ${PATH_SCHEMAS}/"
-cd $PATH_TEST
 cp "${PATH_D2}/d2_schema_1.sql" "${PATH_SCHEMAS}/"
 
 log "cp d2_table_1.sql ${PATH_TABLES}/"
@@ -17,9 +19,17 @@ cp "${PATH_D2}/d2_function_1.sql" "${PATH_FUNCTIONS}/"
 log "cp d2_index_1.sql ${PATH_INDEXES}/"
 cp "${PATH_D2}/d2_index_1.sql" "$PATH_INDEXES/"
 
+log "cp d2_trigger_1.sql ${PATH_TRIGGERS}/"
+cp "${PATH_D2}/d2_trigger_1.sql" "${PATH_TRIGGERS}/"
+
+log "cp d2_sequence_1.sql ${PATH_SEQUENCES}/"
+cp "${PATH_D2}/d2_sequence_1.sql" "${PATH_SEQUENCES}/"
+
+#change function
 cd $PATH_SQL
 echo "ALTER FUNCTION pgdist_test_schema.test_function_1() OWNER TO pgdist_test_role_1;" >> "${PATH_FUNCTIONS}/d1_function_1.sql"
 
+#add files
 log_pgdist "add ${PATH_SCHEMAS}/d2_schema_1.sql"
 python3 "${PATH_PGDIST_SRC}/pgdist.py" add "${PATH_SCHEMAS}/d2_schema_1.sql" -c $PATH_CONFIG_DEV
 
@@ -28,6 +38,15 @@ python3 "${PATH_PGDIST_SRC}/pgdist.py" add "${PATH_TABLES}/d2_table_1.sql" -c $P
 
 log_pgdist "add ${PATH_INDEXES}/d2_index_1.sql"
 python3 "${PATH_PGDIST_SRC}/pgdist.py" add "${PATH_INDEXES}/d2_index_1.sql" -c $PATH_CONFIG_DEV
+
+log_pgdist "add ${PATH_FUNCTIONS}/d2_function_1.sql"
+python "${PATH_PGDIST_SRC}/pgdist.py" add "${PATH_FUNCTIONS}/d2_function_1.sql" -c $PATH_CONFIG_DEV
+
+log_pgdist "add ${PATH_TRIGGERS}/d2_trigger_1.sql"
+python "${PATH_PGDIST_SRC}/pgdist.py" add "${PATH_TRIGGERS}/d2_trigger_1.sql" -c $PATH_CONFIG_DEV
+
+log_pgdist "add ${PATH_SEQUENCES}/d2_sequence_1.sql"
+python "${PATH_PGDIST_SRC}/pgdist.py" add "${PATH_SEQUENCES}/d2_sequence_1.sql" -c $PATH_CONFIG_DEV
 
 #change roles
 log_pgdist "role-list"
@@ -83,5 +102,10 @@ git tag -a v1.1 -m "test pgdist v1.1"
 
 log_git "tag -l"
 git tag -l
+
+#create version 1.1
+log_pgdist "create-version 1.1.1 --version-length 2"
+cd $PATH_SQL
+python "${PATH_PGDIST_SRC}/pgdist.py" create-version 1.1.1 -c $PATH_CONFIG_DEV --version-length 2
 
 log "test 2/3 finished"

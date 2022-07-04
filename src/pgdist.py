@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 import os
 import sys
@@ -133,6 +133,7 @@ def main():
 	parser.add_argument("--post-load-old", dest="post_load_old", help="SQL file to load after load old version of the project")
 	parser.add_argument("--pre-load-new", dest="pre_load_new", help="SQL file to load before load new version of the project")
 	parser.add_argument("--post-load-new", dest="post_load_new", help="SQL file to load after load new version of the project")
+	parser.add_argument("--version-length", dest="version_length", type=int, help="Count of version numbers which should pgdist generate during create-version eg. length: 3, version: 1.2.3; length: 2, version: 1.2")
 
 	# install projects
 	parser.add_argument("--showall", help="show all versions", action="store_true")
@@ -147,6 +148,8 @@ def main():
 	parser.add_argument("--syslog-facility", dest="syslog_facility", help="syslog facility")
 	parser.add_argument("--syslog-ident", dest="syslog_ident", help="syslog ident")
 
+	# argument for list
+	parser.add_argument("--JSON-output", dest="json_output", help="show list of installed projects in databases and store them in JSON", action="store_true", default=False)
 	args = parser.parse_args()
 	less = None
 
@@ -270,7 +273,7 @@ def main():
 
 	elif args.cmd == "create-version" and len(args.args) in (1, 2,):
 		(version, git_tag) = args_parse(args.args, 2)
-		pg_project.create_version(version, git_tag, args.force)
+		pg_project.create_version(version, git_tag, args.force, version_length=args.version_length)
 
 	elif args.cmd == "create-update" and len(args.args) in (2, 3):
 		(git_tag, new_version, part_count) = args_parse(args.args, 3)
@@ -358,7 +361,7 @@ def main():
 	# install projects
 	elif args.cmd == "list" and len(args.args) in (0, 1, 2,):
 		(project_name, dbname) = args_parse(args.args, 2)
-		pg_project.prlist(project_name, dbname or args.dbname, conninfo.ConnInfo(args), args.directory or config.get_install_path(), args.showall)
+		pg_project.prlist(project_name, dbname or args.dbname, conninfo.ConnInfo(args), args.directory or config.get_install_path(), args.showall, args.json_output)
 
 	elif args.cmd == "install" and len(args.args) in (2, 3,):
 		(project_name, dbname, version) = args_parse(args.args, 3)
@@ -366,7 +369,7 @@ def main():
 
 	elif args.cmd == "check-update" and len(args.args) in (0, 1, 2, 3,):
 		(project_name, dbname, version) = args_parse(args.args, 3)
-		pg_project.check_update(project_name, dbname or args.dbname, version, conninfo.ConnInfo(args), args.directory or config.get_install_path())
+		pg_project.check_update(project_name, dbname or args.dbname, version, conninfo.ConnInfo(args), args.directory or config.get_install_path(), args.json_output)
 
 	elif args.cmd == "update" and len(args.args) in (0, 1, 2, 3,):
 		(project_name, dbname, version) = args_parse(args.args, 3)
