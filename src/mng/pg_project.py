@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-
 import os
 import re
 import sys
@@ -9,7 +8,7 @@ from distutils.version import LooseVersion
 
 import pg
 import json
-from print_table import *
+import print_table
 
 class Role:
 	def __init__(self, name, param):
@@ -340,16 +339,19 @@ def prlist(project_name, dbname, conninfo, directory, show_all, json_output):
 				for update in project.updates:
 					if show_all or (project.installed and update.version_old >= min([x.version for x in project.installed])):
 						row_project=[]
-						row_project.append("")
+						if show_all: 
+							row_project.append("")
 						row_project.append("")
 						row_project.append("update: {}".format(update))
 						list_project.append(row_project)
+		
 		if not find_projects:
 			print(" No projects found")
 		else:
-			table_print(list_project, header)
+			print(list_project, header)
+			print_table.table_print(list_project, header)
 		print("")
-  
+		
 		find_projects = False
 		list_project = []
 
@@ -389,7 +391,7 @@ def prlist(project_name, dbname, conninfo, directory, show_all, json_output):
 		if not find_projects:
 			print(" No installed projects found")
 		else:
-			table_print(list_project, header)
+			print_table.table_print(list_project, header)
 		print("")
 	
 	else:
@@ -480,7 +482,7 @@ def update(project_name, dbname, version, conninfo, directory, json_output=False
 							row_project.append(update)
 							list_project.append(row_project)
 
-			table_print(list_project, header)
+			print_table.table_print(list_project, header)
 		else:
 			print("Nothing to do.")
 	else:

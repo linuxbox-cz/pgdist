@@ -8,7 +8,6 @@ import difflib
 import tarfile
 import logging
 import io
-import io
 import subprocess
 
 import color
@@ -16,6 +15,7 @@ import utils
 import pg_conn
 import config
 import pg_parser
+import table_print
 
 class Part:
 	def __init__(self, single_transaction=True, number=1):
@@ -140,7 +140,7 @@ class ProjectBase:
 				if x.group("columns"):
 					self.table_data.append(TableData(x.group("table_name"), x.group("columns").split(",")))
 				else:
-					self.table_data.append(TableData(x.group("table_name")))
+					self.table_data.append(TableData(x.group("table_name")))	
 				continue
 			# part data
 			# import file
@@ -272,7 +272,7 @@ class ProjectGit(ProjectBase):
 		file_object = io.BytesIO(output)
 		self.tar = tarfile.open(fileobj=file_object, bufsize=10240)
 		self.load_conf(self.tar.extractfile("sql/pg_project.sql"))
-
+  
 	def get_file(self, fname):
 		return self.tar.extractfile("sql/"+fname)
 
@@ -835,12 +835,15 @@ def test_update(git_tag, new_version, clean=True, gitversion=None, pre_load=None
 	else:
 		old_version = re.sub(r"^[^\d]*", "", git_tag)
 	new_version = re.sub(r"^[^\d]*", "", new_version)
-
+ 
 	project_old = ProjectGit(git_tag)
 	project_new = ProjectFs()
+
+	project_old.table_data=project_new.table_data.copy()
+
 	upds = []
 	upds.append(Update(project_old.name, old_version, new_version))
-
+ 
 	dump_updated, table_data_updated = load_and_dump(project_old, clean=clean, pre_load=pre_load_old, post_load=post_load_old, updates=upds, dbs="updated",
 		pg_extractor=pg_extractor)
 	dump_cur, table_data_cur = load_and_dump(project_new, clean=clean, pre_load=pre_load_new, post_load=post_load_new,
@@ -852,6 +855,9 @@ def test_update(git_tag, new_version, clean=True, gitversion=None, pre_load=None
 	else:
 		pr_cur = pg_parser.parse(io.StringIO(dump_cur))
 		pr_updated = pg_parser.parse(io.StringIO(dump_updated))
+		pr_cur.table_data = table_data_cur.copy()
+		pr_updated.table_data = table_data_updated.copy()
+
 		if not no_owner:
 			logging.info("checking element owners")
 			pr_updated.check_elements_owner()

@@ -80,6 +80,7 @@ class PG:
 		output, unused_err = process.communicate(cmd)
 		retcode = process.poll()
 		if exit_on_fail and retcode != 0:
+			output = output.decode()
 			output = "\n".join(output.split("\n")[-40:])
 			raise PgError(retcode, cmd, output=output)
 		return (retcode, output)

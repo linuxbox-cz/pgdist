@@ -18,7 +18,6 @@ psql -U postgres -d pgdist_test_database -c "SELECT * FROM pgdist_test_schema.te
 
 log_pgdist "list"
 python3 "${PATH_PGDIST_SRC}/pgdist.py" list -c $PATH_CONFIG_MNG $PGCONN_2
-
 PGCONN="postgres@/pgdist_test_database"
 log_pgdist "diff-db ${PGCONN}"
 python3 "${PATH_PGDIST_SRC}/pgdist.py" diff-db $PGCONN -c $PATH_CONFIG_DEV
