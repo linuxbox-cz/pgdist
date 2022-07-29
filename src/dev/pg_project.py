@@ -613,12 +613,14 @@ def get_test_dbname(project_name, dbs=None):
 	else:
 		return "pgdist_test_%s_%s" % (getpass.getuser(), project_name)
 
-def load_and_dump(project, clean=True, no_owner=False, no_acl=False, pre_load=None, post_load=None, updates=None, dbs=None, pg_extractor=None):
+def load_and_dump(project, clean=True, no_owner=False, no_acl=False, pre_load=None, post_load=None, updates=None, dbs=None, pg_extractor=None, new_project=None):
 	try:
 		pg = pg_conn.PG(config.test_db, dbname=get_test_dbname(project.name, dbs))
 		pg.init()
 		pg.load_file(pre_load)
 		load_requires(project, pg)
+		if new_project:
+			load_requires(new_project, pg)
 		print("load project %s to test pg" % (project.name,), file=sys.stderr)
 		pg.load_project(project)
 		if updates:
@@ -845,7 +847,7 @@ def test_update(git_tag, new_version, clean=True, gitversion=None, pre_load=None
 	upds.append(Update(project_old.name, old_version, new_version))
  
 	dump_updated, table_data_updated = load_and_dump(project_old, clean=clean, pre_load=pre_load_old, post_load=post_load_old, updates=upds, dbs="updated",
-		pg_extractor=pg_extractor)
+		pg_extractor=pg_extractor, new_project=project_new)
 	dump_cur, table_data_cur = load_and_dump(project_new, clean=clean, pre_load=pre_load_new, post_load=post_load_new,
 		pg_extractor=pg_extractor)
 
