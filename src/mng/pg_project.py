@@ -5,6 +5,7 @@ import re
 import sys
 import logging
 from distutils.version import LooseVersion
+from telnetlib import PRAGMA_HEARTBEAT
 
 import pg
 import json
@@ -348,7 +349,6 @@ def prlist(project_name, dbname, conninfo, directory, show_all, json_output):
 		if not find_projects:
 			print(" No projects found")
 		else:
-			print(list_project, header)
 			print_table.table_print(list_project, header)
 		print("")
 		
@@ -481,8 +481,9 @@ def update(project_name, dbname, version, conninfo, directory, json_output=False
 							row_project.append(ins.dbname)
 							row_project.append(update)
 							list_project.append(row_project)
-
+			
 			print_table.table_print(list_project, header)
+			print("")
 		else:
 			print("Nothing to do.")
 	else:
@@ -499,8 +500,6 @@ def update(project_name, dbname, version, conninfo, directory, json_output=False
 
 		json_projects = json.dumps(list_projects, indent = 4)
 		print(json_projects)
-	print("")
-
 	if check:
 		return
 
