@@ -10,7 +10,6 @@ Source:         pgdist-%{version}.tar
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 BuildArch: noarch
 Requires: python3-psycopg2
-Requires: python-argparse
 
 
 %description
