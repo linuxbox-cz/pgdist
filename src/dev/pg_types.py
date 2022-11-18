@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-from __future__ import print_function
 
 import re
 import sys
@@ -10,6 +8,7 @@ import color
 import utils
 import config
 import table_print
+import pg_parser
 
 def rmln(s):
 	if s and s.endswith("\r\n"):
@@ -137,7 +136,14 @@ class Element:
 	def get_whole_command(self):
 		whole_command = self.command
 		if self.owner:
-			whole_command += "ALTER %s %s OWNER TO %s;\n" % (self.element_name.upper(), self.name, self.owner)
+			if self.element_name.upper() == "FUNCTION":
+				x = re.match(r'(?P<name>[^()]+)(?P<args>\(.*\))$', self.name)
+				if x:
+					args = pg_parser.remove_default(x.group('args'))
+					function_name=x.group('name')+"("+", ".join(args)+")"
+				whole_command += "ALTER FUNCTION %s OWNER TO %s;\n" % (function_name, self.owner)
+			else:
+				whole_command += "ALTER %s %s OWNER TO %s;\n" % (self.element_name.upper(), self.name, self.owner)
 		if self.grant:
 			whole_command += "\n".join(self.grant) + "\n"
 		if self.revoke:
@@ -215,7 +221,7 @@ class Project:
 				# Tables table have different columns!
 				continue
 			if d1[0] != d2[0]:
-				m = map(lambda x: d1[0].index(x), d2[0])
+				m = [d1[0].index(x) for x in d2[0]]
 				new_d = []
 				for row in d2:
 					new_r = []
@@ -225,10 +231,10 @@ class Project:
 				d2 = new_d
 
 			table_pr = table_print.TablePrint(d1[0])
-			for i in xrange(1, len(d1)):
+			for i in range(1, len(d1)):
 				row1 = d1[i]
 				find = False
-				for j in xrange(1, len(d2)):
+				for j in range(1, len(d2)):
 					row2 = d2[j]
 					if row1 == row2:
 						find = True
@@ -236,10 +242,10 @@ class Project:
 						break
 				if not find:
 					table_pr.add(row1, "- |")
-			for j in xrange(1, len(d2)):
+			for j in range(1, len(d2)):
 				row2 = d2[j]
 				table_pr.add(row2, "+ |")
-			table_pr.sort()
+			#table_pr.sort()
 			if table_pr.data:
 				print("Tables %s have different data:" % (table, ))
 				for line in table_pr.format().splitlines():
@@ -353,9 +359,10 @@ class Extention(Element):
 		Element.__init__(self, "Extention", command, name)
 		self.schema_name = schema_name
 
+# Enum Type
 class Enum(Element):
 	def __init__(self, command, name, labels):
-		Element.__init__(self, "Enum", command, name)
+		Element.__init__(self, "Type", command, name)
 		self.labels = labels
 
 class Type(Element):
@@ -497,10 +504,8 @@ class Function(Element):
 		self.fname = name
 		self.args = args
 		self.parsed_args = parsed_args
-
 		if self.command:
 			self.command = re.sub(r"^\s*CREATE FUNCTION", "CREATE OR REPLACE FUNCTION", self.command, flags=re.IGNORECASE)
-
 	def update_element(self, file, element2):
 		change_command = self.command != element2.command
 		change_owner = self.owner != element2.owner

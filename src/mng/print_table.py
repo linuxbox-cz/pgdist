@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 
-
-
 import io
-
 
 class Row:
 	def __init__(self, row, init, columns_size):
@@ -14,17 +11,12 @@ class Row:
 			if v is None:
 				row2.append([None])
 				columns_size[i] = max(columns_size[i], 4)
-			elif type(v) not in (str, str):
+			elif type(v) != str:
 				row2.append([v])
 				columns_size[i] = max(columns_size[i], len(str(v)))
 			elif v == "":
 				row2.append([""])
 			else:
-				if type(v) != str:
-					try:
-						v = str(v, "utf-8")
-					except UnicodeDecodeError:
-						v = "UnicodeDecodeError"
 				r = v.splitlines()
 				row2.append(r)
 				self.rows = max(self.rows, len(r))
@@ -32,16 +24,16 @@ class Row:
 					columns_size[i] = max(columns_size[i], len(rv))
 		self.row = row2
 
-	def format(self, columns_size, init_len, buf):
+	def format(self, columns_size, init_len, buf, empty_value=""):
 		for k in range(self.rows):
 			buf.write(("%%-%ds" % (init_len,)) % (self.init,))
 			buf.write(" ")
 			for i, cell in enumerate(self.row):
-				if i > 0: buf.write(" | ")
+				if i > 0: buf.write("   ")
 				if k < len(cell):
 					v = cell[k]
 					if v is None:
-						buf.write(("%%-%ds" % (columns_size[i],)) % ("NULL",))
+						buf.write(("%%-%ds" % (columns_size[i],)) % (empty_value,))
 					elif type(v) in (int, float):
 						buf.write(("%%%ds" % (columns_size[i],)) % (v,))
 					else:
@@ -67,24 +59,30 @@ class TablePrint:
 	def sort(self):
 		self.data.sort()
 
-	def format(self):
+	def format(self, empty_value=""):
 		buf = io.StringIO()
+		
+		buf.write(" " * self.init_len)
+		buf.write("=")
+		for i in range(len(self.columns_size)):
+			if i > 0: buf.write("===")
+			buf.write("=" * self.columns_size[i])
+		buf.write("=\n")
 		self.headers.format(self.columns_size, self.init_len, buf)
 		buf.write(" " * self.init_len)
-		buf.write("-")
-		for i in range(len(self.columns_size)):
-			if i > 0: buf.write("-+-")
-			buf.write("-" * self.columns_size[i])
-		buf.write("-\n")
+
 		for row in self.data:
-			row.format(self.columns_size, self.init_len, buf)
+			row.format(self.columns_size, self.init_len, buf, empty_value)
+		buf.write(" " * self.init_len)
+		buf.write("=")
+		for i in range(len(self.columns_size)):
+			if i > 0: buf.write("===")
+			buf.write("=" * self.columns_size[i])
+		buf.write("=")
 		return buf.getvalue()
 
-def table_print(data, headers, formats=None):
+def table_print(data, headers, formats=None, empty_value=""):
 	tp = TablePrint(headers)
 	for row in data:
 		tp.add(row)
-	print(tp.format())
-
-def table_print_pg(cursor):
-	table_print(cursor.fetchall(), headers=[x.name for x in cursor.description])
+	print(tp.format(empty_value))

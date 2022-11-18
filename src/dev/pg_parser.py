@@ -1,7 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-from __future__ import print_function
-
 import re
 import logging
 import io
@@ -64,7 +61,7 @@ class Tokens:
 			self.read_next()
 
 
-	def next(self):
+	def __next__(self):
 		buf = io.StringIO()
 		while True:
 			# command
@@ -228,9 +225,9 @@ def parse_test(dump_stream):
 	set_schema = None
 
 	for token in tokens:
-		print('v'*80)
+		print(('v'*80))
 		print(token)
-		print('^'*80)
+		print(('^'*80))
 
 def parse(dump_stream):
 	project = Project()

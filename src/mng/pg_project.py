@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
 
 import os
 import re
 import sys
 import logging
 from distutils.version import LooseVersion
+from telnetlib import PRAGMA_HEARTBEAT
 
 import pg
+import json
+import print_table
 
 class Role:
 	def __init__(self, name, param):
@@ -309,62 +311,107 @@ def get_projects(project_name, dbname, conninfo, directory, check_db_exists=Fals
 	return sorted(list(projects.values()),key=lambda x: x.name)
 
 
-def prlist(project_name, dbname, conninfo, directory, show_all):
+def prlist(project_name, dbname, conninfo, directory, show_all, json_output):
 	projects = get_projects(project_name, dbname, conninfo, directory)
 	find_projects = False
-	print("")
+	list_project=[]	
 
-	print("Available projects:")
-	print("============================================================================")
-	if show_all:
-		print(" %-20s%-10s%s" % ("project", "version", "all versions"))
-	else:
-		print(" %-20s%-10s" % ("project", "version"))
-	for project in projects:
-		if project.versions or project.updates:
-			find_projects = True
-			if show_all:
-				print(" %-20s%-10s%s" % (project.name, project.newest_version(), ', '.join([str(x.version) for x in project.versions])))
-			else:
-				print(" %-20s%-10s" % (project.name, project.newest_version()))
-			for update in project.updates:
-				if show_all or (project.installed and update.version_old >= min([x.version for x in project.installed])):
-					print("                               update: %s" % (update,))
-	if not find_projects:
-		print(" No projects found")
-	print("============================================================================")
-
-	find_projects = False
-	print("")
-	print("Installed projects:")
-
-	if dbname:
-		dbs = [dbname]
-	else:
-		dbs = pg.list_database(conninfo)
-
-	print("============================================================================")
-	if show_all:
-		print(" %-20s%-20s%-10s%-10s%-5s" % ("project", "dbname", "version", "from", "part"))
-	else:
-		print(" %-20s%-20s%s" % ("project", "dbname", "version"))
-	for db in dbs:
+	if not json_output:
+		print("")     
+		print("Available projects:")
+		if show_all:
+			header = ["project", "version", "all versions"]
+		else:
+			header = ["project", "version"]
 		for project in projects:
-			for ins in project.get_instalated(db):
+			if project.versions or project.updates:
 				find_projects = True
 				if show_all:
-					if ins.from_version:
-						fromv = str(ins.from_version)
-					else:
-						fromv = "-"
-					print(" %-20s%-20s%-10s%-10s%-5s" % (project.name, ins.dbname, str(ins.version), fromv, "%s/%s" % (ins.part, ins.parts)))
+					row_project=[]
+					row_project.append(project.name)
+					row_project.append(project.newest_version())
+					row_project.append(', '.join([str(x.version) for x in project.versions]))
+					list_project.append(row_project)
 				else:
-					print(" %-20s%-20s%s" % (project.name, ins.dbname, ins.version))
-	if not find_projects:
-		print(" No installed projects found")
-	print("============================================================================")
+					row_project=[]
+					row_project.append(project.name)
+					row_project.append(project.newest_version())
+					list_project.append(row_project)
+				for update in project.updates:
+					if show_all or (project.installed and update.version_old >= min([x.version for x in project.installed])):
+						row_project=[]
+						if show_all: 
+							row_project.append("")
+						row_project.append("")
+						row_project.append("update: {}".format(update))
+						list_project.append(row_project)
+		
+		if not find_projects:
+			print(" No projects found")
+		else:
+			print_table.table_print(list_project, header)
+		print("")
+		
+		find_projects = False
+		list_project = []
 
-	print("")
+		print("Installed projects:")
+		if dbname:
+			dbs = [dbname]
+		else:
+			dbs = pg.list_database(conninfo)
+
+		if show_all:
+			header = ["project", "dbname", "version", "from", "part"]
+		else:
+			header = ["project", "dbname", "version"]
+		for db in dbs:
+			for project in projects:
+				for ins in project.get_instalated(db):
+					find_projects = True
+					if show_all:
+						if ins.from_version:
+							fromv = str(ins.from_version)
+						else:
+							fromv = "-"
+						row_project=[]
+						row_project.append(project.name)
+						row_project.append(ins.dbname)
+						row_project.append(ins.version)
+						row_project.append(fromv)
+						row_project.append(str(ins.part)+"/"+str(ins.parts))
+						list_project.append(row_project)
+					else:
+						row_project=[]
+						row_project.append(project.name)
+						row_project.append(ins.dbname)
+						row_project.append(str(ins.version))
+						list_project.append(row_project)					
+      
+		if not find_projects:
+			print(" No installed projects found")
+		else:
+			print_table.table_print(list_project, header)
+		print("")
+	
+	else:
+		if dbname:
+			dbs = [dbname]
+		else:
+			dbs = pg.list_database(conninfo)
+
+		dict_project = {}
+		list_projects = []
+		for db in dbs:
+			for project in projects:
+				for ins in project.get_instalated(db):	
+					dict_project["project"] = project.name
+					dict_project["dbname"] = ins.dbname
+					dict_project["version"] = str(ins.version)
+					list_projects.append(dict_project.copy())
+
+		json_projects = json.dumps(list_projects, indent = 4)
+		print(json_projects)
 
 def history(project_name, dbname, conninfo):
 	pg.installed_history(project_name, dbname, conninfo)
@@ -395,10 +442,10 @@ def install(project_name, dbname, version, conninfo, directory, create_db, is_re
 		logging.error("Project %s is installed." % (project_name,))
 		sys.exit(1)
 
-def check_update(project_name, dbname, version, conninfo, directory):
-	update(project_name, dbname, version, conninfo, directory, check=True)
+def check_update(project_name, dbname, version, conninfo, directory, json_output):
+	update(project_name, dbname, version, conninfo, directory, json_output, check=True)
 
-def update(project_name, dbname, version, conninfo, directory, check=False):
+def update(project_name, dbname, version, conninfo, directory, json_output=False, check=False):
 	if project_name == "-":
 		project_name = None
 	if dbname == "-":
@@ -419,23 +466,40 @@ def update(project_name, dbname, version, conninfo, directory, check=False):
 			if updates:
 				exists_updates = True
 
-	if exists_updates:
-		print("")
-		print("Project updates:")
-		print("============================================================================")
-
-		print(" %-20s%-20s%s" % ("project", "dbname", "update"))
-		for project in projects:
-			for ins in project.installed:
-				if ins.updates:
-					for update in ins.updates:
-						print(" %-20s%-20s%s" % (project.name, ins.dbname, update))
-
-		print("============================================================================")
-		print("")
+	list_project = []
+	if not json_output:
+		if exists_updates:
+			print("")
+			print("Project updates:")
+			header = ["project", "dbname", "update"]
+			for project in projects:
+				for ins in project.installed:
+					if ins.updates:
+						for update in ins.updates:
+							row_project = []
+							row_project.append(project.name)
+							row_project.append(ins.dbname)
+							row_project.append(update)
+							list_project.append(row_project)
+			
+			print_table.table_print(list_project, header)
+			print("")
+		else:
+			print("Nothing to do.")
 	else:
-		print("Nothing to do.")
+		dict_project = {}
+		list_projects = []
+		for project in projects:
+				for ins in project.installed:
+					if ins.updates:
+						for update in ins.updates:
+							dict_project["project"] = project.name
+							dict_project["dbname"] = ins.dbname
+							dict_project["update"] = str(update)
+							list_projects.append(dict_project.copy())
 
+		json_projects = json.dumps(list_projects, indent = 4)
+		print(json_projects)
 	if check:
 		return
 

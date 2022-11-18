@@ -1,7 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-from __future__ import print_function
-
 import re
 import os
 import sys
@@ -11,7 +8,6 @@ import difflib
 import tarfile
 import logging
 import io
-import cStringIO
 import subprocess
 
 import color
@@ -19,6 +15,7 @@ import utils
 import pg_conn
 import config
 import pg_parser
+import table_print
 
 class Part:
 	def __init__(self, single_transaction=True, number=1):
@@ -36,7 +33,7 @@ class Part:
 
 	def rm_file(self, fname):
 		self.files.remove(fname)
-		self.data = "\n".join(filter(lambda x: not re.match(r"\\ir\s+%s($|\s)" % (fname,), x), self.data.splitlines()))
+		self.data = "\n".join([x for x in self.data.splitlines() if not re.match(r"\\ir\s+%s($|\s)" % (fname,), x)])
 
 class Role:
 	def __init__(self, name, param=None):
@@ -68,7 +65,7 @@ class TableData:
 	def __init__(self, table_name, columns=None):
 		self.table_name = table_name
 		if columns:
-			self.columns = map(lambda x: x.strip(), columns)
+			self.columns = [x.strip() for x in columns]
 		else:
 			self.columns = None
 
@@ -98,6 +95,8 @@ class ProjectBase:
 		part = None
 		part_num = 1
 		for i, line in enumerate(file):
+			if type(line) == bytes:
+				line = line.decode('utf-8')
 			# project name
 			x = re.match(r"-- name:\s*(?P<name>.*\S)", line)
 			if x:
@@ -141,7 +140,7 @@ class ProjectBase:
 				if x.group("columns"):
 					self.table_data.append(TableData(x.group("table_name"), x.group("columns").split(",")))
 				else:
-					self.table_data.append(TableData(x.group("table_name")))
+					self.table_data.append(TableData(x.group("table_name")))	
 				continue
 			# part data
 			# import file
@@ -265,12 +264,15 @@ class ProjectGit(ProjectBase):
 		process = subprocess.Popen(args, bufsize=8192, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE, cwd=self.directory or ".")
 		output, err = process.communicate()
 		retcode = process.poll()
+
 		if retcode != 0:
 			logging.error("Fail get git version: %s" % (err))
 			sys.exit(1)
-		self.tar = tarfile.open(fileobj=cStringIO.StringIO(output), bufsize=10240)
-		self.load_conf(self.tar.extractfile("sql/pg_project.sql"))
 
+		file_object = io.BytesIO(output)
+		self.tar = tarfile.open(fileobj=file_object, bufsize=10240)
+		self.load_conf(self.tar.extractfile("sql/pg_project.sql"))
+  
 	def get_file(self, fname):
 		return self.tar.extractfile("sql/"+fname)
 
@@ -611,12 +613,14 @@ def get_test_dbname(project_name, dbs=None):
 	else:
 		return "pgdist_test_%s_%s" % (getpass.getuser(), project_name)
 
-def load_and_dump(project, clean=True, no_owner=False, no_acl=False, pre_load=None, post_load=None, updates=None, dbs=None, pg_extractor=None):
+def load_and_dump(project, clean=True, no_owner=False, no_acl=False, pre_load=None, post_load=None, updates=None, dbs=None, pg_extractor=None, new_project=None):
 	try:
 		pg = pg_conn.PG(config.test_db, dbname=get_test_dbname(project.name, dbs))
 		pg.init()
 		pg.load_file(pre_load)
 		load_requires(project, pg)
+		if new_project:
+			load_requires(new_project, pg)
 		print("load project %s to test pg" % (project.name,), file=sys.stderr)
 		pg.load_project(project)
 		if updates:
@@ -772,7 +776,7 @@ def create_update(git_tag, new_version, force, gitversion=None, clean=True, pre_
 		os.mkdir(os.path.join(project_old.directory, "sql_dist"))
 
 	# first part can be without --p%02d (--p01)
-	for part in xrange(part_count):
+	for part in range(part_count):
 		if part_count == 1:
 			fname_part = ""
 		else:
@@ -833,14 +837,17 @@ def test_update(git_tag, new_version, clean=True, gitversion=None, pre_load=None
 	else:
 		old_version = re.sub(r"^[^\d]*", "", git_tag)
 	new_version = re.sub(r"^[^\d]*", "", new_version)
-
+ 
 	project_old = ProjectGit(git_tag)
 	project_new = ProjectFs()
+
+	project_old.table_data=project_new.table_data.copy()
+
 	upds = []
 	upds.append(Update(project_old.name, old_version, new_version))
-
+ 
 	dump_updated, table_data_updated = load_and_dump(project_old, clean=clean, pre_load=pre_load_old, post_load=post_load_old, updates=upds, dbs="updated",
-		pg_extractor=pg_extractor)
+		pg_extractor=pg_extractor, new_project=project_new)
 	dump_cur, table_data_cur = load_and_dump(project_new, clean=clean, pre_load=pre_load_new, post_load=post_load_new,
 		pg_extractor=pg_extractor)
 
@@ -850,6 +857,9 @@ def test_update(git_tag, new_version, clean=True, gitversion=None, pre_load=None
 	else:
 		pr_cur = pg_parser.parse(io.StringIO(dump_cur))
 		pr_updated = pg_parser.parse(io.StringIO(dump_updated))
+		pr_cur.table_data = table_data_cur.copy()
+		pr_updated.table_data = table_data_updated.copy()
+
 		if not no_owner:
 			logging.info("checking element owners")
 			pr_updated.check_elements_owner()
@@ -891,7 +901,7 @@ def create_roles(roles):
 def read_file(fname):
 	data = io.StringIO()
 	with open(fname, "r") as f:
-		data.write(unicode(f.read(), "UTF8"))
+		data.write(str(f.read(), "UTF8"))
 	return data.getvalue()
 
 def print_diff(dump1, dump2, data1, data2, diff_raw, no_owner, no_acl, fromfile, tofile, swap=False, ignore_space=False):
