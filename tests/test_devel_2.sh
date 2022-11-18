@@ -49,13 +49,13 @@ log_pgdist "add ${PATH_SEQUENCES}/d2_sequence_1.sql"
 python3 "${PATH_PGDIST_SRC}/pgdist.py" add "${PATH_SEQUENCES}/d2_sequence_1.sql" -c $PATH_CONFIG_DEV
 
 log_pgdist "add ${PATH_FUNCTIONS}/d2_function_1.sql"
-python "${PATH_PGDIST_SRC}/pgdist.py" add "${PATH_FUNCTIONS}/d2_function_1.sql" -c $PATH_CONFIG_DEV
+python3 "${PATH_PGDIST_SRC}/pgdist.py" add "${PATH_FUNCTIONS}/d2_function_1.sql" -c $PATH_CONFIG_DEV
 
 log_pgdist "add ${PATH_TRIGGERS}/d2_trigger_1.sql"
-python "${PATH_PGDIST_SRC}/pgdist.py" add "${PATH_TRIGGERS}/d2_trigger_1.sql" -c $PATH_CONFIG_DEV
+python3 "${PATH_PGDIST_SRC}/pgdist.py" add "${PATH_TRIGGERS}/d2_trigger_1.sql" -c $PATH_CONFIG_DEV
 
 log_pgdist "add ${PATH_SEQUENCES}/d2_sequence_1.sql"
-python "${PATH_PGDIST_SRC}/pgdist.py" add "${PATH_SEQUENCES}/d2_sequence_1.sql" -c $PATH_CONFIG_DEV
+python3 "${PATH_PGDIST_SRC}/pgdist.py" add "${PATH_SEQUENCES}/d2_sequence_1.sql" -c $PATH_CONFIG_DEV
 
 #change roles
 log_pgdist "role-list"

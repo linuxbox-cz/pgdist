@@ -248,7 +248,7 @@ def pgdist_update(dbname, conninfo):
 
 def update_password(role_name, cursor):
 	password = ''.join(random.SystemRandom().choice(string.ascii_letters + string.digits ) for _ in range(12))
-	print(("ALTER ROLE %s PASSWORD" % (role_name,)))
+	print("ALTER ROLE %s PASSWORD" % (role_name,))
 	cursor.execute("ALTER ROLE %s PASSWORD %%s;" % (role_name,), (password,))
 	open(os.path.join(config.get_password_path(), role_name), 'w').write("PGPASSWORD=%s\n" % (password, ))
 
@@ -280,7 +280,7 @@ def create_role(conn, role, project_name, version, part, new_db=False):
 		if role.nologin:
 			login = "NOLOGIN"
 
-		print(("CREATE ROLE %s %s" % (role.name, login)))
+		print("CREATE ROLE %s %s" % (role.name, login))
 		cursor.execute("CREATE ROLE %s %s;" % (role.name, login))
 
 		if role.password:
@@ -329,7 +329,7 @@ def install(dbname, project, ver, conninfo, directory, create_db, is_require):
 			str_part = " part %d/%d" % (part.part, len(ver.parts))
 		if is_require:
 			str_require = " require"
-		print(("Install%s %s %s%s to %s" % (str_require, project.name, str(ver.version), str_part, dbname)))
+		print("Install%s %s %s%s to %s" % (str_require, project.name, str(ver.version), str_part, dbname))
 
 		run("psql", conninfo, dbname=dbname, file=os.path.join(directory, part.fname), single_transaction=part.single_transaction)
 		cursor.execute("INSERT INTO pgdist.history (project, version, part, comment) VALUES (%s, %s, %s, %s);",
@@ -358,9 +358,9 @@ def update(dbname, project, update, conninfo, directory):
 			create_role(conn, role, project.name, update.version_new, part.part)
 	for part in update.parts:
 		if len(update.parts) == 1:
-			print(("Update %s in %s %s > %s" % (project.name, dbname, str(update.version_old), str(update.version_new))))
+			print("Update %s in %s %s > %s" % (project.name, dbname, str(update.version_old), str(update.version_new)))
 		else:
-			print(("Update %s in %s %s > %s part %d/%d" % (project.name, dbname, str(update.version_old), str(update.version_new), part.part, len(update.parts))))
+			print("Update %s in %s %s > %s part %d/%d" % (project.name, dbname, str(update.version_old), str(update.version_new), part.part, len(update.parts)))
 		run("psql", conninfo, dbname=dbname, file=os.path.join(directory, part.fname), single_transaction=part.single_transaction)
 		cursor.execute("INSERT INTO pgdist.history (project, version, part, comment) VALUES (%s, %s, %s, %s);",
 			(project.name, str(update.version_new), part.part, "updated from version %s to %s, part %d/%d" % (str(update.version_old), str(update.version_new), part.part, len(update.parts))))

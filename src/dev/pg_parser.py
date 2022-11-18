@@ -225,9 +225,9 @@ def parse_test(dump_stream):
 	set_schema = None
 
 	for token in tokens:
-		print(('v'*80))
+		print('v'*80)
 		print(token)
-		print(('^'*80))
+		print('^'*80)
 
 def parse(dump_stream):
 	project = Project()

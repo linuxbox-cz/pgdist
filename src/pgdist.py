@@ -9,10 +9,6 @@ import logging
 import logging.handlers
 import importlib
 
-importlib.reload(sys)
-# not used anymore
-# https://stackoverflow.com/questions/28127513/attributeerror-module-object-has-no-attribute-setdefaultencoding
-# sys.setdefaultencoding('utf-8')
 
 description = """
 PGdist - distributes PotgreSQL functions, tables, etc...

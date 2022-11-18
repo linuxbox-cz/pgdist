@@ -5,7 +5,6 @@ import re
 import sys
 import logging
 from distutils.version import LooseVersion
-from telnetlib import PRAGMA_HEARTBEAT
 
 import pg
 import json
