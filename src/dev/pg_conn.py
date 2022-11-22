@@ -74,7 +74,7 @@ class PG:
 			args.append(self.address.ssh)
 			args.append(" ".join(ssh_args))
 		logging.verbose("run: %s" % (" ".join(args),))
-		process = subprocess.Popen(args, bufsize=8192, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=subprocess.PIPE, cwd=cwd or ".")
+		process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=subprocess.PIPE, cwd=cwd or ".")
 		if cmd:
 			cmd = cmd.encode(encoding="UTF8")
 		output, unused_err = process.communicate(cmd)
@@ -266,7 +266,7 @@ class PG:
 		if no_acl:
 			args.append("--no_acl")
 		logging.verbose("run pg_extractor: %s" % (" ".join(args),))
-		process = subprocess.Popen(args, bufsize=8192, cwd=pg_extractor.get_dumpdir(), env=env)
+		process = subprocess.Popen(args, cwd=pg_extractor.get_dumpdir(), env=env)
 		retcode = process.wait()
 		pg_extractor.add_db(self.address.get_dbname(self.dbname))
 

@@ -396,7 +396,7 @@ def main():
 		sys.exit(1)
 
 	if less:
-		pager = subprocess.Popen(["less", "-FKSMIR"], bufsize=1, stdin=subprocess.PIPE, stdout=stdout)
+		pager = subprocess.Popen(["less", "-FKSMIR"], stdin=subprocess.PIPE, stdout=stdout)
 		pager.stdin.write(buffer.getvalue().encode('utf-8'))
 		pager.stdin.close()
 		pager.wait()

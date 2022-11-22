@@ -86,7 +86,7 @@ def run(c, conninfo, cmd=None, single_transaction=True, dbname=None, file=None):
 		args.append("--schema-only")
 
 	logging.verbose("run: %s" % (" ".join(args)),)
-	process = subprocess.Popen(args, bufsize=8192, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=subprocess.PIPE)
+	process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=subprocess.PIPE)
 	output, unused_err = process.communicate(cmd)
 	retcode = process.poll()
 	logging.debug(output)
