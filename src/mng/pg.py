@@ -91,6 +91,7 @@ def run(c, conninfo, cmd=None, single_transaction=True, dbname=None, file=None):
 	retcode = process.poll()
 	logging.debug(output)
 	if retcode != 0:
+		output = output.decode()
 		output = "\n".join(output.split("\n")[-40:])
 		logging.error("Command fail: %s\n%s" % (" ".join(args), output))
 		sys.exit(1)
