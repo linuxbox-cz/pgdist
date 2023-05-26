@@ -50,7 +50,7 @@ PGdist Devel - develop PostgreSQL project
     dbparam-set [PARAM [...]] - parameters with create a database (e.g.: OWNER lbadmin ...)
     dbparam-get - print parameters to create a database
 
-    data-add TABLE [COLUMN1 [...]] - add table to compare data
+    data-add TABLE [COLUMN1 [...]] - add table to compare data or OPTIONS: --EXCLUDE [COLUMN1 [...]] exclude columns (at least one column must be included)
     data-rm TABLE - remove table to compare data
     data-list - list table of data compare
 
@@ -144,6 +144,9 @@ def main():
 	parser.add_argument("--syslog-facility", dest="syslog_facility", help="syslog facility")
 	parser.add_argument("--syslog-ident", dest="syslog_ident", help="syslog ident")
 
+	# argument for data-add
+	parser.add_argument("--exclude", help="exclude columns for comparison of table data for test-update (Example: data-add table_name --exclude column1)", nargs="*")
+
 	# argument for list
 	parser.add_argument("--JSON-output", dest="json_output", help="show list of installed projects in databases and store them in JSON", action="store_true", default=False)
 	args = parser.parse_args()
@@ -157,7 +160,7 @@ def main():
 	logging.addLevelName(VERBOSE, "VERBOSE")
 	def verbose(message, *args, **kws):
 		if logging.getLogger().root.isEnabledFor(VERBOSE):
-			logging.getLogger().root._log(VERBOSE, message, args, **kws) 
+			logging.getLogger().root._log(VERBOSE, message, args, **kws)
 	logging.verbose = verbose
 	if args.verbose > 2:
 		logging.basicConfig(format="%(asctime)-15s %(filename)s:%(lineno)d %(message)s")
@@ -345,7 +348,12 @@ def main():
 	elif args.cmd == "data-add" and len(args.args) >= 1:
 		table = args.args[0]
 		columns = args.args[1:]
-		pg_project.tabledata_add(table, columns)
+		if args.exclude:
+			exclude_columns = args.exclude
+			columns = None
+		else:
+			exclude_columns = None
+		pg_project.tabledata_add(name=table, columns=columns, exclude_columns=exclude_columns)
 
 	elif args.cmd == "data-rm" and len(args.args) in (1,):
 		(table, ) = args_parse(args.args, 1)

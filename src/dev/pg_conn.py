@@ -205,8 +205,14 @@ class PG:
 			return json.load(open(self.address.cache_file("data")))
 		r = {}
 		c = []
+		columns_exclude = {}
 		for tb in project.table_data:
-			c.append("COPY %s TO STDOUT WITH(FORMAT CSV, HEADER, FORCE_QUOTE *, NULL 'NULL@15#7&679');" % (tb,))
+			if tb.exclude_columns is None:
+				c.append("COPY %s TO STDOUT WITH(FORMAT CSV, HEADER, FORCE_QUOTE *, NULL 'NULL@15#7&679');" % (tb,))
+			else:
+				c.append(f"COPY {tb.table_name} TO STDOUT WITH(FORMAT CSV, HEADER, FORCE_QUOTE *, NULL 'NULL@15#7&679');")
+				columns_exclude[tb.table_name] = tb.exclude_columns
+
 		(retcode, output) = self.psql(cmd="\n".join(c), change_db=True, exit_on_fail=False)
 		data = io.StringIO(str(output, "utf8"))
 
@@ -232,6 +238,13 @@ class PG:
 						break
 					data_table.append(line)
 				dt = list(csv.reader(data_table))
+				if table_name in columns_exclude.keys():
+					exclude_index = []
+					for column in columns_exclude[table_name]:
+						exclude_index.append(dt[0].index(column))
+					for row in dt:
+						for index in sorted(exclude_index, reverse=True):
+							del row[index]
 				for row in dt:
 					for i in range(len(row)):
 						if row[i] == "NULL@15#7&679":

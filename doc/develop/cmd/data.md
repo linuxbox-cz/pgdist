@@ -13,10 +13,15 @@ pgdist data-list
 If you´ve added some table data to your project and you want to compare them with installed project table data, use command below to add them to comparison.
 
 ```
-pgdist data-add <table> [column...]
+pgdist data-add <table> [column... | --exclude column...]
 
 Example:
+
 $ pgdist data-add some_table table_column_1 table_column_2
+
+Example for arg --exclude:
+
+$ pgdist data-add some_table --exclude table_column_1 table_column_2
 ```
 
 **args - required**:
@@ -24,6 +29,8 @@ $ pgdist data-add some_table table_column_1 table_column_2
 - `table` - table you want to add to comparison
 
 **args - optional**:
+
+- `--exclude column...` - columns you want to remove from comparison (at least one column must be included)
 
 - `column` - *multiple* - columns you want to add to comparsion
 
