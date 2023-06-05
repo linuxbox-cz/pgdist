@@ -1055,4 +1055,4 @@ def tabledata_rm(name):
 def tabledata_list():
 	project = ProjectFs()
 	for td in project.table_data:
-		print(f"{td}")
+		print(td)
