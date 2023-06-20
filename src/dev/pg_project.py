@@ -62,16 +62,23 @@ class Require:
 		return "%s %s %s" % (self.project_name, self.git, self.tree_ish)
 
 class TableData:
-	def __init__(self, table_name, columns=None):
+	def __init__(self, table_name, columns=None, exclude_columns = None):
 		self.table_name = table_name
 		if columns:
 			self.columns = [x.strip() for x in columns]
 		else:
 			self.columns = None
 
+		if exclude_columns:
+			self.exclude_columns = [x.strip() for x in exclude_columns]
+		else:
+			self.exclude_columns = None
+
 	def __str__(self):
 		if self.columns:
 			return "%s (%s)" % (self.table_name, ", ".join(self.columns))
+		if self.exclude_columns:
+			return "%s exclude(%s)" % (self.table_name, ", ".join(self.exclude_columns))
 		else:
 			return "%s" % (self.table_name)
 
@@ -135,12 +142,14 @@ class ProjectBase:
 				self.dbparam = x.group("dbparam")
 				continue
 			# table_data
-			x = re.match(r"--\s*table_data:\s+(?P<table_name>\S+)(\s*\((?P<columns>.+)\))?", line)
+			x = re.match(r"--\s*table_data:\s(?P<table_name>[^\s]+)(?:\s\((?P<columns>[^\)]+)\))?(?: exclude\((?P<exclude_columns>[^\)]+)\))?", line)
 			if x:
 				if x.group("columns"):
-					self.table_data.append(TableData(x.group("table_name"), x.group("columns").split(",")))
+					self.table_data.append(TableData(table_name=x.group("table_name"), columns=x.group("columns").split(",")))
+				elif x.group("exclude_columns"):
+					self.table_data.append(TableData(table_name=x.group("table_name"), exclude_columns=x.group("exclude_columns").split(",")))
 				else:
-					self.table_data.append(TableData(x.group("table_name")))	
+					self.table_data.append(TableData(x.group("table_name")))
 				continue
 			# part data
 			# import file
@@ -272,7 +281,7 @@ class ProjectGit(ProjectBase):
 		file_object = io.BytesIO(output)
 		self.tar = tarfile.open(fileobj=file_object, bufsize=10240)
 		self.load_conf(self.tar.extractfile("sql/pg_project.sql"))
-  
+
 	def get_file(self, fname):
 		return self.tar.extractfile("sql/"+fname)
 
@@ -837,7 +846,6 @@ def test_update(git_tag, new_version, clean=True, gitversion=None, pre_load=None
 	else:
 		old_version = re.sub(r"^[^\d]*", "", git_tag)
 	new_version = re.sub(r"^[^\d]*", "", new_version)
- 
 	project_old = ProjectGit(git_tag)
 	project_new = ProjectFs()
 
@@ -845,7 +853,6 @@ def test_update(git_tag, new_version, clean=True, gitversion=None, pre_load=None
 
 	upds = []
 	upds.append(Update(project_old.name, old_version, new_version))
- 
 	dump_updated, table_data_updated = load_and_dump(project_old, clean=clean, pre_load=pre_load_old, post_load=post_load_old, updates=upds, dbs="updated",
 		pg_extractor=pg_extractor, new_project=project_new)
 	dump_cur, table_data_cur = load_and_dump(project_new, clean=clean, pre_load=pre_load_new, post_load=post_load_new,
@@ -1022,15 +1029,18 @@ def dbparam_get():
 	else:
 		print("No dbparam.")
 
-def tabledata_add(name, columns):
+def tabledata_add(name, columns, exclude_columns):
 	project = ProjectFs()
 	td = project.get_tabledata(name)
 	if td:
-		td.columns = columns
+		if columns:
+			td.columns = columns
+		if exclude_columns:
+			td.exclude_columns = exclude_columns
 	else:
-		td = TableData(name, columns)
+		td = TableData(name, columns, exclude_columns)
 		project.table_data.append(td)
-		project.table_data.sort()
+		# project.table_data.sort()
 	project.save_conf()
 
 def tabledata_rm(name):
