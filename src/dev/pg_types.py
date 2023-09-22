@@ -524,7 +524,7 @@ class Function(Element):
 		file.write(utils.get_command(command, element2.name, element2.element_name))
 
 	def drop_info(self):
-		return "\nDROP FUNCTION %s(%s);\n" % (self.fname, ", ".join(self.parsed_args))
+		return "\nDROP FUNCTION IF EXISTS %s(%s);\n" % (self.fname, ", ".join(self.parsed_args))
 
 class Sequence(Element):
 	def __init__(self, command, name, serial=False):
