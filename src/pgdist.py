@@ -400,7 +400,7 @@ def main():
 		(project_name, dbname) = args_parse(args.args, 2)
 		pg_project.history(project_name, dbname or args.dbname, conninfo.ConnInfo(args))
   
-	elif args.cmd == "update-status" and len(args.args) in (0, 1, 2,):
+	elif args.cmd == "update-status":
 		pg_project.update_status(conninfo.ConnInfo(args), args.directory or config.get_install_path(), args.json)
 
 	else:
