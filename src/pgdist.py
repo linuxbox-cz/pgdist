@@ -147,11 +147,8 @@ def main():
 
 	# argument for data-add
 	parser.add_argument("--exclude", help="exclude columns for comparison of table data for test-update (Example: data-add table_name --exclude column1)", nargs="*")
-
-	# argument for list
-	parser.add_argument("--JSON-output", dest="json_output", help="show list of installed projects in databases and store them in JSON", action="store_true", default=False)
  
- 	# argument for update-status
+ 	# argument for update-status and list
 	parser.add_argument("--json", dest="json", help="prints the output in json format", action="store_true", default=False)
 	args = parser.parse_args()
 	less = None
@@ -369,7 +366,7 @@ def main():
 	# install projects
 	elif args.cmd == "list" and len(args.args) in (0, 1, 2,):
 		(project_name, dbname) = args_parse(args.args, 2)
-		pg_project.prlist(project_name, dbname or args.dbname, conninfo.ConnInfo(args), args.directory or config.get_install_path(), args.showall, args.json_output)
+		pg_project.prlist(project_name, dbname or args.dbname, conninfo.ConnInfo(args), args.directory or config.get_install_path(), args.showall, args.json)
 
 	elif args.cmd == "install" and len(args.args) in (2, 3,):
 		(project_name, dbname, version) = args_parse(args.args, 3)
@@ -377,7 +374,7 @@ def main():
 
 	elif args.cmd == "check-update" and len(args.args) in (0, 1, 2, 3,):
 		(project_name, dbname, version) = args_parse(args.args, 3)
-		pg_project.check_update(project_name, dbname or args.dbname, version, conninfo.ConnInfo(args), args.directory or config.get_install_path(), args.json_output)
+		pg_project.check_update(project_name, dbname or args.dbname, version, conninfo.ConnInfo(args), args.directory or config.get_install_path(), args.json)
 
 	elif args.cmd == "update" and len(args.args) in (0, 1, 2, 3,):
 		(project_name, dbname, version) = args_parse(args.args, 3)

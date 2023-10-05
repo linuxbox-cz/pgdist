@@ -39,3 +39,5 @@ Installed projects:
 - `-H` `--host` - PG host
 
 - `-p` `--port` - port that PG listens to
+
+- `--json` - prints the output in json format 
