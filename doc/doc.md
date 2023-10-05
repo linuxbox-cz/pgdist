@@ -55,3 +55,4 @@
 | [get-version](distribution/cmd/get-version.md) | shows version of project from PGdist history |
 | [pgdist-update](distribution/cmd/pgdist-update.md) | updates PGdist |
 | [log](distribution/cmd/log.md) | shows history of PGdist actions |
+| [update-status](distribution/cmd/update-status.md) | shows number of installed and avaible projects |

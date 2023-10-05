@@ -508,6 +508,42 @@ def update(project_name, dbname, version, conninfo, directory, json_output=False
 				project.update(ins.dbname, update, conninfo, directory)
 	print("Complete!")
 
+def update_status(conninfo, directory, show_json):
+    projects = get_projects(None, None, conninfo, directory)
+
+    projects_available = []
+    for project in projects:
+        project_available = {}
+        project_available['name'] = project.name
+        project_available['version'] = str(project.newest_version())
+        projects_available.append(project_available)
+    
+    dbs = pg.list_database(conninfo)
+        
+    projects_installed = []
+    for db in dbs:
+        for project in projects:
+            for ins in project.get_instalated(db):
+                project_installed = {}
+                project_installed['name'] = project.name
+                project_installed['version'] = str(ins.version)
+                project_installed['db'] = ins.dbname
+                projects_installed.append(project_installed)
+                
+    updates = []
+    for installed in projects_installed:
+        for available in projects_available:
+            if installed['name'] == available['name']:
+                if installed['version'] < available['version']:
+                    updates.append(installed)
+    
+    if show_json:
+        json_count = { 'project_count': len(projects_installed), 'update_count':  len(updates)}
+        print(json.dumps(json_count))
+    else:
+        print('Installed projects count:', len(projects_installed))
+        print('Projects update count:', len(updates))
+
 def check_succesfull_installed(projects):
 	for project in projects:
 		for ins in project.installed:

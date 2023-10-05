@@ -65,6 +65,7 @@ PGdist Server - manage projects in PostgreSQL database
     get-version PROJECT DBNAME - print installed version of project
     pgdist-update [DBNAME] - update pgdist version in database
     log [PROJECT [DBNAME]] - print history of installed projects
+    update-status - print number of installed projects and number avaible updates 
 
 PGCONN - ssh connection + connection URI, see:
     https://www.postgresql.org/docs/current/static/libpq-connect.html#LIBPQ-CONNSTRING
@@ -149,6 +150,9 @@ def main():
 
 	# argument for list
 	parser.add_argument("--JSON-output", dest="json_output", help="show list of installed projects in databases and store them in JSON", action="store_true", default=False)
+ 
+ 	# argument for update-status
+	parser.add_argument("--json", dest="json", help="prints the output in json format", action="store_true", default=False)
 	args = parser.parse_args()
 	less = None
 
@@ -214,7 +218,7 @@ def main():
 
 		config.git_diff = args.git_diff
 
-	if args.cmd in ("list", "install", "check-update", "update", "clean", "set-version", "get-version","pgdist-update", "log"):
+	if args.cmd in ("list", "install", "check-update", "update", "clean", "set-version", "get-version","pgdist-update", "log", "update-status"):
 		sys.path.insert(1, os.path.join(sys.path[0], "mng"))
 		import config
 		import conninfo
@@ -398,6 +402,9 @@ def main():
 	elif args.cmd == "log" and len(args.args) in (0, 1, 2,):
 		(project_name, dbname) = args_parse(args.args, 2)
 		pg_project.history(project_name, dbname or args.dbname, conninfo.ConnInfo(args))
+  
+	elif args.cmd == "update-status" and len(args.args) in (0, 1, 2,):
+		pg_project.update_status(conninfo.ConnInfo(args), args.directory or config.get_install_path(), args.json)
 
 	else:
 		parser.print_help()
