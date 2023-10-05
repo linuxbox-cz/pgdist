@@ -56,7 +56,7 @@ PGdist Devel - develop PostgreSQL project
 
 PGdist Server - manage projects in PostgreSQL database
 
-    list [PROJECT [DBNAME]] - show list of installed projects in databases
+    l[ist] [PROJECT [DBNAME]] - show list of installed projects in databases
     install PROJECT DBNAME [VERSION] - install project to database
     check-update [PROJECT [DBNAME [VERSION]]] - check update project
     update [PROJECT [DBNAME [VERSION]]] - update project
@@ -215,7 +215,7 @@ def main():
 
 		config.git_diff = args.git_diff
 
-	if args.cmd in ("list", "install", "check-update", "update", "clean", "set-version", "get-version","pgdist-update", "log", "update-status"):
+	if args.cmd in ("list", "l", "install", "check-update", "update", "clean", "set-version", "get-version","pgdist-update", "log", "update-status"):
 		sys.path.insert(1, os.path.join(sys.path[0], "mng"))
 		import config
 		import conninfo
@@ -364,7 +364,7 @@ def main():
 		pg_project.tabledata_list()
 
 	# install projects
-	elif args.cmd == "list" and len(args.args) in (0, 1, 2,):
+	elif args.cmd in ["list", "l"] and len(args.args) in (0, 1, 2,):
 		(project_name, dbname) = args_parse(args.args, 2)
 		pg_project.prlist(project_name, dbname or args.dbname, conninfo.ConnInfo(args), args.directory or config.get_install_path(), args.showall, args.json)
 
