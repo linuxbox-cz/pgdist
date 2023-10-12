@@ -310,12 +310,12 @@ def get_projects(project_name, dbname, conninfo, directory, check_db_exists=Fals
 	return sorted(list(projects.values()),key=lambda x: x.name)
 
 
-def prlist(project_name, dbname, conninfo, directory, show_all, json_output):
+def prlist(project_name, dbname, conninfo, directory, show_all, show_json):
 	projects = get_projects(project_name, dbname, conninfo, directory)
 	find_projects = False
 	list_project=[]	
 
-	if not json_output:
+	if not show_json:
 		print("")     
 		print("Available projects:")
 		if show_all:
@@ -441,10 +441,10 @@ def install(project_name, dbname, version, conninfo, directory, create_db, is_re
 		logging.error("Project %s is installed." % (project_name,))
 		sys.exit(1)
 
-def check_update(project_name, dbname, version, conninfo, directory, json_output):
-	update(project_name, dbname, version, conninfo, directory, json_output, check=True)
+def check_update(project_name, dbname, version, conninfo, directory, show_json):
+	update(project_name, dbname, version, conninfo, directory, show_json, check=True)
 
-def update(project_name, dbname, version, conninfo, directory, json_output=False, check=False):
+def update(project_name, dbname, version, conninfo, directory, show_json=False, check=False):
 	if project_name == "-":
 		project_name = None
 	if dbname == "-":
@@ -466,7 +466,7 @@ def update(project_name, dbname, version, conninfo, directory, json_output=False
 				exists_updates = True
 
 	list_project = []
-	if not json_output:
+	if not show_json:
 		if exists_updates:
 			print("")
 			print("Project updates:")
@@ -507,6 +507,26 @@ def update(project_name, dbname, version, conninfo, directory, json_output=False
 			for update in ins.updates:
 				project.update(ins.dbname, update, conninfo, directory)
 	print("Complete!")
+
+def update_status(conninfo, directory, show_json):
+    projects = get_projects(None, None, conninfo, directory)
+    dbs = pg.list_database(conninfo)
+        
+    updates = 0
+    installed_projects = 0
+    for db in dbs:
+        for project in projects:
+            for ins in project.get_instalated(db):
+                if ins.version < project.newest_version():
+                    updates += 1
+                installed_projects += 1
+    
+    if show_json:
+        json_count = { 'project_count': installed_projects, 'update_count':  updates}
+        print(json.dumps(json_count))
+    else:
+        print('Installed projects count:', installed_projects)
+        print('Projects update count:', updates)
 
 def check_succesfull_installed(projects):
 	for project in projects:

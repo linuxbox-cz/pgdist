@@ -42,6 +42,7 @@ PGdist - create, develop and manage your PostgreSQL projects
 [--directory <\fIpath\fR>]
 [--syslog-facility <\fIfacility\fR>]
 [--syslog-ident <\fIident\fR>]
+[--json]
 <\fIcommand\fR> [<\fIargs\fR>]
 
 .SH DESCRIPTION
@@ -182,6 +183,9 @@ Syslog facility.
 .TP
 \fB--syslog-ident\fR <\fIident\fR>
 Syslog ident.
+.TP
+\fB--json\fR
+Prints the output in json format. Used with \fBlist\fR and \fBupdate-status\fR commands.
 
 .SH DEVELOP COMMANDS
 .TP
@@ -281,7 +285,7 @@ list table of data compare
 
 .SH MANAGEMENT COMMANDS
 .TP
-\fBpgdist list\fR [\fIPROJECT\fR [\fIDBNAME\fR]]
+\fBpgdist l[ist]\fR [\fIPROJECT\fR [\fIDBNAME\fR]]
 show list of installed projects in databases
 .TP
 \fBpgdist install\fR <\fIPROJECT\fR> <\fIDBNAME\fR> [\fIVERSION\fR]
@@ -307,6 +311,9 @@ update pgdist version in database
 .TP
 \fBpgdist log [\fIPROJECT\fR [\fIDBNAME\fR]]
 print history of installed projects
+.TP
+\fBpgdist update-status
+print number of installed and avaible projects
 
 .SH DEVELOP CONFIG FILE
 Configuration file is located at `~/.pgdist`.

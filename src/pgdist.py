@@ -56,7 +56,7 @@ PGdist Devel - develop PostgreSQL project
 
 PGdist Server - manage projects in PostgreSQL database
 
-    list [PROJECT [DBNAME]] - show list of installed projects in databases
+    l[ist] [PROJECT [DBNAME]] - show list of installed projects in databases
     install PROJECT DBNAME [VERSION] - install project to database
     check-update [PROJECT [DBNAME [VERSION]]] - check update project
     update [PROJECT [DBNAME [VERSION]]] - update project
@@ -65,6 +65,7 @@ PGdist Server - manage projects in PostgreSQL database
     get-version PROJECT DBNAME - print installed version of project
     pgdist-update [DBNAME] - update pgdist version in database
     log [PROJECT [DBNAME]] - print history of installed projects
+    update-status - print number of installed projects and number avaible updates 
 
 PGCONN - ssh connection + connection URI, see:
     https://www.postgresql.org/docs/current/static/libpq-connect.html#LIBPQ-CONNSTRING
@@ -146,9 +147,9 @@ def main():
 
 	# argument for data-add
 	parser.add_argument("--exclude", help="exclude columns for comparison of table data for test-update (Example: data-add table_name --exclude column1)", nargs="*")
-
-	# argument for list
-	parser.add_argument("--JSON-output", dest="json_output", help="show list of installed projects in databases and store them in JSON", action="store_true", default=False)
+ 
+ 	# argument for update-status and list
+	parser.add_argument("--json", dest="json", help="prints the output in json format", action="store_true", default=False)
 	args = parser.parse_args()
 	less = None
 
@@ -214,7 +215,7 @@ def main():
 
 		config.git_diff = args.git_diff
 
-	if args.cmd in ("list", "install", "check-update", "update", "clean", "set-version", "get-version","pgdist-update", "log"):
+	if args.cmd in ("list", "l", "install", "check-update", "update", "clean", "set-version", "get-version","pgdist-update", "log", "update-status"):
 		sys.path.insert(1, os.path.join(sys.path[0], "mng"))
 		import config
 		import conninfo
@@ -363,9 +364,9 @@ def main():
 		pg_project.tabledata_list()
 
 	# install projects
-	elif args.cmd == "list" and len(args.args) in (0, 1, 2,):
+	elif args.cmd in ["list", "l"] and len(args.args) in (0, 1, 2,):
 		(project_name, dbname) = args_parse(args.args, 2)
-		pg_project.prlist(project_name, dbname or args.dbname, conninfo.ConnInfo(args), args.directory or config.get_install_path(), args.showall, args.json_output)
+		pg_project.prlist(project_name, dbname or args.dbname, conninfo.ConnInfo(args), args.directory or config.get_install_path(), args.showall, args.json)
 
 	elif args.cmd == "install" and len(args.args) in (2, 3,):
 		(project_name, dbname, version) = args_parse(args.args, 3)
@@ -373,7 +374,7 @@ def main():
 
 	elif args.cmd == "check-update" and len(args.args) in (0, 1, 2, 3,):
 		(project_name, dbname, version) = args_parse(args.args, 3)
-		pg_project.check_update(project_name, dbname or args.dbname, version, conninfo.ConnInfo(args), args.directory or config.get_install_path(), args.json_output)
+		pg_project.check_update(project_name, dbname or args.dbname, version, conninfo.ConnInfo(args), args.directory or config.get_install_path(), args.json)
 
 	elif args.cmd == "update" and len(args.args) in (0, 1, 2, 3,):
 		(project_name, dbname, version) = args_parse(args.args, 3)
@@ -398,6 +399,9 @@ def main():
 	elif args.cmd == "log" and len(args.args) in (0, 1, 2,):
 		(project_name, dbname) = args_parse(args.args, 2)
 		pg_project.history(project_name, dbname or args.dbname, conninfo.ConnInfo(args))
+  
+	elif args.cmd == "update-status":
+		pg_project.update_status(conninfo.ConnInfo(args), args.directory or config.get_install_path(), args.json)
 
 	else:
 		parser.print_help()

@@ -3,7 +3,7 @@
 To show list of installed and available projects and their updates. If you want to show list of projects in some database without specifying project, use `-d` or `--dbname`.
 
 ```
-pgdist list [project [dbname]]
+pgdist l[ist] [project [dbname]]
 
 Example:
 $ pgdist list --directory ./sql_dist --showall
@@ -39,3 +39,5 @@ Installed projects:
 - `-H` `--host` - PG host
 
 - `-p` `--port` - port that PG listens to
+
+- `--json` - prints the output in json format 
