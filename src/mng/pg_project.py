@@ -189,7 +189,7 @@ class Project:
 			if ver.version == version:
 				pg.install(dbname, self, ver, conninfo, directory, create_db, is_require)
 				return
-		
+
 	def find_updates(self, version1, version2):
 		best_updatest = []
 		while True:
@@ -313,10 +313,10 @@ def get_projects(project_name, dbname, conninfo, directory, check_db_exists=Fals
 def prlist(project_name, dbname, conninfo, directory, show_all, show_json):
 	projects = get_projects(project_name, dbname, conninfo, directory)
 	find_projects = False
-	list_project=[]	
+	list_project=[]
 
 	if not show_json:
-		print("")     
+		print("")
 		print("Available projects:")
 		if show_all:
 			header = ["project", "version", "all versions"]
@@ -339,18 +339,18 @@ def prlist(project_name, dbname, conninfo, directory, show_all, show_json):
 				for update in project.updates:
 					if show_all or (project.installed and update.version_old >= min([x.version for x in project.installed])):
 						row_project=[]
-						if show_all: 
+						if show_all:
 							row_project.append("")
 						row_project.append("")
 						row_project.append("update: {}".format(update))
 						list_project.append(row_project)
-		
+
 		if not find_projects:
 			print(" No projects found")
 		else:
 			print_table.table_print(list_project, header)
 		print("")
-		
+
 		find_projects = False
 		list_project = []
 
@@ -385,14 +385,14 @@ def prlist(project_name, dbname, conninfo, directory, show_all, show_json):
 						row_project.append(project.name)
 						row_project.append(ins.dbname)
 						row_project.append(str(ins.version))
-						list_project.append(row_project)					
-      
+						list_project.append(row_project)
+
 		if not find_projects:
 			print(" No installed projects found")
 		else:
 			print_table.table_print(list_project, header)
 		print("")
-	
+
 	else:
 		if dbname:
 			dbs = [dbname]
@@ -403,7 +403,7 @@ def prlist(project_name, dbname, conninfo, directory, show_all, show_json):
 		list_projects = []
 		for db in dbs:
 			for project in projects:
-				for ins in project.get_instalated(db):	
+				for ins in project.get_instalated(db):
 					dict_project["project"] = project.name
 					dict_project["dbname"] = ins.dbname
 					dict_project["version"] = str(ins.version)
@@ -455,7 +455,7 @@ def update(project_name, dbname, version, conninfo, directory, show_json=False, 
 		logging.error("Project %s not found" % (project_name,))
 		sys.exit(1)
 
-	check_succesfull_installed(projects)
+	projects_to_fix = check_succesfull_installed(projects, conninfo, dbname, directory)
 
 	exists_updates = False
 	for project in projects:
@@ -480,7 +480,7 @@ def update(project_name, dbname, version, conninfo, directory, show_json=False, 
 							row_project.append(ins.dbname)
 							row_project.append(update)
 							list_project.append(row_project)
-			
+
 			print_table.table_print(list_project, header)
 			print("")
 		else:
@@ -511,7 +511,7 @@ def update(project_name, dbname, version, conninfo, directory, show_json=False, 
 def update_status(conninfo, directory, show_json):
     projects = get_projects(None, None, conninfo, directory)
     dbs = pg.list_database(conninfo)
-        
+
     updates = 0
     installed_projects = 0
     for db in dbs:
@@ -520,7 +520,7 @@ def update_status(conninfo, directory, show_json):
                 if ins.version < project.newest_version():
                     updates += 1
                 installed_projects += 1
-    
+
     if show_json:
         json_count = { 'project_count': installed_projects, 'update_count':  updates}
         print(json.dumps(json_count))
@@ -528,13 +528,40 @@ def update_status(conninfo, directory, show_json):
         print('Installed projects count:', installed_projects)
         print('Projects update count:', updates)
 
-def check_succesfull_installed(projects):
+def check_succesfull_installed(projects, conninfo, dbname, directory):
 	for project in projects:
 		for ins in project.installed:
 			if ins.part != ins.parts:
-				logging.error("%s in db %s fail in upgrade from %s to %s ")
-				# TODO, what do in this case?
-				sys.exit(1)
+				print
+				new_update = ProjectUpdate(str(ins.version), str(ins.from_version))
+				for p in project.updates:
+					for name in p.parts:
+						print(name.fname)
+
+				# zeptat se zda bude pevný formát nazev + p1. p2 ....
+
+
+				print(ins.updates)
+				conn = pg.connect(conninfo, dbname)
+				cursor = conn.cursor()
+				cursor.execute('SELECT part FROM pgdist.history WHERE version = %s AND project = %s', (str(ins.version), project.name,))
+				installed_parts = cursor.fetchall()
+				print(installed_parts)
+				for p in project.installed:
+					print(str(p.part))
+				# run("psql", conninfo, dbname=dbname, file=os.path.join(directory, part.fname), single_transaction=part.single_transaction)
+				# cursor.execute("INSERT INTO pgdist.history (project, version, part, comment) VALUES (%s, %s, %s, %s);",
+				# 	(project.name, str(update.version_new), part.part, "updated from version %s to %s, part %d/%d" % (str(update.version_old), str(update.version_new), part.part, len(update.parts))))
+				# cursor.execute("UPDATE pgdist.installed SET version=%s, from_version=%s,  part=%s, parts=%s WHERE project=%s RETURNING *;",
+				# 	(str(update.version_new), str(update.version_old), part.part, len(update.parts), project.name))
+				# if not cursor.fetchone():
+				# 	cursor.execute("INSERT INTO pgdist.installed (project, version, part, parts) VALUES (%s, %s, %s, %s);",
+				# 		(project.name, str(update.version), part.part, len(update.parts)))
+				logging.error("Installed %s of %s parts to project %s in database %s. Check the parts in the project." %(ins.part, ins.parts, project.name, ins.dbname))
+                # TODO, what do in this case?
+				# sys.exit(1)
+
+
 
 def clean(project_name, dbname, conninfo):
 	pg.clean(project_name, dbname, conninfo)

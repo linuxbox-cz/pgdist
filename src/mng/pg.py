@@ -51,12 +51,12 @@ PGDIST_UPDATES = [
 ]
 
 class PgError(Exception):
-    def __init__(self, returncode, cmd, output=None):
-        self.returncode = returncode
-        self.cmd = cmd
-        self.output = output
-    def __str__(self):
-        return "Command '%s' returned non-zero exit status %d" % (self.cmd, self.returncode)
+	def __init__(self, returncode, cmd, output=None):
+		self.returncode = returncode
+		self.cmd = cmd
+		self.output = output
+	def __str__(self):
+		return "Command '%s' returned non-zero exit status %d" % (self.cmd, self.returncode)
 
 def run(c, conninfo, cmd=None, single_transaction=True, dbname=None, file=None):
 	args = [c]
@@ -239,7 +239,7 @@ def pgdist_update(dbname, conninfo):
 		dbs = [dbname]
 	else:
 		dbs = list_database(conninfo)
-	
+
 	for db in dbs:
 		conn = connect(conninfo, db, hard=(dbname is not None))
 		cursor = conn.cursor()
