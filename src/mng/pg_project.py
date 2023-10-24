@@ -455,7 +455,7 @@ def update(project_name, dbname, version, conninfo, directory, show_json=False, 
 		logging.error("Project %s not found" % (project_name,))
 		sys.exit(1)
 
-	projects_to_fix = check_succesfull_installed(projects, conninfo, dbname, directory)
+	update_not_sucessfull_installed(projects, conninfo, dbname, directory)
 
 	exists_updates = False
 	for project in projects:
@@ -509,58 +509,43 @@ def update(project_name, dbname, version, conninfo, directory, show_json=False, 
 	print("Complete!")
 
 def update_status(conninfo, directory, show_json):
-    projects = get_projects(None, None, conninfo, directory)
-    dbs = pg.list_database(conninfo)
+	projects = get_projects(None, None, conninfo, directory)
+	dbs = pg.list_database(conninfo)
 
-    updates = 0
-    installed_projects = 0
-    for db in dbs:
-        for project in projects:
-            for ins in project.get_instalated(db):
-                if ins.version < project.newest_version():
-                    updates += 1
-                installed_projects += 1
+	updates = 0
+	installed_projects = 0
+	for db in dbs:
+		for project in projects:
+			for ins in project.get_instalated(db):
+				if ins.version < project.newest_version():
+					updates += 1
+				installed_projects += 1
 
-    if show_json:
-        json_count = { 'project_count': installed_projects, 'update_count':  updates}
-        print(json.dumps(json_count))
-    else:
-        print('Installed projects count:', installed_projects)
-        print('Projects update count:', updates)
+	if show_json:
+		json_count = { 'project_count': installed_projects, 'update_count':  updates}
+		print(json.dumps(json_count))
+	else:
+		print('Installed projects count:', installed_projects)
+		print('Projects update count:', updates)
 
-def check_succesfull_installed(projects, conninfo, dbname, directory):
+def update_not_sucessfull_installed(projects, conninfo, dbname, directory):
+	update_dir = os.path.join(directory)
+	updates = []
+
 	for project in projects:
 		for ins in project.installed:
 			if ins.part != ins.parts:
-				print
-				new_update = ProjectUpdate(str(ins.version), str(ins.from_version))
-				for p in project.updates:
-					for name in p.parts:
-						print(name.fname)
+				# add only parts what are not updated and try to update it again
+				for i in range (ins.part + 1, ins.parts + 1):
+					part_pattern = rf"{project.name}--{ins.from_version}--{ins.version}--p(0?{i}).sql"
+					for filename in os.listdir(directory):
+						if re.match(part_pattern, filename):
+							update = ProjectUpdate(str(ins.from_version), str(ins.version))
+							update.add_part(filename,directory,i)
+							updates.append(update)
 
-				# zeptat se zda bude pevný formát nazev + p1. p2 ....
-
-
-				print(ins.updates)
-				conn = pg.connect(conninfo, dbname)
-				cursor = conn.cursor()
-				cursor.execute('SELECT part FROM pgdist.history WHERE version = %s AND project = %s', (str(ins.version), project.name,))
-				installed_parts = cursor.fetchall()
-				print(installed_parts)
-				for p in project.installed:
-					print(str(p.part))
-				# run("psql", conninfo, dbname=dbname, file=os.path.join(directory, part.fname), single_transaction=part.single_transaction)
-				# cursor.execute("INSERT INTO pgdist.history (project, version, part, comment) VALUES (%s, %s, %s, %s);",
-				# 	(project.name, str(update.version_new), part.part, "updated from version %s to %s, part %d/%d" % (str(update.version_old), str(update.version_new), part.part, len(update.parts))))
-				# cursor.execute("UPDATE pgdist.installed SET version=%s, from_version=%s,  part=%s, parts=%s WHERE project=%s RETURNING *;",
-				# 	(str(update.version_new), str(update.version_old), part.part, len(update.parts), project.name))
-				# if not cursor.fetchone():
-				# 	cursor.execute("INSERT INTO pgdist.installed (project, version, part, parts) VALUES (%s, %s, %s, %s);",
-				# 		(project.name, str(update.version), part.part, len(update.parts)))
-				logging.error("Installed %s of %s parts to project %s in database %s. Check the parts in the project." %(ins.part, ins.parts, project.name, ins.dbname))
-                # TODO, what do in this case?
-				# sys.exit(1)
-
+				for upd in updates:
+					pg.update(dbname,project,upd,conninfo,directory,ins.parts)
 
 
 def clean(project_name, dbname, conninfo):
