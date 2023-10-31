@@ -455,8 +455,6 @@ def update(project_name, dbname, version, conninfo, directory, show_json=False, 
 		logging.error("Project %s not found" % (project_name,))
 		sys.exit(1)
 
-	update_not_sucessfull_installed(projects, conninfo, dbname, directory)
-
 	exists_updates = False
 	for project in projects:
 		for ins in project.installed:
@@ -465,12 +463,23 @@ def update(project_name, dbname, version, conninfo, directory, show_json=False, 
 			if updates:
 				exists_updates = True
 
+			# check if all parts in all projects are installed, if not, try to update not updated parts again
+			if ins.part != ins.parts:
+				for i in range (ins.part + 1, ins.parts + 1):
+					part_pattern = rf"{project.name}--{ins.from_version}--{ins.version}--p(0?{i}).sql"
+					for filename in os.listdir(directory):
+						if re.match(part_pattern, filename):
+							update = ProjectUpdate(str(ins.from_version), str(ins.version))
+							update.add_part(filename,directory,i)
+							ins.updates.append(update)
+							exists_updates = True
+
 	list_project = []
 	if not show_json:
 		if exists_updates:
 			print("")
 			print("Project updates:")
-			header = ["project", "dbname", "update"]
+			header = ["project", "dbname", "update", "info"]
 			for project in projects:
 				for ins in project.installed:
 					if ins.updates:
@@ -479,6 +488,8 @@ def update(project_name, dbname, version, conninfo, directory, show_json=False, 
 							row_project.append(project.name)
 							row_project.append(ins.dbname)
 							row_project.append(update)
+							if ins.part != ins.parts:
+								row_project.append(f"Update continue from part {ins.part + 1}/{ins.parts}.")
 							list_project.append(row_project)
 
 			print_table.table_print(list_project, header)
@@ -527,25 +538,6 @@ def update_status(conninfo, directory, show_json):
 	else:
 		print('Installed projects count:', installed_projects)
 		print('Projects update count:', updates)
-
-def update_not_sucessfull_installed(projects, conninfo, dbname, directory):
-	update_dir = os.path.join(directory)
-	updates = []
-
-	for project in projects:
-		for ins in project.installed:
-			if ins.part != ins.parts:
-				# add only parts what are not updated and try to update it again
-				for i in range (ins.part + 1, ins.parts + 1):
-					part_pattern = rf"{project.name}--{ins.from_version}--{ins.version}--p(0?{i}).sql"
-					for filename in os.listdir(directory):
-						if re.match(part_pattern, filename):
-							update = ProjectUpdate(str(ins.from_version), str(ins.version))
-							update.add_part(filename,directory,i)
-							updates.append(update)
-
-				for upd in updates:
-					pg.update(dbname,project,upd,conninfo,directory,ins.parts)
 
 
 def clean(project_name, dbname, conninfo):

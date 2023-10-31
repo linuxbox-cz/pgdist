@@ -341,8 +341,8 @@ def install(dbname, project, ver, conninfo, directory, create_db, is_require):
 				(project.name, str(ver.version), part.part, len(ver.parts)))
 
 
-def update(dbname, project, update, conninfo, directory, parts = None):
-	total_parts = parts if parts else len(update.parts) #parts is used if are updated only specific parts by function update_not_sucessfull_installed
+def update(dbname, project, update, conninfo, directory):
+	total_parts = update.parts[-1].part
 	conn = connect(conninfo, dbname)
 	cursor = conn.cursor()
 	if not check_pgdist_installed(conn):
@@ -358,7 +358,7 @@ def update(dbname, project, update, conninfo, directory, parts = None):
 		for role in part.roles:
 			create_role(conn, role, project.name, update.version_new, part.part)
 	for part in update.parts:
-		if len(update.parts) == 1 and parts is None:
+		if total_parts == 1:
 			print("Update %s in %s %s > %s" % (project.name, dbname, str(update.version_old), str(update.version_new)))
 		else:
 			print("Update %s in %s %s > %s part %d/%d" % (project.name, dbname, str(update.version_old), str(update.version_new), part.part, total_parts))
