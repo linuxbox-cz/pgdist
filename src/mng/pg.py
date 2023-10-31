@@ -94,7 +94,6 @@ def run(c, conninfo, cmd=None, single_transaction=True, dbname=None, file=None):
 		output = output.decode()
 		output = "\n".join(output.split("\n")[-40:])
 		logging.error("Command fail: %s\n%s" % (" ".join(args), output))
-		sys.exit(1)
 	return (retcode, output)
 
 def connect(conninfo, dbname=None, hard=True):
@@ -362,23 +361,24 @@ def update(dbname, project, update, conninfo, directory):
 			print("Update %s in %s %s > %s" % (project.name, dbname, str(update.version_old), str(update.version_new)))
 		else:
 			print("Update %s in %s %s > %s part %d/%d" % (project.name, dbname, str(update.version_old), str(update.version_new), part.part, total_parts))
-		try:
-			run("psql", conninfo, dbname=dbname, file=os.path.join(directory, part.fname), single_transaction=part.single_transaction)
-			cursor.execute("INSERT INTO pgdist.history (project, version, part, comment) VALUES (%s, %s, %s, %s);",
-				(project.name, str(update.version_new), part.part, "updated from version %s to %s, part %d/%d" % (str(update.version_old), str(update.version_new), part.part, total_parts)))
-			cursor.execute("UPDATE pgdist.installed SET version=%s, from_version=%s,  part=%s, parts=%s WHERE project=%s RETURNING *;",
-				(str(update.version_new), str(update.version_old), part.part, total_parts, project.name))
-			if not cursor.fetchone():
-				cursor.execute("INSERT INTO pgdist.installed (project, version, part, parts) VALUES (%s, %s, %s, %s);",
-					(project.name, str(update.version), part.part, total_parts))
-		except SystemExit as e:
+
+		retcode, output = run("psql", conninfo, dbname=dbname, file=os.path.join(directory, part.fname), single_transaction=part.single_transaction)
+		if retcode != 0:
 			if part.single_transaction:
 				logging.info("Fix the code in the file %s and run update again." %(part.fname))
 			else:
 				logging.info("Fix the code in the file %s, remove manually all changes, what script did and run update again."%(part.fname))
+			conn.close()
 			sys.exit(1)
 
-	conn.close()
+		cursor.execute("INSERT INTO pgdist.history (project, version, part, comment) VALUES (%s, %s, %s, %s);",
+			(project.name, str(update.version_new), part.part, "updated from version %s to %s, part %d/%d" % (str(update.version_old), str(update.version_new), part.part, total_parts)))
+		cursor.execute("UPDATE pgdist.installed SET version=%s, from_version=%s,  part=%s, parts=%s WHERE project=%s RETURNING *;",
+			(str(update.version_new), str(update.version_old), part.part, total_parts, project.name))
+		if not cursor.fetchone():
+			cursor.execute("INSERT INTO pgdist.installed (project, version, part, parts) VALUES (%s, %s, %s, %s);",
+				(project.name, str(update.version), part.part, total_parts))
+
 
 def clean(project_name, dbname, conninfo):
 	conn = connect(conninfo, dbname)

@@ -458,21 +458,20 @@ def update(project_name, dbname, version, conninfo, directory, show_json=False, 
 	exists_updates = False
 	for project in projects:
 		for ins in project.installed:
+
+		# check if all parts in all projects are installed, if not, try to update not updated parts again
+			if ins.part != ins.parts:
+				for upd in project.updates:
+					if upd.version_new == ins.version and upd.version_old == ins.from_version:
+						upd.parts = upd.parts[ins.part:]
+						ins.updates.append(upd)
+
 			updates = project.find_updates(ins.version, version)
-			ins.updates = updates
-			if updates:
+			for u in updates:
+				ins.updates.append(u)
+			if ins.updates:
 				exists_updates = True
 
-			# check if all parts in all projects are installed, if not, try to update not updated parts again
-			if ins.part != ins.parts:
-				for i in range (ins.part + 1, ins.parts + 1):
-					part_pattern = rf"{project.name}--{ins.from_version}--{ins.version}--p(0?{i}).sql"
-					for filename in os.listdir(directory):
-						if re.match(part_pattern, filename):
-							update = ProjectUpdate(str(ins.from_version), str(ins.version))
-							update.add_part(filename,directory,i)
-							ins.updates.append(update)
-							exists_updates = True
 
 	list_project = []
 	if not show_json:
