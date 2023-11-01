@@ -378,7 +378,7 @@ def update(dbname, project, update, conninfo, directory):
 		if not cursor.fetchone():
 			cursor.execute("INSERT INTO pgdist.installed (project, version, part, parts) VALUES (%s, %s, %s, %s);",
 				(project.name, str(update.version), part.part, total_parts))
-
+	conn.close()
 
 def clean(project_name, dbname, conninfo):
 	conn = connect(conninfo, dbname)
