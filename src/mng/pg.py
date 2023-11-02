@@ -341,7 +341,7 @@ def install(dbname, project, ver, conninfo, directory, create_db, is_require):
 
 
 def update(dbname, project, update, conninfo, directory):
-	total_parts = update.parts[-1].part
+	total_parts = len(update.parts)
 	conn = connect(conninfo, dbname)
 	cursor = conn.cursor()
 	if not check_pgdist_installed(conn):
@@ -356,28 +356,38 @@ def update(dbname, project, update, conninfo, directory):
 	for part in update.parts:
 		for role in part.roles:
 			create_role(conn, role, project.name, update.version_new, part.part)
-	for part in update.parts:
-		if total_parts == 1:
-			print("Update %s in %s %s > %s" % (project.name, dbname, str(update.version_old), str(update.version_new)))
-		else:
-			print("Update %s in %s %s > %s part %d/%d" % (project.name, dbname, str(update.version_old), str(update.version_new), part.part, total_parts))
+	for i,part in enumerate(update.parts):
+		if i > update.failed_part - 1:
+			if update.failed and not part.single_transaction:
+				user_answer = input("You are trying to run 'not single transaction' script what last time failed, are you sure? [y/N]: ")
+				if user_answer.upper() != "Y":
+					sys.exit(1)
 
-		retcode, output = run("psql", conninfo, dbname=dbname, file=os.path.join(directory, part.fname), single_transaction=part.single_transaction)
-		if retcode != 0:
-			if part.single_transaction:
-				logging.info("Fix the code in the file %s and run update again." %(part.fname))
+			if total_parts == 1:
+				print("Update %s in %s %s > %s" % (project.name, dbname, str(update.version_old), str(update.version_new)))
 			else:
-				logging.info("Fix the code in the file %s, remove manually all changes, what script did and run update again."%(part.fname))
-			conn.close()
-			sys.exit(1)
+				print("Update %s in %s %s > %s part %d/%d" % (project.name, dbname, str(update.version_old), str(update.version_new), part.part, total_parts))
 
-		cursor.execute("INSERT INTO pgdist.history (project, version, part, comment) VALUES (%s, %s, %s, %s);",
-			(project.name, str(update.version_new), part.part, "updated from version %s to %s, part %d/%d" % (str(update.version_old), str(update.version_new), part.part, total_parts)))
-		cursor.execute("UPDATE pgdist.installed SET version=%s, from_version=%s,  part=%s, parts=%s WHERE project=%s RETURNING *;",
-			(str(update.version_new), str(update.version_old), part.part, total_parts, project.name))
-		if not cursor.fetchone():
-			cursor.execute("INSERT INTO pgdist.installed (project, version, part, parts) VALUES (%s, %s, %s, %s);",
-				(project.name, str(update.version), part.part, total_parts))
+			retcode, output = run("psql", conninfo, dbname=dbname, file=os.path.join(directory, part.fname), single_transaction=part.single_transaction)
+			if retcode != 0:
+				output = "\n".join(output.split("\n")[-4:-2]) #last two rows are empty...
+				if part.single_transaction:
+					logging.info("Fix the code in the file %s/%s and run update again." %(directory, part.fname))
+				else:
+					logging.info("Fix the code in the file %s/%s, remove manually changes what script did (if it is needed) and run update again."%(directory, part.fname))
+
+				cursor.execute("INSERT INTO pgdist.history (project, version, part, comment) VALUES (%s, %s, %s, %s);",
+				(project.name, str(update.version_new), part.part, "FAIL - update from version %s to %s, part %d/%d\n%s" % (str(update.version_old), str(update.version_new), part.part, total_parts, output)))
+				conn.close()
+				sys.exit(1)
+
+			cursor.execute("INSERT INTO pgdist.history (project, version, part, comment) VALUES (%s, %s, %s, %s);",
+				(project.name, str(update.version_new), part.part, "updated from version %s to %s, part %d/%d" % (str(update.version_old), str(update.version_new), part.part, total_parts)))
+			cursor.execute("UPDATE pgdist.installed SET version=%s, from_version=%s,  part=%s, parts=%s WHERE project=%s RETURNING *;",
+				(str(update.version_new), str(update.version_old), part.part, total_parts, project.name))
+			if not cursor.fetchone():
+				cursor.execute("INSERT INTO pgdist.installed (project, version, part, parts) VALUES (%s, %s, %s, %s);",
+					(project.name, str(update.version), part.part, total_parts))
 	conn.close()
 
 def clean(project_name, dbname, conninfo):

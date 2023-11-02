@@ -3,6 +3,7 @@
 import os
 import re
 import sys
+import copy
 import logging
 from distutils.version import LooseVersion
 
@@ -109,6 +110,8 @@ class ProjectUpdate:
 		self.version_new = LooseVersion(version_new)
 		self.version_old = LooseVersion(version_old)
 		self.parts = []
+		self.failed = False
+		self.failed_part = 0
 
 	def __str__(self):
 		return "%s -> %s" % (self.version_old, self.version_new)
@@ -131,6 +134,7 @@ class  ProjectInstalated:
 		self.part = part
 		self.parts = parts
 		self.updates = []
+		self.update_failed:int = None
 
 	def __str__(self):
 		return "ProjectInstalated: %s, %s, updates: %s" % (self.dbname, self.version, ", ".join(self.updates))
@@ -463,12 +467,13 @@ def update(project_name, dbname, version, conninfo, directory, show_json=False, 
 			if ins.part != ins.parts:
 				for upd in project.updates:
 					if upd.version_new == ins.version and upd.version_old == ins.from_version:
-						upd.parts = upd.parts[ins.part:]
-						ins.updates.append(upd)
+						ins_update = copy.deepcopy(upd)
+						ins_update.failed = True
+						ins_update.failed_part = ins.part
+						ins.updates.append(ins_update)
 
-			updates = project.find_updates(ins.version, version)
-			for u in updates:
-				ins.updates.append(u)
+			ins.updates += project.find_updates(ins.version, version)
+
 			if ins.updates:
 				exists_updates = True
 
@@ -478,7 +483,7 @@ def update(project_name, dbname, version, conninfo, directory, show_json=False, 
 		if exists_updates:
 			print("")
 			print("Project updates:")
-			header = ["project", "dbname", "update", "info"]
+			header = ["project", "dbname", "update", ""]
 			for project in projects:
 				for ins in project.installed:
 					if ins.updates:
@@ -487,7 +492,7 @@ def update(project_name, dbname, version, conninfo, directory, show_json=False, 
 							row_project.append(project.name)
 							row_project.append(ins.dbname)
 							row_project.append(update)
-							if ins.part != ins.parts:
+							if ins.part != ins.parts and update.failed:
 								row_project.append(f"Update continue from part {ins.part + 1}/{ins.parts}.")
 							list_project.append(row_project)
 
