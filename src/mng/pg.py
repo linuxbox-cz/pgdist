@@ -251,7 +251,7 @@ def update_password(role_name, cursor):
 	password = ''.join(random.SystemRandom().choice(string.ascii_letters + string.digits ) for _ in range(12))
 	print("ALTER ROLE %s PASSWORD" % (role_name,))
 	cursor.execute("ALTER ROLE %s PASSWORD %%s;" % (role_name,), (password,))
-	open(os.path.join(config.get_password_path(), role_name), 'w').write("PGPASSWORD=%s\n" % (password, ))
+	open(os.path.join(config.get_password_path(), role_name), 'w', encoding='utf-8').write("PGPASSWORD=%s\n" % (password, ))
 
 def create_role(conn, role, project_name, version, part, new_db=False):
 	logging.debug("check role: %s" % (role,))

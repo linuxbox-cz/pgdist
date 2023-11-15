@@ -124,7 +124,7 @@ class PG:
 	def get_roles(self, cache):
 		if cache and self.test_cache_file("roles"):
 			logging.verbose("load roles from cache file")
-			return json.load(open(self.address.cache_file("roles")))
+			return json.load(open(self.address.cache_file("roles"), encoding='utf-8'))
 		cmd = """SELECT string_agg(rolname, ',') FROM pg_roles;"""
 		(retcode, output) = self.psql(cmd=cmd, tuples_only=True)
 
@@ -132,7 +132,7 @@ class PG:
 			output = output.decode('utf-8')
 		r = output.strip().split(",")
 		if cache:
-			json.dump(r, open(self.address.cache_file("roles"), "w"))
+			json.dump(r, open(self.address.cache_file("roles"), "w", encoding='utf-8'))
 		return r
 
 	def load_project(self, project):
@@ -172,11 +172,11 @@ class PG:
 	def dump(self, no_owner=False, no_acl=False, cache=False):
 		if cache and self.test_cache_file("struct"):
 			logging.verbose("load struct from cache file")
-			return open(self.address.cache_file("struct")).read()
+			return open(self.address.cache_file("struct"), encoding='utf-8').read()
 		(retcode, output) = self.pg_dump(change_db=True, no_owner=no_owner, no_acl=no_acl)
 		r = str(output, "UTF8")
 		if cache:
-			open(self.address.cache_file("struct"), "w").write(r)
+			open(self.address.cache_file("struct"), "w", encoding='utf-8').write(r)
 		return r
 
 
@@ -202,7 +202,7 @@ class PG:
 	def dump_data(self, project, cache=False):
 		if cache and self.test_cache_file("data"):
 			logging.verbose("load data from cache file")
-			return json.load(open(self.address.cache_file("data")))
+			return json.load(open(self.address.cache_file("data"), encoding='utf-8'))
 		r = {}
 		c = []
 		columns_exclude = {}
@@ -253,7 +253,7 @@ class PG:
 			else:
 				line = data.readline()
 		if cache:
-			json.dump(r, open(self.address.cache_file("data"), "w"))
+			json.dump(r, open(self.address.cache_file("data"), "w", encoding='utf-8'))
 		return r
 
 	def pg_extractor(self, pg_extractor, no_owner=False, no_acl=False):

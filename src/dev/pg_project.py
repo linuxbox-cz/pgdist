@@ -165,7 +165,7 @@ class ProjectBase:
 		new_conf.write(utils.get_header(self.name, "project-config", roles=self.roles, requires=self.requires, dbparam=self.dbparam, tables_data=self.table_data))
 		new_conf.write(utils.get_part_header(self.parts, "project-config"))
 		new_conf.seek(0)
-		with open(os.path.join(self.directory, "sql", "pg_project.sql"), "w") as file:
+		with open(os.path.join(self.directory, "sql", "pg_project.sql"), "w", encoding='utf-8') as file:
 			for line in new_conf:
 				file.write(line)
 		new_conf.close()
@@ -240,10 +240,10 @@ class ProjectFs(ProjectBase):
 	def __init__(self, directory=None):
 		self.init(directory)
 		self.git = False
-		self.load_conf(open(os.path.join(self.directory, "sql", "pg_project.sql")))
+		self.load_conf(open(os.path.join(self.directory, "sql", "pg_project.sql"), encoding='utf-8'))
 
 	def get_file(self, fname):
-		return open(os.path.join(self.directory, "sql", fname))
+		return open(os.path.join(self.directory, "sql", fname), encoding='utf-8')
 
 	def add_file(self, fname):
 		if not self.parts:
@@ -296,7 +296,7 @@ class UpdatePart:
 			self.load_conf()
 
 	def load_conf(self):
-		with open(self.fname) as f:
+		with open(self.fname, encoding='utf-8') as f:
 			end_header = False
 			end_header_comment = False
 			data_start = False
@@ -327,7 +327,7 @@ class UpdatePart:
 						data_start = True
 
 	def save_conf(self, name, old_version, new_version):
-		with open(self.fname, "w") as file:
+		with open(self.fname, "w", encoding='utf-8') as file:
 			file.write(utils.get_header(name, "project-update", part=self, old_version=old_version, new_version=new_version))
 			file.write(utils.get_part_header([self], "project-update"))
 
@@ -586,7 +586,7 @@ def create_version(version, git_tag, force, version_length=None):
 			logging.error("Error file exists: %s" % (build_fname,))
 			sys.exit(1)
 		logging.verbose("Create file: %s" % (build_fname,))
-		with open(build_fname, "w") as build_file:
+		with open(build_fname, "w", encoding='utf-8') as build_file:
 			if part.number == 1:
 				build_file.write(utils.get_header(project.name, "project-version", part=part, roles=project.roles, requires=project.requires, version=version, dbparam=project.dbparam))
 			else:
@@ -801,7 +801,7 @@ def create_update(git_tag, new_version, force, gitversion=None, clean=True, pre_
 		logging.verbose("Create file: %s" % (build_fname,))
 		update_part = Part(True, part+1)
 
-		with open(build_fname, "w") as build_file:
+		with open(build_fname, "w", encoding='utf-8') as build_file:
 			build_file.write(utils.get_header(project_new.name, "project-update", part=update_part, roles=project_new.roles, requires=project_new.requires, old_version=old_version, new_version=new_version))
 			build_file.write(utils.get_part_header([update_part], "project-update"))
 
@@ -907,7 +907,7 @@ def create_roles(roles):
 
 def read_file(fname):
 	data = io.StringIO()
-	with open(fname, "r") as f:
+	with open(fname, "r", encoding='utf-8') as f:
 		data.write(str(f.read(), "UTF8"))
 	return data.getvalue()
 

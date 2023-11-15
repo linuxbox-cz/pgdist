@@ -35,7 +35,7 @@ class ProjectVersionPart:
 		self.requires = []
 		self.single_transaction = True
 		self.dbparam = ""
-		with(open(os.path.join(directory, fname))) as f:
+		with(open(os.path.join(directory, fname), encoding='utf-8')) as f:
 			for line in f:
 				# single_transaction
 				x = re.match(r"--\s*single_transaction", line)
@@ -82,7 +82,7 @@ class ProjectUpdatePart:
 		self.roles = []
 		self.requires = []
 		self.single_transaction = True
-		with(open(os.path.join(directory, fname))) as f:
+		with(open(os.path.join(directory, fname), encoding='utf-8')) as f:
 			for line in f:
 				# single_transaction
 				x = re.match(r"--\s*single_transaction", line)
@@ -221,7 +221,7 @@ class Project:
 		pg.update(dbname, self, update, conninfo, directory)
 
 def get_project_name(directory, fname):
-	with(open(os.path.join(directory, fname))) as f:
+	with(open(os.path.join(directory, fname), encoding='utf-8')) as f:
 		for line in f:
 			x = re.match(r"--\s*name:\s+(?P<name>\S+)", line)
 			if x:
