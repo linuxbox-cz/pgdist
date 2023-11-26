@@ -322,6 +322,7 @@ def install(dbname, project, ver, conninfo, directory, create_db, is_require):
 		for role in part.roles:
 			create_role(conn, role, project.name, ver.version, part.part)
 	for part in ver.parts:
+		total_parts = len(ver.parts)
 		str_part = ""
 		str_require = ""
 		if len(ver.parts) > 1:
@@ -330,7 +331,19 @@ def install(dbname, project, ver, conninfo, directory, create_db, is_require):
 			str_require = " require"
 		print("Install%s %s %s%s to %s" % (str_require, project.name, str(ver.version), str_part, dbname))
 
-		run("psql", conninfo, dbname=dbname, file=os.path.join(directory, part.fname), single_transaction=part.single_transaction)
+		retcode, output = run("psql", conninfo, dbname=dbname, file=os.path.join(directory, part.fname), single_transaction=part.single_transaction)
+		if retcode != 0:
+				output = "\n".join(output.split("\n")[-4:-2]) #last two rows are empty...
+				if part.single_transaction:
+					logging.info("Fix the code in the file %s/%s and run update again." %(directory, part.fname))
+				else:
+					logging.info("Fix the code in the file %s/%s, remove manually changes what script did (if it is needed) and run update again."%(directory, part.fname))
+
+				cursor.execute("INSERT INTO pgdist.history (project, version, part, comment) VALUES (%s, %s, %s, %s);",
+				(project.name, str(update.version_new), part.part, "FAIL - update from version %s to %s, part %d/%d\n%s" % (str(update.version_old), str(update.version_new), part.part, total_parts, output)))
+				conn.close()
+				sys.exit(1)
+
 		cursor.execute("INSERT INTO pgdist.history (project, version, part, comment) VALUES (%s, %s, %s, %s);",
 			(project.name, str(ver.version), part.part, "installed new version %s, part %d/%d" % (str(ver.version), part.part, len(ver.parts))))
 		cursor.execute("UPDATE pgdist.installed SET version=%s, part=%s, parts=%s WHERE project=%s RETURNING *;",
