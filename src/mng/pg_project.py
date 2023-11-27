@@ -135,6 +135,8 @@ class  ProjectInstalated:
 		self.parts = parts
 		self.updates = []
 		self.update_failed:int = None
+		self.failed = False
+		self.failed_part = 0
 
 	def __str__(self):
 		return "ProjectInstalated: %s, %s, updates: %s" % (self.dbname, self.version, ", ".join(self.updates))
@@ -441,7 +443,12 @@ def install(project_name, dbname, version, conninfo, directory, create_db, is_re
 			print("Complete!")
 	elif need_ver > ins[0].version:
 		update(project_name, dbname, version, conninfo, directory, False)
+	elif ins[0].part != ins[0].parts:
+		# set to the project failed part of instalation
+		ins[0].failed_part = ins[0].part
+		project.install(dbname, need_ver, conninfo, directory, create_db, is_require)
 	else:
+		print(ins)
 		logging.error("Project %s is installed." % (project_name,))
 		sys.exit(1)
 
