@@ -329,7 +329,8 @@ def install(dbname, project, ver, conninfo, directory, create_db, is_require):
 			part_failed = ins.failed_part
 			break
 
-	for i,part in enumerate(ver.parts):
+	# run installation of project (part_failed 0 is default when not failed parts - first installation) or only parts from last failed part
+	for i,part in enumerate(ver.parts[part_failed:]):
 		total_parts = len(ver.parts)
 		str_part = ""
 		str_require = ""
@@ -338,38 +339,36 @@ def install(dbname, project, ver, conninfo, directory, create_db, is_require):
 		if is_require:
 			str_require = " require"
 
-		# run installation of project (part_failed 0 is default) or only parts from last failed part
-		if part_failed == 0 or i > part_failed - 1:
-			# if failed parts installation only, print the mesasge with infomation about repeating instalation  offailed parts
-			if i > part_failed - 1:
-				print("Install%s %s %s%s to %s - repeating the failed part" % (str_require, project.name, str(ver.version), str_part, dbname))
-				if part_failed > 0 and not part.single_transaction:
-					user_answer = input("You are trying to run 'not single transaction' script what last time failed, are you sure? [y/N]: ")
-					if user_answer.upper() != "Y":
-						sys.exit(1)
-			else:
-				print("Install%s %s %s%s to %s" % (str_require, project.name, str(ver.version), str_part, dbname))
-
-			retcode, output = run("psql", conninfo, dbname=dbname, file=os.path.join(directory, part.fname), single_transaction=part.single_transaction)
-			if retcode != 0:
-					output = "\n".join(output.split("\n")[-4:-2]) #last two rows are empty...
-					if part.single_transaction:
-						logging.info("Fix the code in the file %s/%s and run install again." %(directory, part.fname))
-					else:
-						logging.info("Fix the code in the file %s/%s, remove manually changes what script did (if it is needed) and run install again."%(directory, part.fname))
-
-					cursor.execute("INSERT INTO pgdist.history (project, version, part, comment) VALUES (%s, %s, %s, %s);",
-					(project.name, str(ver.version), part.part, "FAIL - install version %s, part %d/%d\n%s" % (str(ver.version), part.part, total_parts, output)))
-					conn.close()
+			# if failed parts installation only, print the mesasge with infomation about repeating instalation of failed parts
+		if part_failed > 0:
+			print("Install%s %s %s%s to %s - repeating the failed part" % (str_require, project.name, str(ver.version), str_part, dbname))
+			if not part.single_transaction:
+				user_answer = input("You are trying to run 'not single transaction' script what last time failed, are you sure? [y/N]: ")
+				if user_answer.upper() != "Y":
 					sys.exit(1)
+		else:
+			print("Install%s %s %s%s to %s" % (str_require, project.name, str(ver.version), str_part, dbname))
 
-			cursor.execute("INSERT INTO pgdist.history (project, version, part, comment) VALUES (%s, %s, %s, %s);",
-				(project.name, str(ver.version), part.part, "installed new version %s, part %d/%d" % (str(ver.version), part.part, len(ver.parts))))
-			cursor.execute("UPDATE pgdist.installed SET version=%s, part=%s, parts=%s WHERE project=%s RETURNING *;",
-				(str(ver.version), part.part, len(ver.parts), project.name))
-			if not cursor.fetchone():
-				cursor.execute("INSERT INTO pgdist.installed (project, version, part, parts) VALUES (%s, %s, %s, %s);",
-					(project.name, str(ver.version), part.part, len(ver.parts)))
+		retcode, output = run("psql", conninfo, dbname=dbname, file=os.path.join(directory, part.fname), single_transaction=part.single_transaction)
+		if retcode != 0:
+				output = "\n".join(output.split("\n")[-4:-2]) #last two rows are empty...
+				if part.single_transaction:
+					logging.info("Fix the code in the file %s/%s and run install again." %(directory, part.fname))
+				else:
+					logging.info("Fix the code in the file %s/%s, remove manually changes what script did (if it is needed) and run install again."%(directory, part.fname))
+
+				cursor.execute("INSERT INTO pgdist.history (project, version, part, comment) VALUES (%s, %s, %s, %s);",
+				(project.name, str(ver.version), part.part, "FAIL - install version %s, part %d/%d\n%s" % (str(ver.version), part.part, total_parts, output)))
+				conn.close()
+				sys.exit(1)
+
+		cursor.execute("INSERT INTO pgdist.history (project, version, part, comment) VALUES (%s, %s, %s, %s);",
+			(project.name, str(ver.version), part.part, "installed new version %s, part %d/%d" % (str(ver.version), part.part, len(ver.parts))))
+		cursor.execute("UPDATE pgdist.installed SET version=%s, part=%s, parts=%s WHERE project=%s RETURNING *;",
+			(str(ver.version), part.part, len(ver.parts), project.name))
+		if not cursor.fetchone():
+			cursor.execute("INSERT INTO pgdist.installed (project, version, part, parts) VALUES (%s, %s, %s, %s);",
+				(project.name, str(ver.version), part.part, len(ver.parts)))
 
 
 def update(dbname, project, update, conninfo, directory):

@@ -447,7 +447,6 @@ def install(project_name, dbname, version, conninfo, directory, create_db, is_re
 		ins[0].failed_part = ins[0].part
 		project.install(dbname, need_ver, conninfo, directory, create_db, is_require)
 	else:
-		print(ins)
 		logging.error("Project %s is installed." % (project_name,))
 		sys.exit(1)
 
