@@ -323,8 +323,8 @@ def install(dbname, project, ver, conninfo, directory, create_db, is_require):
 			create_role(conn, role, project.name, ver.version, part.part)
 
 	# find the failed part of installed project(if some part fail at installation)
+	part_failed = 0
 	for ins in project.installed:
-		part_failed = 0
 		if ins.version == ver.version and ins.dbname == dbname:
 			part_failed = ins.failed_part
 			break
@@ -340,7 +340,7 @@ def install(dbname, project, ver, conninfo, directory, create_db, is_require):
 			str_require = " require"
 
 			# if failed parts installation only, print the mesasge with infomation about repeating instalation of failed parts
-		if part_failed > 0:
+		if part_failed + 1 == part.part and part_failed > 0:
 			print("Install%s %s %s%s to %s - repeating the failed part" % (str_require, project.name, str(ver.version), str_part, dbname))
 			if not part.single_transaction:
 				user_answer = input("You are trying to run 'not single transaction' script what last time failed, are you sure? [y/N]: ")
