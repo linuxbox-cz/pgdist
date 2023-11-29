@@ -135,7 +135,6 @@ class  ProjectInstalated:
 		self.parts = parts
 		self.updates = []
 		self.update_failed:int = None
-		self.failed = False
 		self.failed_part = 0
 
 	def __str__(self):

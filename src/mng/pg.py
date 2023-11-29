@@ -324,10 +324,10 @@ def install(dbname, project, ver, conninfo, directory, create_db, is_require):
 
 	# find the failed part of installed project(if some part fail at installation)
 	for ins in project.installed:
-			part_failed = 0
-			if ins.version == ver.version:
-				part_failed = ins.failed_part
-				break
+		part_failed = 0
+		if ins.version == ver.version and ins.dbname == dbname:
+			part_failed = ins.failed_part
+			break
 
 	for i,part in enumerate(ver.parts):
 		total_parts = len(ver.parts)
