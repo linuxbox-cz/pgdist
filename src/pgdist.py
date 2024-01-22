@@ -109,7 +109,7 @@ def main():
 	parser.add_argument("--less", help="print output in less", action="store_true")
 	parser.add_argument("--noless", help="don't print output in less", action="store_true")
 	parser.add_argument("--all", help="use all files", action="store_true")
-	parser.add_argument("-f", "--force", help="overwriting and removing files", action="store_true")
+	parser.add_argument("-f", "--force", help="force install, update, overwriting and removing files", action="store_true")
 	parser.add_argument("-c", "--config", help="configuration file")
 	parser.add_argument("--color", help="never, always or auto colorred output", default="auto", choices=["auto", "never", "always"])
 	parser.add_argument("--swap", help="Swap compare data, commands diff-...", default=False, action="store_true")
@@ -370,7 +370,7 @@ def main():
 
 	elif args.cmd == "install" and len(args.args) in (2, 3,):
 		(project_name, dbname, version) = args_parse(args.args, 3)
-		pg_project.install(project_name, dbname, version, conninfo.ConnInfo(args), args.directory or config.get_install_path(), args.create, False)
+		pg_project.install(project_name, dbname, version, conninfo.ConnInfo(args), args.directory or config.get_install_path(), args.create, False, args.force)
 
 	elif args.cmd == "check-update" and len(args.args) in (0, 1, 2, 3,):
 		(project_name, dbname, version) = args_parse(args.args, 3)
@@ -378,7 +378,7 @@ def main():
 
 	elif args.cmd == "update" and len(args.args) in (0, 1, 2, 3,):
 		(project_name, dbname, version) = args_parse(args.args, 3)
-		pg_project.update(project_name, dbname or args.dbname, version, conninfo.ConnInfo(args), args.directory or config.get_install_path())
+		pg_project.update(project_name, dbname or args.dbname, version, conninfo.ConnInfo(args), args.directory or config.get_install_path(), force=args.force)
 
 	elif args.cmd == "clean" and len(args.args) in (1, 2,):
 		(project_name, dbname) = args_parse(args.args, 2)

@@ -189,10 +189,10 @@ class Project:
 	def get_instalated(self, dbname):
 		return [x for x in self.installed if x.dbname == dbname]
 
-	def install(self, dbname, version, conninfo, directory, create_db, is_require):
+	def install(self, dbname, version, conninfo, directory, create_db, is_require, force):
 		for ver in self.versions:
 			if ver.version == version:
-				pg.install(dbname, self, ver, conninfo, directory, create_db, is_require)
+				pg.install(dbname, self, ver, conninfo, directory, create_db, is_require, force)
 				return
 
 	def find_updates(self, version1, version2):
@@ -222,8 +222,8 @@ class Project:
 		logging.verbose("\tnot found")
 		return None
 
-	def update(self, dbname, update, conninfo, directory):
-		pg.update(dbname, self, update, conninfo, directory)
+	def update(self, dbname, update, conninfo, directory, force):
+		pg.update(dbname, self, update, conninfo, directory, force)
 
 def get_project_name(directory, fname):
 	with(open(os.path.join(directory, fname), encoding='utf-8')) as f:
@@ -420,7 +420,7 @@ def prlist(project_name, dbname, conninfo, directory, show_all, show_json):
 def history(project_name, dbname, conninfo):
 	pg.installed_history(project_name, dbname, conninfo)
 
-def install(project_name, dbname, version, conninfo, directory, create_db, is_require):
+def install(project_name, dbname, version, conninfo, directory, create_db, is_require, force):
 	projects = get_projects(project_name, dbname, conninfo, directory, check_db_exists=create_db)
 
 	if not projects:
@@ -437,7 +437,7 @@ def install(project_name, dbname, version, conninfo, directory, create_db, is_re
 
 
 	if not ins:
-		project.install(dbname, need_ver, conninfo, directory, create_db, is_require)
+		project.install(dbname, need_ver, conninfo, directory, create_db, is_require, force)
 		if not is_require:
 			print("Complete!")
 	elif need_ver > ins[0].version:
@@ -445,7 +445,7 @@ def install(project_name, dbname, version, conninfo, directory, create_db, is_re
 	elif ins[0].part != ins[0].parts:
 		# set to the project failed part of instalation
 		ins[0].failed_part = ins[0].part
-		project.install(dbname, need_ver, conninfo, directory, create_db, is_require)
+		project.install(dbname, need_ver, conninfo, directory, create_db, is_require, force)
 	else:
 		logging.error("Project %s is installed." % (project_name,))
 		sys.exit(1)
@@ -453,7 +453,7 @@ def install(project_name, dbname, version, conninfo, directory, create_db, is_re
 def check_update(project_name, dbname, version, conninfo, directory, show_json):
 	update(project_name, dbname, version, conninfo, directory, show_json, check=True)
 
-def update(project_name, dbname, version, conninfo, directory, show_json=False, check=False):
+def update(project_name, dbname, version, conninfo, directory, show_json=False, check=False, force=False):
 	if project_name == "-":
 		project_name = None
 	if dbname == "-":
@@ -525,7 +525,7 @@ def update(project_name, dbname, version, conninfo, directory, show_json=False, 
 	for project in projects:
 		for ins in project.installed:
 			for update in ins.updates:
-				project.update(ins.dbname, update, conninfo, directory)
+				project.update(ins.dbname, update, conninfo, directory, force)
 	print("Complete!")
 
 def update_status(conninfo, directory, show_json):

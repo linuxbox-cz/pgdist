@@ -292,7 +292,7 @@ def create_role(conn, role, project_name, version, part, new_db=False):
 	else:
 		return log
 
-def install(dbname, project, ver, conninfo, directory, create_db, is_require):
+def install(dbname, project, ver, conninfo, directory, create_db, is_require, force):
 	log = []
 	if ver.parts and create_db:
 		if not dbname in list_database(conninfo):
@@ -342,10 +342,9 @@ def install(dbname, project, ver, conninfo, directory, create_db, is_require):
 			# if failed parts installation only, print the mesasge with infomation about repeating instalation of failed parts
 		if part_failed + 1 == part.part and part_failed > 0:
 			print("Install%s %s %s%s to %s - repeating the failed part" % (str_require, project.name, str(ver.version), str_part, dbname))
-			if not part.single_transaction:
-				user_answer = input("You are trying to run 'not single transaction' script what last time failed, are you sure? [y/N]: ")
-				if user_answer.upper() != "Y":
-					sys.exit(1)
+			if not part.single_transaction and not force:
+				print("You are trying to run 'not single transaction' script what last time failed, add the parameter --force if you are sure.")
+				sys.exit(1)
 		else:
 			print("Install%s %s %s%s to %s" % (str_require, project.name, str(ver.version), str_part, dbname))
 
@@ -371,7 +370,7 @@ def install(dbname, project, ver, conninfo, directory, create_db, is_require):
 				(project.name, str(ver.version), part.part, len(ver.parts)))
 
 
-def update(dbname, project, update, conninfo, directory):
+def update(dbname, project, update, conninfo, directory, force):
 	total_parts = len(update.parts)
 	conn = connect(conninfo, dbname)
 	cursor = conn.cursor()
@@ -389,10 +388,9 @@ def update(dbname, project, update, conninfo, directory):
 			create_role(conn, role, project.name, update.version_new, part.part)
 	for i,part in enumerate(update.parts):
 		if i > update.failed_part - 1:
-			if update.failed and not part.single_transaction:
-				user_answer = input("You are trying to run 'not single transaction' script what last time failed, are you sure? [y/N]: ")
-				if user_answer.upper() != "Y":
-					sys.exit(1)
+			if update.failed and not part.single_transaction and not force:
+				print("You are trying to run 'not single transaction' script what last time failed, add the parameter --force if you are sure.")
+				sys.exit(1)
 
 			if total_parts == 1:
 				print("Update %s in %s %s > %s" % (project.name, dbname, str(update.version_old), str(update.version_new)))
