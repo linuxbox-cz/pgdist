@@ -409,9 +409,13 @@ def main():
 
 	if less:
 		pager = subprocess.Popen(["less", "-FKSMIR"], stdin=subprocess.PIPE, stdout=stdout)
-		pager.stdin.write(buffer.getvalue().encode('utf-8'))
+		try:
+			pager.stdin.write(buffer.getvalue().encode('utf-8'))
+		except BrokenPipeError as e:
+			pass
 		pager.stdin.close()
 		pager.wait()
+
 
 	sys.exit(0)
 
