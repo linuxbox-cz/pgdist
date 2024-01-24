@@ -11,6 +11,7 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 BuildArch: noarch
 Requires: python3-psycopg2
 
+%define __python python3
 
 %description
 
@@ -53,3 +54,5 @@ ln -s /usr/libexec/pgdist/pgdist.py ${RPM_BUILD_ROOT}/usr/bin/pgdist
 [ "$RPM_BUILD_ROOT" != "/" ] && rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Wed Jan 24 2024 Marian Krucina <marian.krucina@linuxbox.cz> - 1.2401.0.0 - %{dist}.01
+- version 1.2401.0.0

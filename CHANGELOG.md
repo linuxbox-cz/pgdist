@@ -1,3 +1,8 @@
+## [1.2401.0.0] - 2024-01-24
+
+### Fix
+Fix: add parametr --force to install failed installations and updates
+
 ## [1.2312.0.0] - 2023-12-06
 
 ### Fix
