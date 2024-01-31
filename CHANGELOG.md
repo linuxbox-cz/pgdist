@@ -2,6 +2,7 @@
 
 ### Fix
 Fix: apply 'force' when install requires
+Fix: added exception on BrokenPipeError if less command
 
 ## [1.2401.0.0] - 2024-01-24
 
