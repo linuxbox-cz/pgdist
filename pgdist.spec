@@ -54,5 +54,8 @@ ln -s /usr/libexec/pgdist/pgdist.py ${RPM_BUILD_ROOT}/usr/bin/pgdist
 [ "$RPM_BUILD_ROOT" != "/" ] && rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Wed Jan 31 2024 Marian Krucina <marian.krucina@linuxbox.cz> - 1.2401.0.1 - %{dist}.01
+- version 1.2401.0.1
+
 * Wed Jan 24 2024 Marian Krucina <marian.krucina@linuxbox.cz> - 1.2401.0.0 - %{dist}.01
 - version 1.2401.0.0

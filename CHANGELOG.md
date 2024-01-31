@@ -1,3 +1,8 @@
+## [1.2401.0.1] - 2024-01-31
+
+### Fix
+Fix: apply 'force' when install requires
+
 ## [1.2401.0.0] - 2024-01-24
 
 ### Fix
