@@ -317,7 +317,7 @@ def install(dbname, project, ver, conninfo, directory, create_db, is_require, fo
 		for require in part.requires:
 			cursor.execute("SELECT 1 FROM pgdist.installed WHERE project=%s", (require,))
 			if not cursor.fetchall():
-				pg_project.install(require, dbname, None, conninfo, directory, create_db, True)
+				pg_project.install(require, dbname, None, conninfo, directory, create_db, True, force)
 	for part in ver.parts:
 		for role in part.roles:
 			create_role(conn, role, project.name, ver.version, part.part)
@@ -382,7 +382,7 @@ def update(dbname, project, update, conninfo, directory, force):
 		for require in part.requires:
 			cursor.execute("SELECT 1 FROM pgdist.installed WHERE project=%s", (require,))
 			if not cursor.fetchall():
-				pg_project.install(require, dbname, None, conninfo, directory, False, True)
+				pg_project.install(require, dbname, None, conninfo, directory, False, True, force)
 	for part in update.parts:
 		for role in part.roles:
 			create_role(conn, role, project.name, update.version_new, part.part)
