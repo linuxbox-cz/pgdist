@@ -1,3 +1,8 @@
+## [1.2401.0.2] - 2024-02-01
+
+### Fix
+Fix: omit project none version when pgoject in db and not in filesystem
+
 ## [1.2401.0.1] - 2024-01-31
 
 ### Fix
