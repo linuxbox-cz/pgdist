@@ -537,9 +537,12 @@ def update_status(conninfo, directory, show_json):
 	for db in dbs:
 		for project in projects:
 			for ins in project.get_instalated(db):
+				installed_projects += 1			
+				if not project.newest_version():
+					continue
+
 				if ins.version < project.newest_version():
 					updates += 1
-				installed_projects += 1
 
 	if show_json:
 		json_count = { 'project_count': installed_projects, 'update_count':  updates}
