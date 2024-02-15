@@ -4,7 +4,6 @@ import re
 import sys
 import logging
 import subprocess
-from distutils.version import LooseVersion
 
 try:
 	import configparser
