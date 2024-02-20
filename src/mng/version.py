@@ -6,24 +6,25 @@ class InvalidVersionFormatError(Exception):
 	pass
 
 class Version:
-	version_re = re.compile(r'(\d+ | [a-z]+ | \.)', re.VERBOSE)
+	version_re = re.compile(r'(\.)', re.VERBOSE)
 
 	def __init__ (self, vstring):
 		self.parse(vstring)
 
 
 	def parse(self, vstring):
-		if re.match(r'^(0.|[1-9]\d*\.){1}(0.|[1-9]\d*\.){0,}(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[0-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$',vstring) is None:
-			raise InvalidVersionFormatError(f'Not valid semantic versioning format: {vstring}')
-
 		self.vstring = vstring
-		v_array = [x for x in self.version_re.split(vstring) if x and x != '.']
+		ver_match = re.match(r'^((?:0.|[1-9]\d*\.){1}(?:0.|[1-9]\d*\.){0,}(?:0|[1-9]\d*))(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[0-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$',vstring)
+		if ver_match is None:
+			raise InvalidVersionFormatError(f'Not valid semantic versioning format: {vstring}')
+		
+		core, pre_rel, build = ver_match.groups()
 
-		try:
-			core_version = v_array[:v_array.index('-')]
-			pre_version = v_array[v_array.index('-'):]
-		except ValueError:
-			core_version = v_array
+		core_version = [x for x in self.version_re.split(core) if x and x != '.']
+		
+		if pre_rel is not None:
+			pre_version = [x for x in self.version_re.split(pre_rel) if x and x != '.']
+		else: 
 			pre_version = []
 
 		for v in [core_version,pre_version]:
@@ -42,7 +43,7 @@ class Version:
 	def cmp (self, other):
 		if isinstance(other, str):
 			other = Version(other)
-		#check core part of version
+		#compare core part of version
 		for i, c1 in enumerate(self.core_version):
 			if i >= len(other.core_version):
 					return 1
@@ -58,11 +59,8 @@ class Version:
 		if len(other.core_version) > len(self.core_version):
 			return -1
 
-		#check pre-release part of version
+		#compare pre-release part of version
 		if len(self.pre_version) > 0 and len(other.pre_version) > 0:
-			if i >= len(other.pre_version):
-				return 1
-
 			for i, p1 in enumerate(self.pre_version):
 				if i >= len(other.pre_version):
 					return 1
@@ -84,7 +82,7 @@ class Version:
 			else:
 				return 0
 
-		if len(self.pre_version) > 0:
+		if len(self.pre_version) > len(other.pre_version) :
 			return -1
 		if len(other.pre_version) > 0:
 			return 1
@@ -260,12 +258,12 @@ def tests():
 	assert x == False
 
 	x = Version('1.2.1-1') > Version('1.2.1-alfa')
-	print("35. > True", x)
-	assert x == True
+	print("35. > False", x)
+	assert x == False
 
 	x = Version('1.2.1-1') < Version('1.2.1-alfa')
 	print("36. < False", x)
-	assert x == False
+	assert x == True
 
 	x = Version('1.0.0-alpha') < Version('1.0.0-alpha.1')
 	print("37. < True", x)
@@ -275,7 +273,7 @@ def tests():
 	print("38. < True", x)
 	assert x == True
 
-	x = Version('1.2.3----RC-SNAPSHOT.12.9.1--.12') > Version('1.2.3')
+	x = Version('1.2.3----RC-SNAPSHOT.12.9.1--.12') < Version('1.2.3')
 	print("39. < True", x)
 	assert x == True
 
@@ -292,6 +290,7 @@ def tests():
 	assert x == True
 
 if __name__ == '__main__':
+	tests()
 	try:
 		tests()
 		print('\033[1;32m Tests OK!\n \033[0m')
