@@ -6,7 +6,8 @@ class InvalidVersionFormatError(Exception):
 	pass
 
 class Version:
-	version_re = re.compile(r'(\.)', re.VERBOSE)
+	ver_re_pre = re.compile(r'(\.)', re.VERBOSE)
+	ver_re_core = re.compile(r'(\d+ | [a-zA-Z]+ | \.)', re.VERBOSE)
 
 	def __init__ (self, vstring):
 		self.parse(vstring)
@@ -14,17 +15,17 @@ class Version:
 
 	def parse(self, vstring):
 		self.vstring = vstring
-		ver_match = re.match(r'^((?:0.|[1-9]\d*\.){1}(?:0.|[1-9]\d*\.){0,}(?:0|[1-9]\d*))(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[0-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$',vstring)
+		ver_match = re.match(r'^((?:[0-9a-zA-Z]*\.){1,}(?:[0-9a-zA-Z]+))(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[0-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$',vstring)
 		if ver_match is None:
-			raise InvalidVersionFormatError(f'Not valid semantic versioning format: {vstring}')
-		
+			raise InvalidVersionFormatError(f'Invalid version format: {vstring}')
+
 		core, pre_rel, build = ver_match.groups()
 
-		core_version = [x for x in self.version_re.split(core) if x and x != '.']
-		
+		core_version = [x for x in self.ver_re_core.split(core) if x and x != '.']
+
 		if pre_rel is not None:
-			pre_version = [x for x in self.version_re.split(pre_rel) if x and x != '.']
-		else: 
+			pre_version = [x for x in self.ver_re_pre.split(pre_rel) if x and x != '.']
+		else:
 			pre_version = []
 
 		for v in [core_version,pre_version]:
@@ -46,6 +47,9 @@ class Version:
 		#compare core part of version
 		for i, c1 in enumerate(self.core_version):
 			if i >= len(other.core_version):
+				if type(c1) == str:
+					return -1
+				else:
 					return 1
 			c2 = other.core_version[i]
 			# id both is int, str
@@ -56,8 +60,15 @@ class Version:
 					return -1
 				if c1 > c2:
 					return 1
-		if len(other.core_version) > len(self.core_version):
+				if type(c1) == int:
+					return 1
 			return -1
+
+		if len(self.core_version) < len(other.core_version):
+			if type(other.core_version[len(self.core_version)]) == str:
+				return 1
+			else:
+				return -1
 
 		#compare pre-release part of version
 		if len(self.pre_version) > 0 and len(other.pre_version) > 0:
@@ -289,8 +300,49 @@ def tests():
 	print("41. < True", x)
 	assert x == True
 
+	# tests from origin distutils.version
+	x = Version('1.0.4b1') < Version('1.0.4')
+	print("42. < True", x)
+	assert x == True
+
+	x = Version('1.0.4b1') > Version('1.0.4')
+	print("43. < False", x)
+	assert x == False
+
+	x = Version('1.0.4b1') == Version('1.0.4')
+	print("44. < False", x)
+	assert x == False
+
+	x = Version('1.0.4a3') < Version('1.0.4b1')
+	print("45. < True", x)
+	assert x == True
+
+	x = Version('1.0.4a3') > Version('1.0.4b1')
+	print("46. < False", x)
+	assert x == False
+
+	x = Version('1.0.4a3') == Version('1.0.4b1')
+	print("47. < False", x)
+	assert x == False
+
+	x = Version('0.5b3') < Version('0.5')
+	print("48. < True", x)
+	assert x == True
+
+	x = Version('0.5b3') > Version('0.5')
+	print("49. < False", x)
+	assert x == False
+
+	x = Version('0.5b3') == Version('0.5')
+	print("50. < False", x)
+	assert x == False
+
+	x = Version('0.b') < Version('0.1')
+	print("51. < True", x)
+	assert x == True
+
+
 if __name__ == '__main__':
-	tests()
 	try:
 		tests()
 		print('\033[1;32m Tests OK!\n \033[0m')
