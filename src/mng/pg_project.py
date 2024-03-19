@@ -5,7 +5,7 @@ import re
 import sys
 import copy
 import logging
-from distutils.version import LooseVersion
+from version import Version
 
 import pg
 import json
@@ -65,11 +65,11 @@ class ProjectVersionPart:
 
 class ProjectVersion:
 	def __init__(self, version):
-		self.version = LooseVersion(version)
+		self.version = Version(version)
 		self.parts = []
 
 	def cmp_text(self, version):
-		return self.version == LooseVersion(version)
+		return self.version == Version(version)
 
 	def add_part(self, fname, directory, part):
 		self.parts.insert(part, ProjectVersionPart(fname, directory, part))
@@ -107,8 +107,8 @@ class ProjectUpdatePart:
 
 class ProjectUpdate:
 	def __init__(self, version_old, version_new):
-		self.version_new = LooseVersion(version_new)
-		self.version_old = LooseVersion(version_old)
+		self.version_new = Version(version_new)
+		self.version_old = Version(version_old)
 		self.parts = []
 		self.failed = False
 		self.failed_part = 0
@@ -117,7 +117,7 @@ class ProjectUpdate:
 		return "%s -> %s" % (self.version_old, self.version_new)
 
 	def cmp_text(self, version_old, version_new):
-		return self.version_old == LooseVersion(version_old) and self.version_new == LooseVersion(version_new)
+		return self.version_old == Version(version_old) and self.version_new == Version(version_new)
 
 	def add_part(self, fname, directory, part):
 		self.parts.insert(part, ProjectUpdatePart(fname, directory, part))
@@ -126,9 +126,9 @@ class ProjectUpdate:
 class  ProjectInstalated:
 	def __init__(self, dbname, version, from_version, part, parts):
 		self.dbname = dbname
-		self.version = LooseVersion(version)
+		self.version = Version(version)
 		if from_version:
-			self.from_version = LooseVersion(from_version)
+			self.from_version = Version(from_version)
 		else:
 			self.from_version = None
 		self.part = part
@@ -431,7 +431,7 @@ def install(project_name, dbname, version, conninfo, directory, create_db, is_re
 	ins = project.get_instalated(dbname)
 
 	if version:
-		need_ver = LooseVersion(version)
+		need_ver = Version(version)
 	else:
 		need_ver = project.newest_version()
 
@@ -537,7 +537,7 @@ def update_status(conninfo, directory, show_json):
 	for db in dbs:
 		for project in projects:
 			for ins in project.get_instalated(db):
-				installed_projects += 1			
+				installed_projects += 1
 				if not project.newest_version():
 					continue
 
