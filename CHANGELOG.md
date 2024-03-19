@@ -1,3 +1,8 @@
+## [1.2403.0.0] - 2024-03-19
+
+### Change
+change to own versioning implementation
+
 ## [1.2401.0.2] - 2024-02-01
 
 ### Fix
